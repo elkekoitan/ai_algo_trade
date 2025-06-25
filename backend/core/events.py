@@ -97,4 +97,14 @@ class EventTypes:
     # System events
     MT5_CONNECTED = "system.mt5_connected"
     MT5_DISCONNECTED = "system.mt5_disconnected"
-    ERROR_OCCURRED = "system.error" 
+    ERROR_OCCURRED = "system.error"
+    
+    # Algo Forge events
+    REPO_CREATED = "forge.repo_created"
+    REPO_DELETED = "forge.repo_deleted"
+    REPO_CLONED = "forge.repo_cloned"
+    REPO_COMMITTED = "forge.repo_committed"
+    REPO_PUSHED = "forge.repo_pushed"
+    REPO_PULLED = "forge.repo_pulled"
+    BRANCH_CREATED = "forge.branch_created"
+    BRANCH_CHECKED_OUT = "forge.branch_checked_out" 

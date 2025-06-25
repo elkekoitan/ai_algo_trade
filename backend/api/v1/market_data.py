@@ -42,7 +42,7 @@ class CandleData(BaseModel):
 @router.get("/symbols")
 async def get_symbols() -> List[str]:
     """
-    Get list of available trading symbols.
+    Get list of all available and tradeable trading symbols.
     """
     try:
         from backend.main import get_mt5_service
@@ -57,13 +57,10 @@ async def get_symbols() -> List[str]:
         if symbols is None:
             return []
             
-        # Filter for forex symbols
-        forex_symbols = [
-            s.name for s in symbols 
-            if s.name.endswith("USD") or "USD" in s.name[:3]
-        ]
+        # Return all visible (tradeable) symbols
+        tradeable_symbols = [s.name for s in symbols if s.visible]
         
-        return sorted(forex_symbols)[:20]  # Return top 20 symbols
+        return sorted(tradeable_symbols)
         
     except Exception as e:
         logger.error(f"Error getting symbols: {e}")

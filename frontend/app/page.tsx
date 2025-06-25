@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import Header from "@/components/layout/Header";
 import AccountInfo from "@/components/dashboard/AccountInfo";
+import QuickTrade from "@/components/dashboard/QuickTrade";
 
 interface StatusResponse {
   api_status: string;
@@ -78,41 +79,38 @@ export default function Home() {
           </div>
 
           {/* Dashboard Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Account Info */}
-            <div className="lg:col-span-2">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Main Column */}
+            <div className="lg:col-span-2 space-y-6">
               <AccountInfo />
-            </div>
 
-            {/* Quick Stats */}
-            <div className="bg-gray-900/50 backdrop-blur-lg rounded-xl p-6 border border-gray-800">
-              <h3 className="text-lg font-semibold text-white mb-4">System Status</h3>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-400">API Status</span>
-                  <span className="text-green-400 font-medium">Online</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-400">MT5 Connection</span>
-                  <span className="text-green-400 font-medium">Connected</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-400">Active Signals</span>
-                  <span className="text-white font-medium">0</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-400">Open Positions</span>
-                  <span className="text-white font-medium">0</span>
+              {/* Quick Stats */}
+              <div className="bg-gray-900/50 backdrop-blur-lg rounded-xl p-6 border border-gray-800">
+                <h3 className="text-lg font-semibold text-white mb-4">System Status</h3>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-400">API Status</span>
+                    <span className="text-green-400 font-medium">Online</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-400">MT5 Connection</span>
+                    <span className="text-green-400 font-medium">Connected</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-400">Active Signals</span>
+                    <span className="text-white font-medium">0</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-400">Open Positions</span>
+                    <span className="text-white font-medium">0</span>
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* Recent Activity */}
-            <div className="bg-gray-900/50 backdrop-blur-lg rounded-xl p-6 border border-gray-800">
-              <h3 className="text-lg font-semibold text-white mb-4">Recent Activity</h3>
-              <div className="space-y-3">
-                <p className="text-gray-400 text-sm">No recent activity</p>
-              </div>
+            {/* Side Column */}
+            <div className="lg:col-span-1">
+                <QuickTrade />
             </div>
           </div>
 

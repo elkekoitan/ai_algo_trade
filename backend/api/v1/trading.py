@@ -169,4 +169,56 @@ async def get_account_info() -> Dict[str, Any]:
             
     except Exception as e:
         logger.error(f"Error getting account info: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/trade", response_model=OrderResponse)
+async def place_trade(request: PlaceOrderRequest) -> OrderResponse:
+    """
+    Place a new trading order for any available instrument.
+    """
+    try:
+        # Get MT5 service from app state
+        from backend.main import get_mt5_service
+        mt5_service = await get_mt5_service()
+        
+        if not mt5_service.is_connected:
+            raise HTTPException(status_code=503, detail="MT5 not connected")
+        
+        # Create order request
+        order_req = OrderRequest(
+            symbol=request.symbol,
+            order_type=request.order_type,
+            volume=request.volume,
+            price=request.price,
+            sl=request.sl,
+            tp=request.tp,
+            magic=request.magic,
+            comment=f"Trade via ICT Ultra v2: {request.comment}"
+        )
+        
+        # Place order
+        result = await mt5_service.place_order(order_req)
+        
+        if result.success:
+            return OrderResponse(
+                success=True,
+                order_id=result.order,
+                message=f"{order_req.order_type.value} order for {order_req.volume} lots of {order_req.symbol} placed successfully.",
+                details={
+                    "order": result.order,
+                    "deal": result.deal,
+                    "volume": result.volume,
+                    "price": result.price
+                }
+            )
+        else:
+            return OrderResponse(
+                success=False,
+                message=result.error_description,
+                details={"retcode": result.retcode}
+            )
+            
+    except Exception as e:
+        logger.error(f"Error placing trade: {e}")
         raise HTTPException(status_code=500, detail=str(e)) 

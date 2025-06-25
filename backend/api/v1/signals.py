@@ -1,167 +1,365 @@
 """
-ICT Signals API endpoints.
-
-This module provides API endpoints for retrieving ICT signals
-like Order Blocks, Fair Value Gaps, and Breaker Blocks.
+API endpoints for ICT signals.
 """
 
 from typing import List, Dict, Any, Optional
-from fastapi import APIRouter, Query, HTTPException, Depends
+from fastapi import APIRouter, Depends, HTTPException, Query
+import pandas as pd
 import MetaTrader5 as mt5
-import logging
-from datetime import datetime, timedelta
+from datetime import datetime
 
-from backend.core.config import get_settings
+from backend.core.config.settings import settings
 from backend.modules.signals.ict import (
-    find_order_blocks,
-    find_fair_value_gaps,
-    find_breaker_blocks,
-    score_signals
+    OrderBlockDetector, 
+    FairValueGapDetector, 
+    BreakerBlockDetector,
+    ICTSignalScorer,
+    ICTOpenBLASEngine
+)
+from backend.modules.mt5_integration.service import MT5Service
+
+# Create router
+router = APIRouter(prefix="/signals", tags=["signals"])
+
+# Initialize services
+mt5_service = MT5Service(
+    login=settings.MT5_LOGIN,
+    password=settings.MT5_PASSWORD,
+    server=settings.MT5_SERVER,
+    timeout=settings.MT5_TIMEOUT
 )
 
-logger = logging.getLogger("ict_ultra_v2.api.signals")
+# Initialize detectors with OpenBLAS
+ob_detector = OrderBlockDetector(use_openblas=settings.USE_OPENBLAS)
+fvg_detector = FairValueGapDetector(use_openblas=settings.USE_OPENBLAS)
+bb_detector = BreakerBlockDetector(use_openblas=settings.USE_OPENBLAS)
+signal_scorer = ICTSignalScorer()
 
-router = APIRouter(prefix="/ict", tags=["ICT Signals"])
 
-
-@router.get("/signals")
-async def get_ict_signals(
-    symbols: List[str] = Query(["EURUSD", "GBPUSD", "USDJPY", "XAUUSD"]),
-    timeframes: List[str] = Query(["M15", "H1", "H4"]),
-    signal_types: List[str] = Query(["order_blocks", "fair_value_gaps", "breaker_blocks"]),
-    lookback_period: int = Query(100, ge=10, le=500),
-    min_score: float = Query(70.0, ge=0.0, le=100.0),
-    max_results: int = Query(50, ge=1, le=100)
-) -> Dict[str, Any]:
+@router.get("/order-blocks", response_model=List[Dict[str, Any]])
+async def get_order_blocks(
+    symbol: str = Query(..., description="Trading symbol (e.g., EURUSD)"),
+    timeframe: str = Query("H1", description="Timeframe (M1, M5, M15, M30, H1, H4, D1, W1, MN)"),
+    bars_count: int = Query(500, description="Number of bars to analyze"),
+    min_body_size_factor: float = Query(0.6, description="Minimum body size factor"),
+    min_move_after_factor: float = Query(1.5, description="Minimum move after factor"),
+    confirmation_candles: int = Query(3, description="Confirmation candles"),
+    strength_threshold: float = Query(0.7, description="Strength threshold (0.0-1.0)"),
+    max_results: int = Query(10, description="Maximum number of results to return")
+):
     """
-    Get ICT signals for the specified symbols and timeframes.
+    Detect Order Blocks for the given symbol and timeframe.
     
-    Args:
-        symbols: List of symbols to analyze
-        timeframes: List of timeframes to analyze
-        signal_types: List of signal types to include
-        lookback_period: How far back to look for signals
-        min_score: Minimum score for signals
-        max_results: Maximum number of results to return
+    Order blocks are areas on the chart where significant orders were placed 
+    before a strong move in price, often serving as support/resistance in the future.
+    """
+    # Get market data from MT5
+    try:
+        # Connect to MT5 if not connected
+        if not mt5_service.is_connected():
+            if not await mt5_service.connect():
+                raise HTTPException(status_code=500, detail="Failed to connect to MetaTrader 5")
         
-    Returns:
-        Dictionary with ICT signals
-    """
-    logger.info(f"Getting ICT signals for {symbols} on {timeframes}")
-    
-    # Check if MT5 is connected
-    if not mt5.initialize():
-        logger.error(f"Failed to connect to MT5: {mt5.last_error()}")
-        raise HTTPException(status_code=503, detail="Failed to connect to MetaTrader 5")
-    
-    # Convert timeframe strings to MT5 constants
-    mt5_timeframes = {
-        "M1": mt5.TIMEFRAME_M1,
-        "M5": mt5.TIMEFRAME_M5,
-        "M15": mt5.TIMEFRAME_M15,
-        "M30": mt5.TIMEFRAME_M30,
-        "H1": mt5.TIMEFRAME_H1,
-        "H4": mt5.TIMEFRAME_H4,
-        "D1": mt5.TIMEFRAME_D1,
-        "W1": mt5.TIMEFRAME_W1,
-        "MN1": mt5.TIMEFRAME_MN1
-    }
-    
-    all_signals = []
-    
-    # For each symbol and timeframe, get the requested signals
-    for symbol in symbols:
-        for tf_str in timeframes:
-            tf = mt5_timeframes.get(tf_str)
-            if tf is None:
-                logger.warning(f"Invalid timeframe: {tf_str}")
-                continue
-            
-            # Get the signals based on the requested types
-            signals_for_tf = []
-            
-            if "order_blocks" in signal_types:
-                obs = find_order_blocks(symbol, tf, lookback_period=lookback_period)
-                for ob in obs:
-                    ob["signal_type"] = "order_block"
-                    ob["timeframe"] = tf_str
-                    ob["symbol"] = symbol
-                signals_for_tf.extend(obs)
-            
-            if "fair_value_gaps" in signal_types:
-                fvgs = find_fair_value_gaps(symbol, tf, lookback_period=lookback_period)
-                for fvg in fvgs:
-                    fvg["signal_type"] = "fair_value_gap"
-                    fvg["timeframe"] = tf_str
-                    fvg["symbol"] = symbol
-                signals_for_tf.extend(fvgs)
-            
-            if "breaker_blocks" in signal_types:
-                bbs = find_breaker_blocks(symbol, tf, lookback_period=lookback_period)
-                for bb in bbs:
-                    bb["signal_type"] = "breaker_block"
-                    bb["timeframe"] = tf_str
-                    bb["symbol"] = symbol
-                signals_for_tf.extend(bbs)
-            
-            # Score the signals
-            if signals_for_tf:
-                scored_signals = score_signals(signals_for_tf, symbol, tf)
-                all_signals.extend(scored_signals)
-    
-    # Filter by minimum score
-    filtered_signals = [s for s in all_signals if s.get("score", 0) >= min_score]
-    
-    # Sort by score (highest first)
-    filtered_signals.sort(key=lambda x: x.get("score", 0), reverse=True)
-    
-    # Limit the number of results
-    limited_signals = filtered_signals[:max_results]
-    
-    # Add timestamp and metadata
-    response = {
-        "timestamp": datetime.now().isoformat(),
-        "symbols": symbols,
-        "timeframes": timeframes,
-        "signal_types": signal_types,
-        "min_score": min_score,
-        "total_signals": len(filtered_signals),
-        "returned_signals": len(limited_signals),
-        "signals": limited_signals
-    }
-    
-    logger.info(f"Returning {len(limited_signals)} ICT signals")
-    return response
-
-
-@router.get("/signals/{symbol}")
-async def get_ict_signals_for_symbol(
-    symbol: str,
-    timeframes: List[str] = Query(["M15", "H1", "H4"]),
-    signal_types: List[str] = Query(["order_blocks", "fair_value_gaps", "breaker_blocks"]),
-    lookback_period: int = Query(100, ge=10, le=500),
-    min_score: float = Query(70.0, ge=0.0, le=100.0),
-    max_results: int = Query(50, ge=1, le=100)
-) -> Dict[str, Any]:
-    """
-    Get ICT signals for a specific symbol.
-    
-    Args:
-        symbol: Symbol to analyze
-        timeframes: List of timeframes to analyze
-        signal_types: List of signal types to include
-        lookback_period: How far back to look for signals
-        min_score: Minimum score for signals
-        max_results: Maximum number of results to return
+        # Convert timeframe string to MT5 timeframe
+        tf_map = {
+            "M1": mt5.TIMEFRAME_M1,
+            "M5": mt5.TIMEFRAME_M5,
+            "M15": mt5.TIMEFRAME_M15,
+            "M30": mt5.TIMEFRAME_M30,
+            "H1": mt5.TIMEFRAME_H1,
+            "H4": mt5.TIMEFRAME_H4,
+            "D1": mt5.TIMEFRAME_D1,
+            "W1": mt5.TIMEFRAME_W1,
+            "MN": mt5.TIMEFRAME_MN1
+        }
         
-    Returns:
-        Dictionary with ICT signals
+        mt5_timeframe = tf_map.get(timeframe.upper(), mt5.TIMEFRAME_H1)
+        
+        # Get market data
+        rates = mt5.copy_rates_from_pos(symbol, mt5_timeframe, 0, bars_count)
+        if rates is None or len(rates) == 0:
+            raise HTTPException(status_code=404, detail=f"No data found for {symbol} on {timeframe}")
+            
+        # Convert to pandas DataFrame
+        df = pd.DataFrame(rates)
+        df['time'] = pd.to_datetime(df['time'], unit='s')
+        
+        # Add symbol and timeframe to DataFrame for reference
+        df['symbol'] = symbol
+        df['timeframe'] = timeframe
+        
+        # Detect order blocks
+        order_blocks = ob_detector.detect(
+            df,
+            min_body_size_factor=min_body_size_factor,
+            min_move_after_factor=min_move_after_factor,
+            confirmation_candles=confirmation_candles,
+            strength_threshold=strength_threshold,
+            max_results=max_results
+        )
+        
+        # Score signals
+        scored_signals = signal_scorer.score_signals(order_blocks, df)
+        
+        return scored_signals
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error detecting order blocks: {str(e)}")
+
+
+@router.get("/fair-value-gaps", response_model=List[Dict[str, Any]])
+async def get_fair_value_gaps(
+    symbol: str = Query(..., description="Trading symbol (e.g., EURUSD)"),
+    timeframe: str = Query("H1", description="Timeframe (M1, M5, M15, M30, H1, H4, D1, W1, MN)"),
+    bars_count: int = Query(500, description="Number of bars to analyze"),
+    min_gap_factor: float = Query(0.5, description="Minimum gap size factor"),
+    strength_threshold: float = Query(0.7, description="Strength threshold (0.0-1.0)"),
+    max_results: int = Query(10, description="Maximum number of results to return")
+):
     """
-    return await get_ict_signals(
-        symbols=[symbol],
-        timeframes=timeframes,
-        signal_types=signal_types,
-        lookback_period=lookback_period,
-        min_score=min_score,
-        max_results=max_results
-    ) 
+    Detect Fair Value Gaps for the given symbol and timeframe.
+    
+    Fair Value Gaps are areas on the chart where price has 'gapped' and left an
+    imbalance between buyers and sellers, often serving as magnets for price to return to.
+    """
+    # Get market data from MT5
+    try:
+        # Connect to MT5 if not connected
+        if not mt5_service.is_connected():
+            if not await mt5_service.connect():
+                raise HTTPException(status_code=500, detail="Failed to connect to MetaTrader 5")
+        
+        # Convert timeframe string to MT5 timeframe
+        tf_map = {
+            "M1": mt5.TIMEFRAME_M1,
+            "M5": mt5.TIMEFRAME_M5,
+            "M15": mt5.TIMEFRAME_M15,
+            "M30": mt5.TIMEFRAME_M30,
+            "H1": mt5.TIMEFRAME_H1,
+            "H4": mt5.TIMEFRAME_H4,
+            "D1": mt5.TIMEFRAME_D1,
+            "W1": mt5.TIMEFRAME_W1,
+            "MN": mt5.TIMEFRAME_MN1
+        }
+        
+        mt5_timeframe = tf_map.get(timeframe.upper(), mt5.TIMEFRAME_H1)
+        
+        # Get market data
+        rates = mt5.copy_rates_from_pos(symbol, mt5_timeframe, 0, bars_count)
+        if rates is None or len(rates) == 0:
+            raise HTTPException(status_code=404, detail=f"No data found for {symbol} on {timeframe}")
+            
+        # Convert to pandas DataFrame
+        df = pd.DataFrame(rates)
+        df['time'] = pd.to_datetime(df['time'], unit='s')
+        
+        # Add symbol and timeframe to DataFrame for reference
+        df['symbol'] = symbol
+        df['timeframe'] = timeframe
+        
+        # Detect fair value gaps
+        fvgs = fvg_detector.detect(
+            df,
+            min_gap_factor=min_gap_factor,
+            strength_threshold=strength_threshold,
+            max_results=max_results
+        )
+        
+        # Score signals
+        scored_signals = signal_scorer.score_signals(fvgs, df)
+        
+        return scored_signals
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error detecting fair value gaps: {str(e)}")
+
+
+@router.get("/breaker-blocks", response_model=List[Dict[str, Any]])
+async def get_breaker_blocks(
+    symbol: str = Query(..., description="Trading symbol (e.g., EURUSD)"),
+    timeframe: str = Query("H1", description="Timeframe (M1, M5, M15, M30, H1, H4, D1, W1, MN)"),
+    bars_count: int = Query(500, description="Number of bars to analyze"),
+    min_strength: float = Query(0.7, description="Strength threshold (0.0-1.0)"),
+    max_results: int = Query(10, description="Maximum number of results to return")
+):
+    """
+    Detect Breaker Blocks for the given symbol and timeframe.
+    
+    Breaker blocks are order blocks that have been broken and then retested,
+    often creating high-probability trading opportunities.
+    """
+    # Get market data from MT5
+    try:
+        # Connect to MT5 if not connected
+        if not mt5_service.is_connected():
+            if not await mt5_service.connect():
+                raise HTTPException(status_code=500, detail="Failed to connect to MetaTrader 5")
+        
+        # Convert timeframe string to MT5 timeframe
+        tf_map = {
+            "M1": mt5.TIMEFRAME_M1,
+            "M5": mt5.TIMEFRAME_M5,
+            "M15": mt5.TIMEFRAME_M15,
+            "M30": mt5.TIMEFRAME_M30,
+            "H1": mt5.TIMEFRAME_H1,
+            "H4": mt5.TIMEFRAME_H4,
+            "D1": mt5.TIMEFRAME_D1,
+            "W1": mt5.TIMEFRAME_W1,
+            "MN": mt5.TIMEFRAME_MN1
+        }
+        
+        mt5_timeframe = tf_map.get(timeframe.upper(), mt5.TIMEFRAME_H1)
+        
+        # Get market data
+        rates = mt5.copy_rates_from_pos(symbol, mt5_timeframe, 0, bars_count)
+        if rates is None or len(rates) == 0:
+            raise HTTPException(status_code=404, detail=f"No data found for {symbol} on {timeframe}")
+            
+        # Convert to pandas DataFrame
+        df = pd.DataFrame(rates)
+        df['time'] = pd.to_datetime(df['time'], unit='s')
+        
+        # Add symbol and timeframe to DataFrame for reference
+        df['symbol'] = symbol
+        df['timeframe'] = timeframe
+        
+        # Detect breaker blocks
+        breaker_blocks = bb_detector.detect(
+            df,
+            min_strength=min_strength,
+            max_results=max_results
+        )
+        
+        # Score signals
+        scored_signals = signal_scorer.score_signals(breaker_blocks, df)
+        
+        return scored_signals
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error detecting breaker blocks: {str(e)}")
+
+
+@router.get("/all-signals", response_model=Dict[str, List[Dict[str, Any]]])
+async def get_all_signals(
+    symbol: str = Query(..., description="Trading symbol (e.g., EURUSD)"),
+    timeframe: str = Query("H1", description="Timeframe (M1, M5, M15, M30, H1, H4, D1, W1, MN)"),
+    bars_count: int = Query(500, description="Number of bars to analyze"),
+    strength_threshold: float = Query(0.7, description="Strength threshold (0.0-1.0)"),
+    max_results: int = Query(10, description="Maximum number of results to return per signal type")
+):
+    """
+    Get all ICT signals (Order Blocks, Fair Value Gaps, Breaker Blocks) for the given symbol and timeframe.
+    """
+    # Get market data from MT5
+    try:
+        # Connect to MT5 if not connected
+        if not mt5_service.is_connected():
+            if not await mt5_service.connect():
+                raise HTTPException(status_code=500, detail="Failed to connect to MetaTrader 5")
+        
+        # Convert timeframe string to MT5 timeframe
+        tf_map = {
+            "M1": mt5.TIMEFRAME_M1,
+            "M5": mt5.TIMEFRAME_M5,
+            "M15": mt5.TIMEFRAME_M15,
+            "M30": mt5.TIMEFRAME_M30,
+            "H1": mt5.TIMEFRAME_H1,
+            "H4": mt5.TIMEFRAME_H4,
+            "D1": mt5.TIMEFRAME_D1,
+            "W1": mt5.TIMEFRAME_W1,
+            "MN": mt5.TIMEFRAME_MN1
+        }
+        
+        mt5_timeframe = tf_map.get(timeframe.upper(), mt5.TIMEFRAME_H1)
+        
+        # Get market data
+        rates = mt5.copy_rates_from_pos(symbol, mt5_timeframe, 0, bars_count)
+        if rates is None or len(rates) == 0:
+            raise HTTPException(status_code=404, detail=f"No data found for {symbol} on {timeframe}")
+            
+        # Convert to pandas DataFrame
+        df = pd.DataFrame(rates)
+        df['time'] = pd.to_datetime(df['time'], unit='s')
+        
+        # Add symbol and timeframe to DataFrame for reference
+        df['symbol'] = symbol
+        df['timeframe'] = timeframe
+        
+        # Detect all signal types
+        order_blocks = ob_detector.detect(
+            df,
+            min_body_size_factor=0.6,
+            min_move_after_factor=1.5,
+            confirmation_candles=3,
+            strength_threshold=strength_threshold,
+            max_results=max_results
+        )
+        
+        fair_value_gaps = fvg_detector.detect(
+            df,
+            min_gap_factor=0.5,
+            strength_threshold=strength_threshold,
+            max_results=max_results
+        )
+        
+        breaker_blocks = bb_detector.detect(
+            df,
+            min_strength=strength_threshold,
+            max_results=max_results
+        )
+        
+        # Score all signals
+        scored_obs = signal_scorer.score_signals(order_blocks, df)
+        scored_fvgs = signal_scorer.score_signals(fair_value_gaps, df)
+        scored_bbs = signal_scorer.score_signals(breaker_blocks, df)
+        
+        # Return all signals
+        return {
+            "order_blocks": scored_obs,
+            "fair_value_gaps": scored_fvgs,
+            "breaker_blocks": scored_bbs
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error detecting signals: {str(e)}")
+
+
+@router.get("/top-signals", response_model=List[Dict[str, Any]])
+async def get_top_signals(
+    symbol: str = Query(..., description="Trading symbol (e.g., EURUSD)"),
+    timeframe: str = Query("H1", description="Timeframe (M1, M5, M15, M30, H1, H4, D1, W1, MN)"),
+    bars_count: int = Query(500, description="Number of bars to analyze"),
+    strength_threshold: float = Query(0.7, description="Strength threshold (0.0-1.0)"),
+    max_results: int = Query(10, description="Maximum number of results to return")
+):
+    """
+    Get top ICT signals across all signal types, sorted by strength/score.
+    """
+    try:
+        # Get all signals
+        all_signals = await get_all_signals(
+            symbol=symbol,
+            timeframe=timeframe,
+            bars_count=bars_count,
+            strength_threshold=strength_threshold,
+            max_results=max_results * 2  # Get more signals to choose from
+        )
+        
+        # Combine all signals
+        combined_signals = []
+        combined_signals.extend(all_signals["order_blocks"])
+        combined_signals.extend(all_signals["fair_value_gaps"])
+        combined_signals.extend(all_signals["breaker_blocks"])
+        
+        # Sort by score/strength
+        sorted_signals = sorted(
+            combined_signals, 
+            key=lambda x: x.get("score", x.get("strength", 0)), 
+            reverse=True
+        )
+        
+        # Return top N signals
+        return sorted_signals[:max_results]
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error getting top signals: {str(e)}")

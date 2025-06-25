@@ -5,6 +5,7 @@ Application settings management using Pydantic.
 import os
 from functools import lru_cache
 from typing import List, Optional, Dict, Any
+from pathlib import Path
 
 from pydantic_settings import BaseSettings
 from pydantic import validator, Field
@@ -19,19 +20,20 @@ class Settings(BaseSettings):
     # API settings
     API_V1_STR: str = "/api"
     PROJECT_NAME: str = "ICT Ultra v2"
-    VERSION: str = "1.0.0"
+    VERSION: str = "2.0.0"
     
     # CORS settings
-    BACKEND_CORS_ORIGINS: List[str] = ["http://localhost:3000", "http://localhost:8000"]
+    BACKEND_CORS_ORIGINS: List[str] = ["http://localhost:3000", "http://localhost:3001"]
     
     # MetaTrader 5 settings
     MT5_LOGIN: int = 25201110
     MT5_SERVER: str = "Tickmill-Demo"
-    MT5_PASSWORD: Optional[str] = None
+    MT5_PASSWORD: str = "e|([rXU1IsiM"
     MT5_TIMEOUT: int = 60000  # milliseconds
     
     # Database settings
-    DATABASE_URL: Optional[str] = None
+    DATABASE_URL: str = "sqlite+aiosqlite:///./ict_ultra_v2.db"
+    DATABASE_ECHO: bool = False
     
     # Redis settings
     REDIS_HOST: str = "localhost"
@@ -45,10 +47,21 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     
     # MQL5 Algo Forge settings
-    FORGE_REPOS_PATH: str = "../mql5_forge_repos"
+    FORGE_REPOS_PATH: str = "./mql5_forge_repos"
     
     # Logging settings
     LOG_LEVEL: str = "INFO"
+    
+    # Application settings
+    APP_NAME: str = "ICT Ultra v2: Algo Forge Edition"
+    ENVIRONMENT: str = "development"
+    DEBUG: bool = True
+    HOST: str = "0.0.0.0"
+    PORT: int = 8001
+    
+    # OpenBLAS settings
+    USE_OPENBLAS: bool = True
+    OPENBLAS_THREADS: int = 4
     
     @validator("BACKEND_CORS_ORIGINS", pre=True)
     def assemble_cors_origins(cls, v: Any) -> List[str]:

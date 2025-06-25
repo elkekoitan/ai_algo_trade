@@ -11,12 +11,303 @@ import numpy as np
 import pandas as pd
 import MetaTrader5 as mt5
 import logging
+import uuid
+from datetime import datetime
 
-logger = logging.getLogger("ict_ultra_v2.signals.ict.fair_value_gaps")
+from backend.core.logger import setup_logger
+from .openblas_engine import ICTOpenBLASEngine
+
+# Initialize logger
+logger = setup_logger("ict_fair_value_gaps")
 
 # Constants for FVG detection
 MIN_GAP_FACTOR = 0.5  # Minimum gap size as a factor of average body size
 MAX_AGE_BARS = 50  # Maximum age of FVG in bars to be considered valid
+
+
+class FairValueGapDetector:
+    """
+    Detector for ICT Fair Value Gaps (FVGs).
+    
+    Fair Value Gaps are areas on the chart where price has 'gapped' and left an
+    imbalance between buyers and sellers, often serving as magnets for price to return to.
+    """
+    
+    def __init__(self, use_openblas: bool = True):
+        """
+        Initialize the Fair Value Gap detector.
+        
+        Args:
+            use_openblas: Whether to use OpenBLAS optimization
+        """
+        self.use_openblas = use_openblas
+        self.engine = ICTOpenBLASEngine() if use_openblas else None
+        logger.info(f"Fair Value Gap detector initialized (OpenBLAS: {use_openblas})")
+        
+    def detect(
+        self, 
+        df: pd.DataFrame,
+        min_gap_factor: float = 0.5,
+        strength_threshold: float = 0.7,
+        max_results: int = 20
+    ) -> List[Dict[str, Any]]:
+        """
+        Detect fair value gaps in the given price data.
+        
+        Args:
+            df: DataFrame with OHLCV data
+            min_gap_factor: Minimum gap size as factor of ATR
+            strength_threshold: Minimum strength threshold (0-1)
+            max_results: Maximum number of results to return
+            
+        Returns:
+            List of FVG signals with metadata
+        """
+        # Validate input data
+        required_columns = ['open', 'high', 'low', 'close', 'time']
+        if not all(col in df.columns for col in required_columns):
+            logger.error(f"Missing required columns in dataframe: {required_columns}")
+            return []
+            
+        # Use optimized engine if available
+        if self.use_openblas and self.engine:
+            logger.debug("Using OpenBLAS engine for FVG detection")
+            fvgs = self.engine.detect_fair_value_gaps(
+                df,
+                min_gap_factor=min_gap_factor,
+                strength_threshold=strength_threshold
+            )
+        else:
+            logger.debug("Using standard algorithm for FVG detection")
+            fvgs = self._detect_standard(
+                df,
+                min_gap_factor=min_gap_factor,
+                strength_threshold=strength_threshold
+            )
+            
+        # Sort by strength and limit results
+        fvgs = sorted(fvgs, key=lambda x: x['strength'], reverse=True)[:max_results]
+        
+        # Enrich with additional metadata
+        for fvg in fvgs:
+            fvg['pattern_type'] = 'fair_value_gap'
+            fvg['signal_type'] = 'BUY' if fvg['type'] == 'bullish' else 'SELL'
+            fvg['timestamp'] = fvg['time'].isoformat() if isinstance(fvg['time'], datetime) else fvg['time']
+            
+            # Calculate risk level
+            strength = fvg['strength']
+            if strength >= 0.9:
+                fvg['risk_level'] = 'LOW'
+            elif strength >= 0.8:
+                fvg['risk_level'] = 'MEDIUM'
+            elif strength >= 0.7:
+                fvg['risk_level'] = 'HIGH'
+            else:
+                fvg['risk_level'] = 'EXTREME'
+                
+            # Add analysis text
+            fvg['analysis'] = self._generate_analysis(fvg)
+            
+        logger.info(f"Detected {len(fvgs)} fair value gaps with strength >= {strength_threshold}")
+        return fvgs
+        
+    def _detect_standard(
+        self, 
+        df: pd.DataFrame,
+        min_gap_factor: float = 0.5,
+        strength_threshold: float = 0.7
+    ) -> List[Dict[str, Any]]:
+        """
+        Standard (non-optimized) algorithm for fair value gap detection.
+        """
+        # Calculate ATR for volatility normalization
+        df['tr'] = np.maximum(
+            df['high'] - df['low'],
+            np.maximum(
+                abs(df['high'] - df['close'].shift(1)),
+                abs(df['low'] - df['close'].shift(1))
+            )
+        )
+        df['atr'] = df['tr'].rolling(window=14).mean()
+        
+        # Fill first ATR value
+        if pd.isna(df['atr'].iloc[0]):
+            df['atr'].iloc[0] = df['tr'].iloc[0]
+            
+        # Fill remaining NaN values with forward fill
+        df['atr'] = df['atr'].fillna(method='ffill')
+        
+        fvgs = []
+        
+        # Find bullish FVGs (gap up)
+        for i in range(1, len(df) - 1):
+            # Check for gap up (current low > previous high)
+            if df.iloc[i]['low'] <= df.iloc[i-1]['high']:
+                continue
+                
+            # Calculate gap size
+            gap_size = df.iloc[i]['low'] - df.iloc[i-1]['high']
+            
+            # Check if gap is significant
+            if gap_size < min_gap_factor * df.iloc[i]['atr']:
+                continue
+                
+            # Calculate strength factors
+            gap_strength = min(1.0, gap_size / (df.iloc[i]['atr'] * 2))
+            
+            # Calculate trend strength (simplified)
+            prev_data = df.iloc[max(0, i-20):i]
+            if len(prev_data) > 5:
+                sma_fast = prev_data['close'][-5:].mean()
+                sma_slow = prev_data['close'].mean()
+                if sma_fast > sma_slow:
+                    trend_strength = min(1.0, (sma_fast / sma_slow - 1) * 10)
+                else:
+                    trend_strength = max(0.3, 0.5 - (sma_slow / sma_fast - 1) * 5)
+            else:
+                trend_strength = 0.5
+                
+            # Calculate overall strength
+            strength = (
+                gap_strength * 0.4 +
+                trend_strength * 0.3 +
+                0.3  # Base strength for valid gap
+            )
+            
+            # Skip if below threshold
+            if strength < strength_threshold:
+                continue
+                
+            # Create FVG signal
+            fvg = {
+                "id": str(uuid.uuid4()),
+                "type": "bullish",
+                "entry_price": (df.iloc[i]['low'] + df.iloc[i-1]['high']) / 2,  # Middle of gap
+                "stop_loss": df.iloc[i-1]['high'] - df.iloc[i]['atr'] * 0.3,
+                "take_profit": df.iloc[i]['low'] + gap_size,
+                "risk_reward_ratio": gap_size / (df.iloc[i]['atr'] * 0.3),
+                "strength": strength,
+                "time": df.iloc[i]['time'],
+                "gap_size": gap_size,
+                "symbol": df.iloc[0].get('symbol', 'UNKNOWN'),
+                "timeframe": df.iloc[0].get('timeframe', 'UNKNOWN'),
+                "confluence_factors": {
+                    "gap_strength": float(gap_strength),
+                    "trend_strength": float(trend_strength),
+                    "structure_quality": 0.7,  # Default value
+                    "liquidity_presence": 0.5,  # Default value
+                    "time_of_day": 0.5,  # Default value
+                }
+            }
+            
+            fvgs.append(fvg)
+            
+        # Find bearish FVGs (gap down)
+        for i in range(1, len(df) - 1):
+            # Check for gap down (current high < previous low)
+            if df.iloc[i]['high'] >= df.iloc[i-1]['low']:
+                continue
+                
+            # Calculate gap size
+            gap_size = df.iloc[i-1]['low'] - df.iloc[i]['high']
+            
+            # Check if gap is significant
+            if gap_size < min_gap_factor * df.iloc[i]['atr']:
+                continue
+                
+            # Calculate strength factors
+            gap_strength = min(1.0, gap_size / (df.iloc[i]['atr'] * 2))
+            
+            # Calculate trend strength (simplified)
+            prev_data = df.iloc[max(0, i-20):i]
+            if len(prev_data) > 5:
+                sma_fast = prev_data['close'][-5:].mean()
+                sma_slow = prev_data['close'].mean()
+                if sma_fast < sma_slow:
+                    trend_strength = min(1.0, (sma_slow / sma_fast - 1) * 10)
+                else:
+                    trend_strength = max(0.3, 0.5 - (sma_fast / sma_slow - 1) * 5)
+            else:
+                trend_strength = 0.5
+                
+            # Calculate overall strength
+            strength = (
+                gap_strength * 0.4 +
+                trend_strength * 0.3 +
+                0.3  # Base strength for valid gap
+            )
+            
+            # Skip if below threshold
+            if strength < strength_threshold:
+                continue
+                
+            # Create FVG signal
+            fvg = {
+                "id": str(uuid.uuid4()),
+                "type": "bearish",
+                "entry_price": (df.iloc[i]['high'] + df.iloc[i-1]['low']) / 2,  # Middle of gap
+                "stop_loss": df.iloc[i-1]['low'] + df.iloc[i]['atr'] * 0.3,
+                "take_profit": df.iloc[i]['high'] - gap_size,
+                "risk_reward_ratio": gap_size / (df.iloc[i]['atr'] * 0.3),
+                "strength": strength,
+                "time": df.iloc[i]['time'],
+                "gap_size": gap_size,
+                "symbol": df.iloc[0].get('symbol', 'UNKNOWN'),
+                "timeframe": df.iloc[0].get('timeframe', 'UNKNOWN'),
+                "confluence_factors": {
+                    "gap_strength": float(gap_strength),
+                    "trend_strength": float(trend_strength),
+                    "structure_quality": 0.7,  # Default value
+                    "liquidity_presence": 0.5,  # Default value
+                    "time_of_day": 0.5,  # Default value
+                }
+            }
+            
+            fvgs.append(fvg)
+            
+        return fvgs
+        
+    def _generate_analysis(self, fvg: Dict[str, Any]) -> Dict[str, str]:
+        """Generate analysis text for the fair value gap."""
+        fvg_type = fvg['type']
+        strength = fvg['strength']
+        risk_level = fvg['risk_level']
+        
+        # Generate gap analysis
+        gap_strength = fvg['confluence_factors'].get('gap_strength', 0.5)
+        if gap_strength > 0.8:
+            gap_analysis = f"Large {fvg_type} fair value gap with high probability of fill"
+        elif gap_strength > 0.6:
+            gap_analysis = f"Moderate {fvg_type} fair value gap with good probability of fill"
+        else:
+            gap_analysis = f"Small {fvg_type} fair value gap"
+            
+        # Generate trend analysis
+        trend_strength = fvg['confluence_factors'].get('trend_strength', 0.5)
+        if trend_strength > 0.8:
+            trend_analysis = f"Strong {'bullish' if fvg_type == 'bullish' else 'bearish'} trend alignment"
+        elif trend_strength > 0.6:
+            trend_analysis = f"Moderate {'bullish' if fvg_type == 'bullish' else 'bearish'} trend alignment"
+        elif trend_strength > 0.4:
+            trend_analysis = "Neutral trend conditions"
+        else:
+            trend_analysis = f"Counter-trend setup (against {'bullish' if fvg_type == 'bearish' else 'bearish'} trend)"
+            
+        # Generate entry reasoning
+        if strength > 0.9:
+            entry_reasoning = f"High-probability {fvg_type} fair value gap with excellent confluence factors"
+        elif strength > 0.8:
+            entry_reasoning = f"Strong {fvg_type} fair value gap with good confluence"
+        elif strength > 0.7:
+            entry_reasoning = f"Moderate {fvg_type} fair value gap, exercise caution"
+        else:
+            entry_reasoning = f"Lower probability {fvg_type} fair value gap, high risk"
+            
+        return {
+            "gap_analysis": gap_analysis,
+            "trend_analysis": trend_analysis,
+            "entry_reasoning": entry_reasoning
+        }
 
 
 def find_fair_value_gaps(

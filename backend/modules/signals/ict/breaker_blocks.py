@@ -1,291 +1,348 @@
 """
-Breaker Blocks detection module.
-
-This module implements the ICT concept of Breaker Blocks.
-A Breaker Block is a former support/resistance level that has been broken
-and is now being retested from the other side.
+Breaker Block detection module for ICT Ultra v2.
 """
 
-from typing import List, Dict, Any, Tuple, Optional
-import numpy as np
 import pandas as pd
-import MetaTrader5 as mt5
-import logging
+import numpy as np
+from typing import List, Dict, Any, Optional
+from datetime import datetime
+import uuid
 
-logger = logging.getLogger("ict_ultra_v2.signals.ict.breaker_blocks")
+from backend.core.logger import setup_logger
+from .openblas_engine import ICTOpenBLASEngine
+from .order_blocks import OrderBlockDetector
 
-# Constants for breaker block detection
-MIN_BODY_SIZE_FACTOR = 0.7  # Minimum candle body size as a factor of average body size
-RETEST_THRESHOLD = 0.3  # Maximum distance for retest as a factor of average body size
-MAX_LOOKBACK = 50  # Maximum lookback for breaker blocks
+# Initialize logger
+logger = setup_logger("ict_breaker_blocks")
 
 
-def find_breaker_blocks(
-    symbol: str,
-    timeframe: int,
-    bars_count: int = 500,
-    lookback_period: int = 100,
-    strength_threshold: float = 0.6
-) -> List[Dict[str, Any]]:
+class BreakerBlockDetector:
     """
-    Find Breaker Blocks in the price data.
+    Detector for ICT Breaker Blocks.
     
-    Args:
-        symbol: The trading symbol (e.g., "EURUSD")
-        timeframe: The timeframe to analyze (e.g., mt5.TIMEFRAME_H1)
-        bars_count: Number of bars to retrieve
-        lookback_period: How far back to look for breaker blocks
-        strength_threshold: Threshold for breaker block strength (0.0 to 1.0)
-        
-    Returns:
-        List of dictionaries containing breaker block information
+    Breaker blocks are order blocks that have been broken and then retested,
+    often creating high-probability trading opportunities.
     """
-    logger.info(f"Finding breaker blocks for {symbol} on timeframe {timeframe}")
     
-    # Get price data from MT5
-    rates = mt5.copy_rates_from_pos(symbol, timeframe, 0, bars_count)
-    if rates is None or len(rates) == 0:
-        logger.error(f"Failed to get price data for {symbol}: {mt5.last_error()}")
-        return []
-    
-    # Convert to pandas DataFrame
-    df = pd.DataFrame(rates)
-    df['time'] = pd.to_datetime(df['time'], unit='s')
-    
-    # Calculate candle properties
-    df['body_size'] = abs(df['close'] - df['open'])
-    df['is_bullish'] = df['close'] > df['open']
-    df['is_bearish'] = df['close'] < df['open']
-    
-    # Calculate average body size for reference
-    avg_body_size = df['body_size'].mean()
-    
-    # Find swing highs and lows
-    swings = _find_swings(df)
-    
-    # Find potential breaker blocks
-    bullish_bbs = _find_bullish_breaker_blocks(df, swings, avg_body_size, lookback_period, strength_threshold)
-    bearish_bbs = _find_bearish_breaker_blocks(df, swings, avg_body_size, lookback_period, strength_threshold)
-    
-    # Combine and sort by time (most recent first)
-    all_bbs = bullish_bbs + bearish_bbs
-    all_bbs.sort(key=lambda x: x['time'], reverse=True)
-    
-    logger.info(f"Found {len(all_bbs)} breaker blocks for {symbol}")
-    return all_bbs
-
-
-def _find_swings(df: pd.DataFrame, window: int = 5) -> Dict[str, List[int]]:
-    """
-    Find swing highs and lows in the price data.
-    
-    Args:
-        df: DataFrame with price data
-        window: Window size for swing detection
+    def __init__(self, use_openblas: bool = True):
+        """
+        Initialize the Breaker Block detector.
         
-    Returns:
-        Dictionary with swing high and low indices
-    """
-    highs = []
-    lows = []
-    
-    for i in range(window, len(df) - window):
-        # Check for swing high
-        if all(df['high'].iloc[i] > df['high'].iloc[i-j] for j in range(1, window+1)) and \
-           all(df['high'].iloc[i] > df['high'].iloc[i+j] for j in range(1, window+1)):
-            highs.append(i)
+        Args:
+            use_openblas: Whether to use OpenBLAS optimization
+        """
+        self.use_openblas = use_openblas
+        self.engine = ICTOpenBLASEngine() if use_openblas else None
+        self.ob_detector = OrderBlockDetector(use_openblas=use_openblas)
+        logger.info(f"Breaker Block detector initialized (OpenBLAS: {use_openblas})")
         
-        # Check for swing low
-        if all(df['low'].iloc[i] < df['low'].iloc[i-j] for j in range(1, window+1)) and \
-           all(df['low'].iloc[i] < df['low'].iloc[i+j] for j in range(1, window+1)):
-            lows.append(i)
-    
-    return {"highs": highs, "lows": lows}
-
-
-def _find_bullish_breaker_blocks(
-    df: pd.DataFrame,
-    swings: Dict[str, List[int]],
-    avg_body_size: float,
-    lookback_period: int,
-    strength_threshold: float
-) -> List[Dict[str, Any]]:
-    """
-    Find bullish breaker blocks.
-    
-    A bullish breaker block is a former resistance level that has been broken
-    and is now being retested as support.
-    
-    Args:
-        df: DataFrame with price data
-        swings: Dictionary with swing high and low indices
-        avg_body_size: Average candle body size
-        lookback_period: How far back to look for breaker blocks
-        strength_threshold: Threshold for breaker block strength
+    def detect(
+        self, 
+        df: pd.DataFrame,
+        min_strength: float = 0.7,
+        max_results: int = 20
+    ) -> List[Dict[str, Any]]:
+        """
+        Detect breaker blocks in the given price data.
         
-    Returns:
-        List of dictionaries containing bullish breaker block information
-    """
-    bullish_bbs = []
-    
-    # We need at least a few candles
-    if len(df) < 10:
-        return bullish_bbs
-    
-    # Use swing highs as potential resistance levels
-    for high_idx in swings["highs"]:
-        # Check if we've gone beyond the lookback period
-        if high_idx >= lookback_period:
-            continue
+        Args:
+            df: DataFrame with OHLCV data
+            min_strength: Minimum strength threshold (0-1)
+            max_results: Maximum number of results to return
+            
+        Returns:
+            List of breaker block signals with metadata
+        """
+        # Validate input data
+        required_columns = ['open', 'high', 'low', 'close', 'time']
+        if not all(col in df.columns for col in required_columns):
+            logger.error(f"Missing required columns in dataframe: {required_columns}")
+            return []
+            
+        # Use optimized engine if available
+        if self.use_openblas and self.engine:
+            logger.debug("Using OpenBLAS engine for breaker block detection")
+            breaker_blocks = self.engine.detect_breaker_blocks(
+                df,
+                min_strength=min_strength
+            )
+        else:
+            logger.debug("Using standard algorithm for breaker block detection")
+            breaker_blocks = self._detect_standard(
+                df,
+                min_strength=min_strength
+            )
+            
+        # Sort by strength and limit results
+        breaker_blocks = sorted(breaker_blocks, key=lambda x: x['strength'], reverse=True)[:max_results]
         
-        # This is the resistance level
-        resistance_level = df['high'].iloc[high_idx]
+        # Enrich with additional metadata
+        for bb in breaker_blocks:
+            bb['pattern_type'] = 'breaker_block'
+            bb['signal_type'] = 'BUY' if bb['type'] == 'bullish' else 'SELL'
+            bb['timestamp'] = bb['time'].isoformat() if isinstance(bb['time'], datetime) else bb['time']
+            
+            # Calculate risk level
+            strength = bb['strength']
+            if strength >= 0.9:
+                bb['risk_level'] = 'LOW'
+            elif strength >= 0.8:
+                bb['risk_level'] = 'MEDIUM'
+            elif strength >= 0.7:
+                bb['risk_level'] = 'HIGH'
+            else:
+                bb['risk_level'] = 'EXTREME'
+                
+            # Add analysis text
+            bb['analysis'] = self._generate_analysis(bb)
+            
+        logger.info(f"Detected {len(breaker_blocks)} breaker blocks with strength >= {min_strength}")
+        return breaker_blocks
         
-        # Look for a break of this resistance
-        break_idx = None
-        for i in range(high_idx + 1, min(high_idx + MAX_LOOKBACK, len(df))):
-            if df['close'].iloc[i] > resistance_level and df['is_bullish'].iloc[i]:
-                if df['body_size'].iloc[i] >= MIN_BODY_SIZE_FACTOR * avg_body_size:
-                    break_idx = i
-                    break
+    def _detect_standard(
+        self, 
+        df: pd.DataFrame,
+        min_strength: float = 0.7
+    ) -> List[Dict[str, Any]]:
+        """
+        Standard (non-optimized) algorithm for breaker block detection.
+        """
+        # First detect order blocks with lower strength threshold
+        order_blocks = self.ob_detector.detect(
+            df,
+            min_body_size_factor=0.5,
+            min_move_after_factor=1.2,
+            confirmation_candles=2,
+            strength_threshold=0.6,
+            max_results=100  # Get more OBs to find potential breaker blocks
+        )
         
-        if break_idx is None:
-            continue
+        # Filter for breaker blocks (order blocks that have been broken and retested)
+        breaker_blocks = []
         
-        # Look for a retest of this level as support
-        retest_idx = None
-        for i in range(break_idx + 1, min(break_idx + MAX_LOOKBACK, len(df))):
-            if abs(df['low'].iloc[i] - resistance_level) <= RETEST_THRESHOLD * avg_body_size:
-                retest_idx = i
-                break
+        for ob in order_blocks:
+            # Skip low strength order blocks
+            if ob["strength"] < 0.6:
+                continue
+                
+            # Find the index of this order block in the dataframe
+            ob_time = ob["time"]
+            if isinstance(ob_time, str):
+                try:
+                    ob_time = datetime.fromisoformat(ob_time)
+                except ValueError:
+                    continue
+                    
+            # Find the row index for this time
+            ob_index = df[df['time'] == ob_time].index
+            if len(ob_index) == 0:
+                continue
+                
+            ob_index = ob_index[0]
+            
+            # Check if there's enough data after this order block
+            if ob_index >= len(df) - 5:
+                continue
+                
+            # Check if price has broken through the order block
+            if ob["type"] == "bullish":
+                # For bullish OB, check if price went below the low
+                future_data = df.iloc[ob_index+1:]
+                broken_indices = future_data[future_data['low'] < ob["entry_price"]].index
+                
+                if len(broken_indices) == 0:
+                    continue
+                    
+                # Get the first break
+                break_index = broken_indices[0]
+                
+                # Check if price returned to the level (retest)
+                if break_index >= len(df) - 3:
+                    continue
+                    
+                retest_data = df.iloc[break_index+1:]
+                retest_indices = retest_data[retest_data['high'] > ob["entry_price"]].index
+                
+                if len(retest_indices) == 0:
+                    continue
+                    
+                # Get the first retest
+                retest_index = retest_indices[0]
+                
+                # Calculate strength factors
+                break_strength = min(1.0, (ob["entry_price"] - df.iloc[break_index]['low']) / ob["entry_price"] * 20)
+                retest_quality = min(1.0, 1 - abs(df.iloc[retest_index]['high'] - ob["entry_price"]) / ob["entry_price"] * 100)
+                
+                # Calculate overall strength
+                strength = (
+                    ob["strength"] * 0.4 +
+                    break_strength * 0.3 +
+                    retest_quality * 0.3
+                )
+                
+                if strength >= min_strength:
+                    # Calculate ATR for stop loss
+                    atr = df.iloc[retest_index].get('atr', None)
+                    if atr is None or pd.isna(atr):
+                        # Calculate ATR if not available
+                        recent_data = df.iloc[max(0, retest_index-14):retest_index+1]
+                        tr = np.maximum(
+                            recent_data['high'] - recent_data['low'],
+                            np.maximum(
+                                abs(recent_data['high'] - recent_data['close'].shift(1)),
+                                abs(recent_data['low'] - recent_data['close'].shift(1))
+                            )
+                        )
+                        atr = tr.mean()
+                    
+                    # Create breaker block signal
+                    breaker_block = {
+                        "id": str(uuid.uuid4()),
+                        "type": "bearish",  # Bullish OB becomes bearish breaker
+                        "entry_price": ob["entry_price"],
+                        "stop_loss": df.iloc[retest_index]['high'] * 1.005 if pd.isna(atr) else df.iloc[retest_index]['high'] + atr * 0.5,
+                        "take_profit": ob["entry_price"] - (ob.get("move_after", atr * 2) * 0.8),
+                        "risk_reward_ratio": (ob.get("move_after", atr * 2) * 0.8) / (atr * 0.5) if not pd.isna(atr) else 3.0,
+                        "strength": strength,
+                        "time": df.iloc[retest_index]['time'],
+                        "original_ob_time": ob["time"],
+                        "symbol": df.iloc[0].get('symbol', 'UNKNOWN'),
+                        "timeframe": df.iloc[0].get('timeframe', 'UNKNOWN'),
+                        "confluence_factors": {
+                            "original_strength": float(ob["strength"]),
+                            "break_strength": float(break_strength),
+                            "retest_quality": float(retest_quality),
+                            "trend_strength": ob["confluence_factors"].get("trend_strength", 0.5),
+                            "structure_quality": ob["confluence_factors"].get("structure_quality", 0.7),
+                        }
+                    }
+                    
+                    breaker_blocks.append(breaker_block)
+                    
+            else:  # bearish order block
+                # For bearish OB, check if price went above the high
+                future_data = df.iloc[ob_index+1:]
+                broken_indices = future_data[future_data['high'] > ob["entry_price"]].index
+                
+                if len(broken_indices) == 0:
+                    continue
+                    
+                # Get the first break
+                break_index = broken_indices[0]
+                
+                # Check if price returned to the level (retest)
+                if break_index >= len(df) - 3:
+                    continue
+                    
+                retest_data = df.iloc[break_index+1:]
+                retest_indices = retest_data[retest_data['low'] < ob["entry_price"]].index
+                
+                if len(retest_indices) == 0:
+                    continue
+                    
+                # Get the first retest
+                retest_index = retest_indices[0]
+                
+                # Calculate strength factors
+                break_strength = min(1.0, (df.iloc[break_index]['high'] - ob["entry_price"]) / ob["entry_price"] * 20)
+                retest_quality = min(1.0, 1 - abs(df.iloc[retest_index]['low'] - ob["entry_price"]) / ob["entry_price"] * 100)
+                
+                # Calculate overall strength
+                strength = (
+                    ob["strength"] * 0.4 +
+                    break_strength * 0.3 +
+                    retest_quality * 0.3
+                )
+                
+                if strength >= min_strength:
+                    # Calculate ATR for stop loss
+                    atr = df.iloc[retest_index].get('atr', None)
+                    if atr is None or pd.isna(atr):
+                        # Calculate ATR if not available
+                        recent_data = df.iloc[max(0, retest_index-14):retest_index+1]
+                        tr = np.maximum(
+                            recent_data['high'] - recent_data['low'],
+                            np.maximum(
+                                abs(recent_data['high'] - recent_data['close'].shift(1)),
+                                abs(recent_data['low'] - recent_data['close'].shift(1))
+                            )
+                        )
+                        atr = tr.mean()
+                    
+                    # Create breaker block signal
+                    breaker_block = {
+                        "id": str(uuid.uuid4()),
+                        "type": "bullish",  # Bearish OB becomes bullish breaker
+                        "entry_price": ob["entry_price"],
+                        "stop_loss": df.iloc[retest_index]['low'] * 0.995 if pd.isna(atr) else df.iloc[retest_index]['low'] - atr * 0.5,
+                        "take_profit": ob["entry_price"] + (ob.get("move_after", atr * 2) * 0.8),
+                        "risk_reward_ratio": (ob.get("move_after", atr * 2) * 0.8) / (atr * 0.5) if not pd.isna(atr) else 3.0,
+                        "strength": strength,
+                        "time": df.iloc[retest_index]['time'],
+                        "original_ob_time": ob["time"],
+                        "symbol": df.iloc[0].get('symbol', 'UNKNOWN'),
+                        "timeframe": df.iloc[0].get('timeframe', 'UNKNOWN'),
+                        "confluence_factors": {
+                            "original_strength": float(ob["strength"]),
+                            "break_strength": float(break_strength),
+                            "retest_quality": float(retest_quality),
+                            "trend_strength": ob["confluence_factors"].get("trend_strength", 0.5),
+                            "structure_quality": ob["confluence_factors"].get("structure_quality", 0.7),
+                        }
+                    }
+                    
+                    breaker_blocks.append(breaker_block)
         
-        if retest_idx is None:
-            continue
+        return breaker_blocks
         
-        # Calculate strength based on the break candle and subsequent price action
-        break_strength = min(1.0, df['body_size'].iloc[break_idx] / (avg_body_size * 2))
-        retest_strength = min(1.0, 1 - abs(df['low'].iloc[retest_idx] - resistance_level) / (avg_body_size * RETEST_THRESHOLD))
-        strength = (break_strength + retest_strength) / 2
+    def _generate_analysis(self, bb: Dict[str, Any]) -> Dict[str, str]:
+        """Generate analysis text for the breaker block."""
+        bb_type = bb['type']
+        strength = bb['strength']
+        risk_level = bb['risk_level']
         
-        if strength < strength_threshold:
-            continue
-        
-        # This is a valid bullish breaker block
-        bullish_bbs.append({
-            'type': 'bullish',
-            'time': df['time'].iloc[retest_idx],
-            'price_level': resistance_level,
-            'resistance_time': df['time'].iloc[high_idx],
-            'break_time': df['time'].iloc[break_idx],
-            'retest_time': df['time'].iloc[retest_idx],
-            'strength': strength,
-            'timeframe': df.iloc[high_idx].name,
-            'symbol': df.iloc[high_idx].get('symbol', None)
-        })
-    
-    return bullish_bbs
-
-
-def _find_bearish_breaker_blocks(
-    df: pd.DataFrame,
-    swings: Dict[str, List[int]],
-    avg_body_size: float,
-    lookback_period: int,
-    strength_threshold: float
-) -> List[Dict[str, Any]]:
-    """
-    Find bearish breaker blocks.
-    
-    A bearish breaker block is a former support level that has been broken
-    and is now being retested as resistance.
-    
-    Args:
-        df: DataFrame with price data
-        swings: Dictionary with swing high and low indices
-        avg_body_size: Average candle body size
-        lookback_period: How far back to look for breaker blocks
-        strength_threshold: Threshold for breaker block strength
-        
-    Returns:
-        List of dictionaries containing bearish breaker block information
-    """
-    bearish_bbs = []
-    
-    # We need at least a few candles
-    if len(df) < 10:
-        return bearish_bbs
-    
-    # Use swing lows as potential support levels
-    for low_idx in swings["lows"]:
-        # Check if we've gone beyond the lookback period
-        if low_idx >= lookback_period:
-            continue
-        
-        # This is the support level
-        support_level = df['low'].iloc[low_idx]
-        
-        # Look for a break of this support
-        break_idx = None
-        for i in range(low_idx + 1, min(low_idx + MAX_LOOKBACK, len(df))):
-            if df['close'].iloc[i] < support_level and df['is_bearish'].iloc[i]:
-                if df['body_size'].iloc[i] >= MIN_BODY_SIZE_FACTOR * avg_body_size:
-                    break_idx = i
-                    break
-        
-        if break_idx is None:
-            continue
-        
-        # Look for a retest of this level as resistance
-        retest_idx = None
-        for i in range(break_idx + 1, min(break_idx + MAX_LOOKBACK, len(df))):
-            if abs(df['high'].iloc[i] - support_level) <= RETEST_THRESHOLD * avg_body_size:
-                retest_idx = i
-                break
-        
-        if retest_idx is None:
-            continue
-        
-        # Calculate strength based on the break candle and subsequent price action
-        break_strength = min(1.0, df['body_size'].iloc[break_idx] / (avg_body_size * 2))
-        retest_strength = min(1.0, 1 - abs(df['high'].iloc[retest_idx] - support_level) / (avg_body_size * RETEST_THRESHOLD))
-        strength = (break_strength + retest_strength) / 2
-        
-        if strength < strength_threshold:
-            continue
-        
-        # This is a valid bearish breaker block
-        bearish_bbs.append({
-            'type': 'bearish',
-            'time': df['time'].iloc[retest_idx],
-            'price_level': support_level,
-            'support_time': df['time'].iloc[low_idx],
-            'break_time': df['time'].iloc[break_idx],
-            'retest_time': df['time'].iloc[retest_idx],
-            'strength': strength,
-            'timeframe': df.iloc[low_idx].name,
-            'symbol': df.iloc[low_idx].get('symbol', None)
-        })
-    
-    return bearish_bbs
-
-
-def is_breaker_block_valid(
-    breaker_block: Dict[str, Any], 
-    current_price: float
-) -> bool:
-    """
-    Check if a breaker block is still valid based on the current price.
-    
-    Args:
-        breaker_block: Breaker block information
-        current_price: Current price to check against
-        
-    Returns:
-        True if the breaker block is still valid, False otherwise
-    """
-    if breaker_block['type'] == 'bullish':
-        # For bullish BB, price should be above the level
-        return current_price > breaker_block['price_level']
-    else:  # bearish
-        # For bearish BB, price should be below the level
-        return current_price < breaker_block['price_level'] 
+        # Generate break analysis
+        break_strength = bb['confluence_factors'].get('break_strength', 0.5)
+        if break_strength > 0.8:
+            break_analysis = f"Strong break of original order block with decisive price action"
+        elif break_strength > 0.6:
+            break_analysis = f"Clear break of original order block"
+        else:
+            break_analysis = f"Moderate break of original order block"
+            
+        # Generate retest analysis
+        retest_quality = bb['confluence_factors'].get('retest_quality', 0.5)
+        if retest_quality > 0.8:
+            retest_analysis = f"High-quality retest with precise price reaction"
+        elif retest_quality > 0.6:
+            retest_analysis = f"Good retest with clear price reaction"
+        else:
+            retest_analysis = f"Acceptable retest with some price reaction"
+            
+        # Generate trend analysis
+        trend_strength = bb['confluence_factors'].get('trend_strength', 0.5)
+        if trend_strength > 0.8:
+            trend_analysis = f"Strong {'bullish' if bb_type == 'bullish' else 'bearish'} trend alignment"
+        elif trend_strength > 0.6:
+            trend_analysis = f"Moderate {'bullish' if bb_type == 'bullish' else 'bearish'} trend alignment"
+        elif trend_strength > 0.4:
+            trend_analysis = "Neutral trend conditions"
+        else:
+            trend_analysis = f"Counter-trend setup (against {'bullish' if bb_type == 'bearish' else 'bearish'} trend)"
+            
+        # Generate entry reasoning
+        if strength > 0.9:
+            entry_reasoning = f"High-probability {bb_type} breaker block with excellent confluence factors"
+        elif strength > 0.8:
+            entry_reasoning = f"Strong {bb_type} breaker block with good confluence"
+        elif strength > 0.7:
+            entry_reasoning = f"Moderate {bb_type} breaker block, exercise caution"
+        else:
+            entry_reasoning = f"Lower probability {bb_type} breaker block, high risk"
+            
+        return {
+            "break_analysis": break_analysis,
+            "retest_analysis": retest_analysis,
+            "trend_analysis": trend_analysis,
+            "entry_reasoning": entry_reasoning
+        } 
