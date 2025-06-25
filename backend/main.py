@@ -1,202 +1,129 @@
 """
-ICT Ultra v2: Algo Forge Edition - Backend Main Module
------------------------------------------------------
-This is the main entry point for the ICT Ultra v2 backend.
-It initializes the FastAPI application, sets up middleware,
-and connects to the MetaTrader 5 platform.
+ICT Ultra v2: Algo Forge Edition - Main FastAPI Application
 """
 
-import os
-import sys
-import time
-from typing import Dict, Any, Optional
-import logging
-
-from fastapi import FastAPI, HTTPException, Depends, Request, status
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from contextlib import asynccontextmanager
+import uvicorn
 
-# Try to import MetaTrader5 package
-try:
-    import MetaTrader5 as mt5
-except ImportError:
-    print("ERROR: MetaTrader5 package not found. Please install it with:")
-    print("pip install MetaTrader5")
-    sys.exit(1)
+from backend.core.config.settings import settings
+from backend.core.logger import logger
+from backend.core.database import init_db
+from backend.modules.mt5_integration import MT5Service, MT5Config
+from backend.api.v1 import api_router
 
-# Initialize logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler("logs/backend.log"),
-        logging.StreamHandler()
-    ]
-)
-logger = logging.getLogger("ict_ultra_v2")
+# Global MT5 service instance
+mt5_service = None
 
-# Create logs directory if it doesn't exist
-os.makedirs("logs", exist_ok=True)
+async def get_mt5_service() -> MT5Service:
+    """Get the global MT5 service instance."""
+    return mt5_service
 
-# Initialize FastAPI app
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """
+    Application lifespan manager.
+    Handles startup and shutdown events.
+    """
+    # Startup
+    logger.info("Starting ICT Ultra v2: Algo Forge Edition...")
+    
+    # Initialize database
+    await init_db()
+    logger.info("Database initialized")
+    
+    # Initialize MT5 service
+    global mt5_service
+    mt5_config = MT5Config(
+        login=settings.MT5_LOGIN,
+        password=settings.MT5_PASSWORD,
+        server=settings.MT5_SERVER
+    )
+    mt5_service = MT5Service(mt5_config)
+    
+    # Connect to MT5
+    connected = await mt5_service.connect()
+    if connected:
+        logger.info("MT5 connection established")
+    else:
+        logger.error("Failed to connect to MT5")
+    
+    yield
+    
+    # Shutdown
+    logger.info("Shutting down ICT Ultra v2...")
+    
+    # Disconnect from MT5
+    if mt5_service:
+        await mt5_service.disconnect()
+    
+    logger.info("Shutdown complete")
+
+
+# Create FastAPI application
 app = FastAPI(
-    title="ICT Ultra v2 API",
-    description="Next-generation trading platform with MQL5 Algo Forge integration",
-    version="1.0.0"
+    title="ICT Ultra v2: Algo Forge Edition",
+    description="Advanced algorithmic trading platform with MT5 integration and ICT concepts",
+    version="2.0.0",
+    lifespan=lifespan
 )
 
-# CORS middleware setup
+# Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # Frontend URL
+    allow_origins=settings.CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# --- MT5 Connection Management ---
+# Include API routers
+app.include_router(api_router)
 
-def connect_to_mt5() -> bool:
-    """
-    Connect to the MetaTrader 5 terminal.
+# Health check endpoint
+@app.get("/health")
+async def health_check():
+    """Health check endpoint."""
+    mt5_connected = mt5_service.is_connected if mt5_service else False
     
-    Returns:
-        bool: True if connection was successful, False otherwise
-    """
-    # Initialize MT5 connection
-    if not mt5.initialize():
-        logger.error(f"MT5 initialize() failed, error code = {mt5.last_error()}")
-        return False
-    
-    # Demo account credentials
-    login = 25201110
-    server = "Tickmill-Demo"
-    # For security, password should be stored in environment variables
-    # password = os.getenv("MT5_PASSWORD")
-    
-    # Try to login (if terminal is already logged in, this will succeed without password)
-    authorized = mt5.login(login, server=server)
-    
-    if authorized:
-        logger.info(f"Connected to MT5 account #{login}")
-        return True
-    else:
-        logger.error(f"Failed to connect to account #{login}, error code: {mt5.last_error()}")
-        return False
-
-# --- Startup and Shutdown Events ---
-
-@app.on_event("startup")
-async def startup_event():
-    """Execute when the application starts up."""
-    logger.info("Starting ICT Ultra v2 backend...")
-    
-    # Connect to MT5
-    if not connect_to_mt5():
-        logger.warning("Could not connect to MT5 on startup. Some features may be limited.")
-    
-    logger.info("Backend startup complete")
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    """Execute when the application shuts down."""
-    logger.info("Shutting down ICT Ultra v2 backend...")
-    
-    # Shutdown MT5 connection
-    mt5.shutdown()
-    
-    logger.info("Backend shutdown complete")
-
-# --- API Endpoints ---
-
-@app.get("/")
-async def read_root():
-    """Root endpoint."""
-    return {"message": "Welcome to ICT Ultra v2 API"}
-
-@app.get("/api/status")
-async def get_status():
-    """
-    Check the status of the API and MT5 connection.
-    
-    Returns:
-        dict: Status information
-    """
-    terminal_info = mt5.terminal_info()
-    if not terminal_info:
-        return {
-            "api_status": "online",
-            "mt5_status": "disconnected",
-            "error": mt5.last_error()
-        }
-        
     return {
-        "api_status": "online",
-        "mt5_status": "connected",
-        "terminal": {
-            "name": terminal_info.name,
-            "company": terminal_info.company,
-            "version": terminal_info.version,
-            "build": terminal_info.build,
-            "path": terminal_info.path,
-        }
+        "status": "healthy",
+        "version": "2.0.0",
+        "mt5_connected": mt5_connected,
+        "environment": settings.ENVIRONMENT
     }
 
-@app.get("/api/account_info")
-async def get_account_info():
-    """
-    Get information about the connected MT5 account.
+# Root endpoint
+@app.get("/")
+async def root():
+    """Root endpoint with system information."""
+    mt5_connected = mt5_service.is_connected if mt5_service else False
+    account_info = None
     
-    Returns:
-        dict: Account information
-    """
-    account_info = mt5.account_info()
-    if account_info:
-        return account_info._asdict()
+    if mt5_connected and mt5_service._account_info:
+        account_info = {
+            "login": mt5_service._account_info.login,
+            "balance": mt5_service._account_info.balance,
+            "server": mt5_service._account_info.server
+        }
     
-    raise HTTPException(
-        status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-        detail=f"Could not retrieve account info. MT5 error: {mt5.last_error()}"
-    )
+    return {
+        "name": "ICT Ultra v2: Algo Forge Edition",
+        "version": "2.0.0",
+        "status": "operational",
+        "mt5_connected": mt5_connected,
+        "account": account_info,
+        "api_docs": "/docs",
+        "health_check": "/health"
+    }
 
-@app.get("/api/symbols")
-async def get_symbols():
-    """
-    Get list of available symbols.
-    
-    Returns:
-        list: Available symbols
-    """
-    symbols = mt5.symbols_get()
-    if symbols:
-        return [symbol.name for symbol in symbols]
-    
-    raise HTTPException(
-        status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-        detail=f"Could not retrieve symbols. MT5 error: {mt5.last_error()}"
-    )
-
-# --- Error Handling ---
-
-@app.exception_handler(Exception)
-async def global_exception_handler(request: Request, exc: Exception):
-    """Global exception handler for unhandled exceptions."""
-    logger.error(f"Unhandled exception: {exc}", exc_info=True)
-    return JSONResponse(
-        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        content={"detail": "An internal server error occurred."}
-    )
-
-# --- Main Entry Point ---
 
 if __name__ == "__main__":
-    import uvicorn
-    
-    # Run the FastAPI application with uvicorn
     uvicorn.run(
         "main:app",
-        host="0.0.0.0",
-        port=8001,
-        reload=True,
-        log_level="info"
+        host=settings.HOST,
+        port=settings.PORT,
+        reload=settings.DEBUG
     ) 
