@@ -1,27 +1,33 @@
-import './globals.css';
-import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
+import type { Metadata } from "next";
+import localFont from "next/font/local";
+import "./globals.css";
 
-// Initialize the Inter font
-const inter = Inter({ 
-  subsets: ['latin'],
-  variable: '--font-inter',
+const geistSans = localFont({
+  src: "./fonts/GeistVF.woff",
+  variable: "--font-geist-sans",
+  weight: "100 900",
+});
+const geistMono = localFont({
+  src: "./fonts/GeistMonoVF.woff",
+  variable: "--font-geist-mono",
+  weight: "100 900",
 });
 
-// Metadata for the application
 export const metadata: Metadata = {
-  title: 'ICT Ultra v2: Algo Forge Edition',
-  description: 'Next-generation algorithmic trading platform with MQL5 Algo Forge integration',
+  title: "ICT Ultra v2: Algo Forge Edition",
+  description: "Advanced algorithmic trading platform with MT5 integration and ICT concepts",
 };
 
 export default function RootLayout({
   children,
-}: {
+}: Readonly<{
   children: React.ReactNode;
-}) {
+}>) {
   return (
-    <html lang="en" className={`${inter.variable}`}>
-      <body className="bg-background min-h-screen">
+    <html lang="en" className="dark">
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gray-950 text-white`}
+      >
         {children}
       </body>
     </html>
