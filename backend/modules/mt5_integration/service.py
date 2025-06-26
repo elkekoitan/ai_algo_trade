@@ -5,7 +5,7 @@ MT5 service for connection management and trading operations.
 import MetaTrader5 as mt5
 from typing import Optional, List, Dict, Any
 import asyncio
-from datetime import datetime
+from datetime import datetime, timedelta
 import pandas as pd
 
 from backend.core.logger import setup_logger
@@ -151,14 +151,6 @@ class MT5Service:
     ) -> Optional[pd.DataFrame]:
         """
         Get historical rates for a symbol.
-        
-        Args:
-            symbol: Symbol name
-            timeframe: MT5 timeframe constant
-            count: Number of bars to retrieve
-            
-        Returns:
-            DataFrame with OHLCV data
         """
         if not self.is_connected:
             return None
@@ -313,4 +305,38 @@ class MT5Service:
             return True
         else:
             logger.error(f"Failed to close position {ticket}")
-            return False 
+            return False
+
+    async def get_history(self, days: int = 30) -> List[Dict[str, Any]]:
+        """
+        Get trade history for the last N days.
+        """
+        if not self.is_connected:
+            return []
+            
+        from_date = datetime.now() - timedelta(days=days)
+        deals = mt5.history_deals_get(from_date, datetime.now())
+        
+        if deals is None:
+            return []
+            
+        return [
+            {
+                "ticket": deal.ticket,
+                "order": deal.order,
+                "time": datetime.fromtimestamp(deal.time),
+                "type": deal.type,
+                "entry": deal.entry,
+                "magic": deal.magic,
+                "reason": deal.reason,
+                "position_id": deal.position_id,
+                "volume": deal.volume,
+                "price": deal.price,
+                "commission": deal.commission,
+                "swap": deal.swap,
+                "profit": deal.profit,
+                "symbol": deal.symbol,
+                "comment": deal.comment,
+            }
+            for deal in deals
+        ]

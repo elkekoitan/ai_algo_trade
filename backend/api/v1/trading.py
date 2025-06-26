@@ -2,7 +2,7 @@
 Trading API endpoints.
 """
 
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Query
 from typing import List, Dict, Any
 from pydantic import BaseModel, Field
 
@@ -221,4 +221,26 @@ async def place_trade(request: PlaceOrderRequest) -> OrderResponse:
             
     except Exception as e:
         logger.error(f"Error placing trade: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/history", response_model=List[Dict[str, Any]])
+async def get_trade_history(
+    days: int = Query(30, description="Number of days to retrieve history for")
+) -> List[Dict[str, Any]]:
+    """
+    Get trade history from MT5.
+    """
+    try:
+        from backend.main import get_mt5_service
+        mt5_service = await get_mt5_service()
+        
+        if not mt5_service.is_connected:
+            raise HTTPException(status_code=503, detail="MT5 not connected")
+        
+        history = await mt5_service.get_history(days=days)
+        return history
+        
+    except Exception as e:
+        logger.error(f"Error getting trade history: {e}")
         raise HTTPException(status_code=500, detail=str(e)) 

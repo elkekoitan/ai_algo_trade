@@ -1,25 +1,16 @@
 #!/bin/bash
 
-# Platform Başlatma Betiği - ICT Ultra v2
+# Platform Başlatma Betiği - ICT Ultra v2 (Simple Mode)
 
-echo "🚀 ICT Ultra v2 Platformu Başlatılıyor..."
+echo "🚀 ICT Ultra v2 Platformu Başlatılıyor (Basit Mod)..."
 
 # --- Backend Başlatma ---
 echo "▶️ Backend sunucusu başlatılıyor..."
 cd backend || { echo "HATA: backend dizini bulunamadı."; exit 1; }
 
-# Sanal ortamı kontrol et ve oluştur
-if [ ! -d "venv" ]; then
-    echo "🐍 Sanal ortam oluşturuluyor..."
-    python -m venv venv
-fi
-
-# Sanal ortamı aktive et
-source venv/Scripts/activate
-
-# Bağımlılıkları yükle
+# Gerekli basit paketleri yükle
 echo "📦 Backend bağımlılıkları yükleniyor..."
-pip install -r requirements.txt
+pip install fastapi uvicorn
 
 # Basit sunucuyu başlat (arka planda)
 echo "🔥 Backend (simple_main.py) 8001 portunda başlatılıyor..."
@@ -51,7 +42,4 @@ echo "🌐 Frontend Dashboard: http://localhost:3000"
 echo "📖 API Dokümanları: http://localhost:8001/docs"
 echo "-------------------------------------------------"
 echo "PID'ler: Backend ($BACKEND_PID), Frontend ($FRONTEND_PID)"
-echo "Durdurmak için 'stop.sh' betiğini çalıştırın veya manuel olarak durdurun."
-
-# Keep script running
-wait 
+echo "Durdurmak için manuel olarak terminalleri kapatın." 
