@@ -1,4 +1,4 @@
-# 🧠 THE STRATEGY WHISPERER - Detaylı Yol Haritası
+ 🧠 THE STRATEGY WHISPERER - Detaylı Yol Haritası
 
 ## Vizyon
 "Strateji geliştirmek, artık bir arkadaşınıza fikrinizi anlatmak kadar kolay."

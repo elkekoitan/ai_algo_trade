@@ -34,16 +34,11 @@ const navigationItems = [
   { id: "trading", icon: TrendingUp, label: "Trading", path: "/trading" },
   { id: "signals", icon: Target, label: "Signals", path: "/signals" },
   { id: "performance", icon: Activity, label: "Performance", path: "/performance" },
-  { id: "quantum", icon: Brain, label: "Quantum", path: "/quantum" },
-  { id: "contact", icon: Mail, label: "Contact", path: "/contact" },
-  { id: "ai_patterns", icon: Brain, label: "AI Patterns", path: "/quantum" },
-  { id: "edge_computing", icon: Zap, label: "Edge", path: "/edge" },
-  { id: "social_trading", icon: User, label: "Social", path: "/social" },
-  { id: "institutional", icon: Shield, label: "Institutional", path: "/institutional" },
-  { id: "quantum_tech", icon: Brain, label: "Quantum Tech", path: "/quantum-tech" },
+  { id: "whisperer", icon: MessageSquare, label: "Whisperer", path: "/strategy-whisperer" },
+  { id: "adaptive_manager", icon: Shield, label: "Adaptive Manager", path: "/adaptive-trade-manager" },
   { id: "god_mode", icon: Brain, label: "God Mode", path: "/god-mode" },
   { id: "shadow_mode", icon: Shield, label: "Shadow Mode", path: "/shadow" },
-  { id: "strategy_whisperer", icon: MessageSquare, label: "Whisperer", path: "/strategy-whisperer" },
+  { id: "contact", icon: Mail, label: "Contact", path: "/contact" },
 ];
 
 interface ConnectionStatus {
