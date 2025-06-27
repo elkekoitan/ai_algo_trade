@@ -6,71 +6,73 @@ Shadow Mode sistem mimarisi ve veri akış diyagramı.
 
 ```mermaid
 graph TB
-    subgraph "Frontend Layer"
-        UI[Shadow Mode UI]
-        CP[Control Panel]
-        IR[Institutional Radar]
-        WT[Whale Tracker] 
-        DPM[Dark Pool Monitor]
+    subgraph "🥷 SHADOW MODE SYSTEM ARCHITECTURE"
+        
+        subgraph "Frontend Layer"
+            UI[Shadow Mode UI]
+            CP[Control Panel]
+            IR[Institutional Radar]
+            WT[Whale Tracker] 
+            DPM[Dark Pool Monitor]
+        end
+        
+        subgraph "API Layer"
+            API[Shadow Mode API]
+            AUTH[Authentication]
+            RATE[Rate Limiting]
+        end
+        
+        subgraph "Core Services"
+            SS[Shadow Service]
+            IT[Institutional Tracker]
+            WD[Whale Detector]
+            DPM_S[Dark Pool Monitor]
+            SE[Stealth Executor]
+            PA[Pattern Analyzer]
+        end
+        
+        subgraph "Data Sources"
+            MT5[MetaTrader 5]
+            L2[Level 2 Data]
+            DP[Dark Pools]
+            NEWS[News Feeds]
+        end
+        
+        subgraph "Intelligence Layer"
+            ML[Machine Learning]
+            AI[AI Analysis]
+            PRED[Prediction Engine]
+        end
+        
+        UI --> API
+        CP --> API
+        IR --> API
+        WT --> API
+        DPM --> API
+        
+        API --> AUTH
+        API --> RATE
+        API --> SS
+        
+        SS --> IT
+        SS --> WD
+        SS --> DPM_S
+        SS --> SE
+        SS --> PA
+        
+        IT --> MT5
+        WD --> L2
+        DPM_S --> DP
+        PA --> NEWS
+        
+        IT --> ML
+        WD --> AI
+        PA --> PRED
+        
+        style UI fill:#2C2C2C,stroke:#FF6B35,stroke-width:2px,color:#fff
+        style SS fill:#2C2C2C,stroke:#FF6B35,stroke-width:2px,color:#fff
+        style ML fill:#50C878,stroke:#fff,stroke-width:2px
     end
-    
-    subgraph "API Layer"
-        API[Shadow Mode API]
-        AUTH[Authentication]
-        RATE[Rate Limiting]
-    end
-    
-    subgraph "Core Services"
-        SS[Shadow Service]
-        IT[Institutional Tracker]
-        WD[Whale Detector]
-        DPM_S[Dark Pool Monitor]
-        SE[Stealth Executor]
-        PA[Pattern Analyzer]
-    end
-    
-    subgraph "Data Sources"
-        MT5[MetaTrader 5]
-        L2[Level 2 Data]
-        DP[Dark Pools]
-        NEWS[News Feeds]
-    end
-    
-    subgraph "Intelligence Layer"
-        ML[Machine Learning]
-        AI[AI Analysis]
-        PRED[Prediction Engine]
-    end
-    
-    UI --> API
-    CP --> API
-    IR --> API
-    WT --> API
-    DPM --> API
-    
-    API --> AUTH
-    API --> RATE
-    API --> SS
-    
-    SS --> IT
-    SS --> WD
-    SS --> DPM_S
-    SS --> SE
-    SS --> PA
-    
-    IT --> MT5
-    WD --> L2
-    DPM_S --> DP
-    PA --> NEWS
-    
-    IT --> ML
-    WD --> AI
-    PA --> PRED
-end
-
-style UI fill:#2C2C2C,stroke:#FF6B35,stroke-width:2px,color:#fff
-style SS fill:#2C2C2C,stroke:#FF6B35,stroke-width:2px,color:#fff
-style ML fill:#50C878,stroke:#fff,stroke-width:2px
 ```
 
 ## Katman Açıklamaları

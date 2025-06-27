@@ -1,6 +1,45 @@
 # 📊 AI Algo Trade - Diagrams & Visuals
 
-Bu klasör, AI Algo Trade platformunun tüm görsel diyagramlarını ve şemalarını içerir.
+Bu klasör, AI Algo Trade platformunun tüm görsel diyagramlarını ve şemalarını içerir. Tüm diyagramlar yüksek çözünürlüklü SVG formatında render edilecek şekilde Mermaid kodu ile saklanmaktadır.
+
+## 📁 Ana Diyagramlar
+
+### 🏗️ Architecture Diagrams
+- [Genel Sistem Mimarisi](./system-architecture.md)
+- [God Mode Mimarisi](./god-mode-architecture.md)
+- [Shadow Mode Mimarisi](./shadow-mode-architecture.md)
+- [Veri Akış Diyagramı](./data-flow-diagram.md)
+
+### 🔄 Process Flows
+- [Whale Tespit Süreci](./whale-detection-process.md)
+
+### ⚛️ UI/UX & Frontend Diagrams
+- [Frontend Bileşen Mimarisi](./frontend-component-diagram.md)
+
+### 🔧 Technical & Data Diagrams
+- [Veritabanı Şeması](./database-schema.md)
+
+---
+
+Aşağıda her bir diyagramın kısa bir açıklaması ve linki bulunmaktadır.
+
+### [Genel Sistem Mimarisi](./system-architecture.md)
+Platformun Frontend, Backend, Veritabanı, MT5 Entegrasyonu ve ana modülleri (God Mode, Shadow Mode) arasındaki temel ilişkiyi gösterir.
+
+### [God Mode Mimarisi](./god-mode-architecture.md)
+God Mode'un kuantum motoru, tahmin modelleri, risk kalkanı ve harici veri kaynakları ile olan karmaşık yapısını detaylandırır.
+
+### [Shadow Mode Mimarisi](./shadow-mode-architecture.md)
+Shadow Mode'un kurumsal takip, whale tespiti, dark pool izleme ve gizli emir yürütme bileşenlerinin nasıl bir araya geldiğini gösterir.
+
+### [Veri Akış Diyagramı](./data-flow-diagram.md)
+Kullanıcı etkileşiminden başlayarak verinin sistem içindeki (emir gönderme, canlı veri alma, periyodik analiz) yolculuğunu görselleştirir.
+
+### [Whale Tespit Süreci](./whale-detection-process.md)
+Piyasa verisinin girişinden, çeşitli filtreleme ve analiz adımlarından geçerek bir "whale"in nasıl tespit edildiğini ve buna karşı nasıl bir strateji oluşturulduğunu adım adım gösterir.
+
+## 🎯 Kullanım
+Her bir `.md` dosyası, ilgili diyagramın hem görselini (Mermaid kodu) hem de detaylı açıklamasını içermektedir. Bu sayede projenin herhangi bir bölümünü anlamak çok daha kolay hale gelir.
 
 ## 📁 Klasör Yapısı
 
