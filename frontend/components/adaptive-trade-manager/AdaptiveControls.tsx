@@ -108,7 +108,7 @@ export default function AdaptiveControls({ alert, riskScore, ticket }: AdaptiveC
                         </>
                     ) : (
                         <>
-                            {actionIcons[alert.recommended_action.action_type] || actionIcons.default}
+                            {actionIcons[alert.recommended_action.action_type as keyof typeof actionIcons] || actionIcons.default}
                             Execute
                         </>
                     )}

@@ -42,7 +42,7 @@ export default function AlertCenter({ alerts, onDismiss }: AlertCenterProps) {
     <div className="fixed top-24 right-6 w-96 z-50">
       <AnimatePresence>
         {visibleAlerts.slice(0, 5).map((alert, index) => {
-          const style = alertStyles[alert.urgency] || alertStyles[3];
+          const style = alertStyles[alert.urgency as keyof typeof alertStyles] || alertStyles[3];
           const Icon = style.icon;
 
           return (

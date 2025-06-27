@@ -27,7 +27,8 @@ from api.v1 import (
     god_mode,           # Revolutionary: God Mode
     shadow_mode,        # Revolutionary: Shadow Mode
     strategy_whisperer, # Revolutionary: Strategy Whisperer
-    adaptive_trade_manager # Revolutionary: Adaptive Trade Manager
+    adaptive_trade_manager, # Revolutionary: Adaptive Trade Manager
+    market_narrator
 )
 
 from core.logger import setup_logger
@@ -80,6 +81,7 @@ app.include_router(god_mode.router, prefix="/api/v1")
 app.include_router(shadow_mode.router, prefix="/api/v1")
 app.include_router(strategy_whisperer.router, prefix="/api/v1")
 app.include_router(adaptive_trade_manager.router, prefix="/api/v1")
+app.include_router(market_narrator.router, prefix="/api/v1")
 
 @app.get("/")
 async def root():
