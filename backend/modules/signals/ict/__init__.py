@@ -1,24 +1,15 @@
 """
-ICT (Inner Circle Trader) signal detection module.
+ICT (Inner Circle Trader) REAL signal detection module.
 
-This module implements various ICT concepts for market analysis:
-- Order Blocks
-- Fair Value Gaps
-- Breaker Blocks
-- Liquidity Sweeps
-- Smart Money Concepts
+GERÇEK MT5 verilerine dayalı ICT analiz motoru:
+- Order Blocks (Gerçek fiyat verilerinden)
+- Fair Value Gaps (Canlı market data)
+- Breaker Blocks (Live trading data)
+- Real-time ICT analysis
 """
 
-from .order_blocks import OrderBlockDetector
-from .fair_value_gaps import FairValueGapDetector
-from .breaker_blocks import BreakerBlockDetector
-from .scoring import ICTSignalScorer
-from .openblas_engine import ICTOpenBLASEngine
+from .real_ict_engine import RealICTEngine
 
 __all__ = [
-    "OrderBlockDetector",
-    "FairValueGapDetector", 
-    "BreakerBlockDetector",
-    "ICTSignalScorer",
-    "ICTOpenBLASEngine"
+    "RealICTEngine"
 ] 

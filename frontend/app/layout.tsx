@@ -1,31 +1,37 @@
-import type { Metadata } from "next";
-import { Inter } from "next/font/google";
-import "./globals.css";
+import type { Metadata, Viewport } from 'next'
+import { Inter } from 'next/font/google'
+import './globals.css'
+import QuantumLayout from '@/components/layout/QuantumLayout'
+import { AppProvider } from '@/lib/context'
+import { TranslationsProvider } from '@/lib/translations/context'
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
+const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: {
-    default: "ICT Ultra v2: Algo Forge Edition",
-    template: `%s | ICT Ultra v2`,
-  },
-  description: "Advanced algorithmic trading platform with ICT concepts, real-time analytics, and MQL5 Algo Forge integration.",
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "white" },
-    { media: "(prefers-color-scheme: dark)", color: "black" },
-  ],
-};
+  title: 'AI Algo Trade - Quantum Edition',
+  description: 'Advanced AI-powered algorithmic trading platform with real-time MT5 integration and ICT analysis.',
+}
+
+export const viewport: Viewport = {
+  themeColor: '#0a0a0f',
+}
 
 export default function RootLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+}: {
+  children: React.ReactNode
+}) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={`font-sans ${inter.variable} antialiased`}>
-        {children}
+    <html lang="en" className="dark">
+      <body className={`${inter.className} bg-quantum-dark text-gray-300`}>
+        <TranslationsProvider>
+          <AppProvider>
+            <QuantumLayout>
+              {children}
+            </QuantumLayout>
+          </AppProvider>
+        </TranslationsProvider>
       </body>
     </html>
-  );
-} 
+  )
+}

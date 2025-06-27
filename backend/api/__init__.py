@@ -1,5 +1,5 @@
 """
-API module for ICT Ultra v2.
+API module for AI Algo Trade Platform.
 """
 
 from fastapi import APIRouter

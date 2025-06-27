@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import axios from 'axios';
-import { TrendingUp, TrendingDown, Send, Repeat } from 'lucide-react';
+import { TrendingUp, TrendingDown, Send, Repeat, AlertCircle } from 'lucide-react';
+import ApiService from '@/lib/api';
 
 interface TickData {
   time: string;
@@ -13,22 +13,49 @@ interface TickData {
 
 const QuickTrade = () => {
   const [symbols, setSymbols] = useState<string[]>([]);
-  const [selectedSymbol, setSelectedSymbol] = useState('BTCUSD');
+  const [selectedSymbol, setSelectedSymbol] = useState('EURUSD');
   const [tick, setTick] = useState<TickData | null>(null);
   const [volume, setVolume] = useState('0.01');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [lastOrder, setLastOrder] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // Fetch all available symbols on component mount
   useEffect(() => {
     const fetchSymbols = async () => {
       try {
-        const response = await axios.get('http://localhost:8001/api/v1/market/symbols');
-        setSymbols(response.data);
+        setLoading(true);
+        const response = await ApiService.getSymbols();
+        
+        if (!response.error && response.data) {
+          if (Array.isArray(response.data)) {
+            const symbolData = response.data;
+            // Gelen verinin bir nesne dizisi olup olmadığını kontrol et ve sadece 'name' alanını al
+            if (symbolData.length > 0 && typeof symbolData[0] === 'object' && symbolData[0] !== null && 'name' in symbolData[0]) {
+              setSymbols(symbolData.map((s: any) => s.name));
+            } else {
+              setSymbols(symbolData); // Zaten string dizisi ise olduğu gibi kullan
+            }
+            setError(null);
+          } else {
+            console.error("Symbols data is not an array:", response.data);
+            setSymbols([]);
+            setError("Invalid symbols data format");
+          }
+        } else {
+          setError(response.message || "Failed to fetch symbols");
+          setSymbols([]);
+        }
       } catch (error) {
         console.error("Error fetching symbols:", error);
+        setError("Connection error");
+        setSymbols([]);
+      } finally {
+        setLoading(false);
       }
     };
+    
     fetchSymbols();
   }, []);
 
@@ -38,8 +65,14 @@ const QuickTrade = () => {
 
     const fetchTick = async () => {
       try {
-        const response = await axios.get(`http://localhost:8001/api/v1/market/tick/${selectedSymbol}`);
-        setTick(response.data);
+        const response = await ApiService.getSymbolTick(selectedSymbol);
+        if (!response.error && response.data) {
+          setTick(response.data);
+          setError(null);
+        } else {
+          console.error(`Error fetching tick: ${response.message}`);
+          setTick(null);
+        }
       } catch (error) {
         console.error(`Error fetching tick for ${selectedSymbol}:`, error);
         setTick(null);
@@ -56,18 +89,27 @@ const QuickTrade = () => {
     setLastOrder(null);
 
     try {
-      const response = await axios.post('http://localhost:8001/api/v1/trading/trade', {
+      const response = await ApiService.placeOrder({
         symbol: selectedSymbol,
         order_type: orderType,
         volume: parseFloat(volume),
         comment: `QuickTrade via ICT Ultra v2`
       });
 
-      setLastOrder({ success: response.data.success, ...response.data });
+      if (!response.error && response.data) {
+        setLastOrder({ success: true, ...response.data });
+      } else {
+        setLastOrder({ 
+          success: false, 
+          message: response.message || 'Failed to place trade.' 
+        });
+      }
     } catch (error: any) {
       console.error("Error placing trade:", error);
-      const message = error.response?.data?.detail || 'Failed to place trade.';
-      setLastOrder({ success: false, message });
+      setLastOrder({ 
+        success: false, 
+        message: error.message || 'Failed to place trade.' 
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -75,6 +117,10 @@ const QuickTrade = () => {
 
   const currentPrice = tick?.ask ?? 0;
   const priceColor = tick && tick.last > 0 ? (tick.ask > tick.last ? 'text-green-400' : 'text-red-400') : 'text-white';
+
+  // Default symbols if API fails
+  const defaultSymbols = ['EURUSD', 'GBPUSD', 'USDJPY', 'XAUUSD', 'BTCUSD'];
+  const displaySymbols = symbols.length > 0 ? symbols : defaultSymbols;
 
   return (
     <div className="bg-gray-900/50 backdrop-blur-lg rounded-xl border border-gray-800 p-6">
@@ -88,8 +134,9 @@ const QuickTrade = () => {
           value={selectedSymbol}
           onChange={(e) => setSelectedSymbol(e.target.value)}
           className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:border-emerald-500 focus:outline-none"
+          disabled={loading || isSubmitting}
         >
-          {symbols.map((symbol) => (
+          {displaySymbols.map((symbol) => (
             <option key={symbol} value={symbol}>{symbol}</option>
           ))}
         </select>
@@ -98,7 +145,7 @@ const QuickTrade = () => {
       {/* Price Display */}
       <div className="text-center mb-4">
         <p className={`text-4xl font-bold transition-colors duration-300 ${priceColor}`}>
-          {currentPrice > 0 ? currentPrice.toFixed(4) : 'Loading...'}
+          {currentPrice > 0 ? currentPrice.toFixed(5) : 'Loading...'}
         </p>
         <p className="text-xs text-gray-500">{tick ? new Date(tick.time).toLocaleTimeString() : '...'}</p>
       </div>
@@ -144,6 +191,16 @@ const QuickTrade = () => {
         }`}>
           <p><strong>{lastOrder.success ? 'Success' : 'Failed'}:</strong> {lastOrder.message}</p>
           {lastOrder.order_id && <p>Order ID: {lastOrder.order_id}</p>}
+        </div>
+      )}
+      
+      {/* Error Message */}
+      {error && (
+        <div className="mt-4 p-3 bg-yellow-900/20 border border-yellow-800/50 rounded-lg">
+          <div className="flex items-start space-x-2">
+            <AlertCircle className="text-yellow-500 mt-0.5" size={16} />
+            <p className="text-xs text-yellow-400">{error}</p>
+          </div>
         </div>
       )}
     </div>

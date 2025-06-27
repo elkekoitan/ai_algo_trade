@@ -2,11 +2,9 @@
 module.exports = {
   darkMode: ["class"],
   content: [
-    './pages/**/*.{ts,tsx}',
-    './components/**/*.{ts,tsx}',
-    './app/**/*.{ts,tsx}',
-    './src/**/*.{ts,tsx}',
-	],
+    './app/**/*.{js,ts,jsx,tsx,mdx}',
+    './components/**/*.{js,ts,jsx,tsx,mdx}',
+  ],
   theme: {
     container: {
       center: true,
@@ -50,6 +48,11 @@ module.exports = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        'quantum-primary': '#00ff88',
+        'quantum-secondary': '#e94560',
+        'quantum-accent': '#7209b7',
+        'quantum-dark': '#0a0a0f',
+        'quantum-glass': 'rgba(255,255,255,0.05)',
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -65,10 +68,28 @@ module.exports = {
           from: { height: "var(--radix-accordion-content-height)" },
           to: { height: 0 },
         },
+        float: {
+          '0%, 100%': { transform: 'translateY(0)' },
+          '50%': { transform: 'translateY(-20px)' },
+        },
+        'pulse-glow': {
+          '0%, 100%': { opacity: 0.5, boxShadow: '0 0 20px rgba(0, 255, 136, 0.5)' },
+          '50%': { opacity: 1, boxShadow: '0 0 40px rgba(0, 255, 136, 0.8)' },
+        },
+        shimmer: {
+          '0%': { backgroundPosition: '200% 0%' },
+          '100%': { backgroundPosition: '-200% 0%' },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        'float': 'float 6s ease-in-out infinite',
+        'pulse-glow': 'pulse-glow 2s ease-in-out infinite',
+        'shimmer': 'shimmer 3s linear infinite',
+      },
+      backdropBlur: {
+        xs: '2px',
       },
     },
   },

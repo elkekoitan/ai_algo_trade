@@ -1,60 +1,24 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { 
   TrendingUp, 
   TrendingDown, 
   DollarSign, 
   BarChart3,
-  RefreshCw
+  RefreshCw,
+  ShieldAlert,
+  AlertTriangle
 } from "lucide-react";
-
-interface AccountData {
-  login: number;
-  balance: number;
-  equity: number;
-  margin: number;
-  margin_free: number;
-  margin_level: number;
-  profit: number;
-  leverage: number;
-  currency: string;
-  server: string;
-  company: string;
-  margin_used_percent: number;
-}
+import { useAppContext } from "@/lib/context";
 
 export default function AccountInfo() {
-  const [accountData, setAccountData] = useState<AccountData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
+  
+  // Use our context
+  const { accountInfo, isLoading, errors, refreshAccountInfo } = useAppContext();
 
-  useEffect(() => {
-    fetchAccountInfo();
-    const interval = setInterval(fetchAccountInfo, 5000); // Update every 5 seconds
-    return () => clearInterval(interval);
-  }, []);
-
-  const fetchAccountInfo = async () => {
-    try {
-      const response = await fetch("http://localhost:8001/api/v1/trading/account_info");
-      if (response.ok) {
-        const data = await response.json();
-        setAccountData(data);
-        setError(null);
-        setLastUpdate(new Date());
-      } else {
-        setError("Failed to fetch account data");
-      }
-    } catch (err) {
-      setError("Connection error");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (loading) {
+  if (isLoading.account && !accountInfo) {
     return (
       <div className="bg-gray-900/50 backdrop-blur-lg rounded-xl p-6 border border-gray-800">
         <div className="flex items-center justify-center h-40">
@@ -64,24 +28,30 @@ export default function AccountInfo() {
     );
   }
 
-  if (error || !accountData) {
+  if (errors.account || !accountInfo) {
     return (
       <div className="bg-gray-900/50 backdrop-blur-lg rounded-xl p-6 border border-gray-800">
-        <div className="text-center">
-          <p className="text-red-400">{error || "No account data available"}</p>
+        <div className="text-center py-8">
+          <AlertTriangle className="mx-auto h-12 w-12 text-yellow-500 mb-3" />
+          <p className="text-red-400 mb-4">{errors.account || "No account data available"}</p>
           <button 
-            onClick={fetchAccountInfo}
-            className="mt-4 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 rounded-lg text-sm font-medium transition-colors"
+            onClick={refreshAccountInfo}
+            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 rounded-lg text-sm font-medium transition-colors"
           >
-            Retry
+            Retry Connection
           </button>
         </div>
       </div>
     );
   }
 
-  const profitColor = accountData.profit >= 0 ? "text-green-400" : "text-red-400";
-  const profitIcon = accountData.profit >= 0 ? <TrendingUp size={16} /> : <TrendingDown size={16} />;
+  const profitColor = accountInfo.profit >= 0 ? "text-green-400" : "text-red-400";
+  const profitIcon = accountInfo.profit >= 0 ? <TrendingUp size={16} /> : <TrendingDown size={16} />;
+  
+  // Calculate margin used percent if not available
+  const marginUsedPercent = accountInfo.margin > 0 && accountInfo.equity > 0
+    ? (accountInfo.margin / accountInfo.equity) * 100
+    : 0;
 
   return (
     <div className="bg-gray-900/50 backdrop-blur-lg rounded-xl p-6 border border-gray-800">
@@ -89,8 +59,13 @@ export default function AccountInfo() {
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl font-semibold text-white">Account Overview</h2>
         <div className="flex items-center space-x-2 text-xs text-gray-400">
-          <RefreshCw size={14} />
-          <span>Updated {lastUpdate.toLocaleTimeString()}</span>
+          <RefreshCw 
+            size={14} 
+            className={isLoading.account ? "animate-spin" : ""} 
+            onClick={refreshAccountInfo}
+            style={{ cursor: 'pointer' }}
+          />
+          <span>Updated {new Date().toLocaleTimeString()}</span>
         </div>
       </div>
 
@@ -103,7 +78,7 @@ export default function AccountInfo() {
             <DollarSign size={16} className="text-gray-400" />
           </div>
           <p className="text-2xl font-semibold text-white">
-            {accountData.currency} {accountData.balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            {accountInfo?.currency || 'USD'} {accountInfo?.balance?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}
           </p>
         </div>
 
@@ -114,7 +89,7 @@ export default function AccountInfo() {
             <BarChart3 size={16} className="text-gray-400" />
           </div>
           <p className="text-2xl font-semibold text-white">
-            {accountData.currency} {accountData.equity.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            {accountInfo?.currency || 'USD'} {accountInfo?.equity?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}
           </p>
         </div>
 
@@ -125,7 +100,7 @@ export default function AccountInfo() {
             {profitIcon}
           </div>
           <p className={`text-2xl font-semibold ${profitColor}`}>
-            {accountData.profit >= 0 ? '+' : ''}{accountData.currency} {accountData.profit.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            {accountInfo.profit >= 0 ? '+' : ''}{accountInfo?.currency || 'USD'} {accountInfo?.profit?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}
           </p>
         </div>
 
@@ -133,10 +108,10 @@ export default function AccountInfo() {
         <div className="bg-gray-800/50 rounded-lg p-4">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm text-gray-400">Used Margin</span>
-            <span className="text-xs text-gray-500">{accountData.margin_used_percent.toFixed(1)}%</span>
+            <span className="text-xs text-gray-500">{marginUsedPercent?.toFixed(1) || '0.0'}%</span>
           </div>
           <p className="text-lg font-medium text-white">
-            {accountData.currency} {accountData.margin.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            {accountInfo?.currency || 'USD'} {accountInfo?.margin?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}
           </p>
         </div>
 
@@ -146,7 +121,7 @@ export default function AccountInfo() {
             <span className="text-sm text-gray-400">Free Margin</span>
           </div>
           <p className="text-lg font-medium text-white">
-            {accountData.currency} {accountData.margin_free.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            {accountInfo?.currency || 'USD'} {accountInfo?.free_margin?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}
           </p>
         </div>
 
@@ -155,7 +130,7 @@ export default function AccountInfo() {
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm text-gray-400">Leverage</span>
           </div>
-          <p className="text-lg font-medium text-white">1:{accountData.leverage}</p>
+          <p className="text-lg font-medium text-white">1:{accountInfo.leverage}</p>
         </div>
       </div>
 
@@ -163,9 +138,9 @@ export default function AccountInfo() {
       <div className="mt-4 pt-4 border-t border-gray-800">
         <div className="flex items-center justify-between text-sm">
           <span className="text-gray-400">
-            Account: #{accountData.login} • {accountData.server}
+            Account: #{accountInfo?.login || '...'} • {accountInfo?.server || '...'}
           </span>
-          <span className="text-gray-500">{accountData.company}</span>
+          <span className="text-gray-500">{accountInfo?.company || '...'}</span>
         </div>
       </div>
     </div>

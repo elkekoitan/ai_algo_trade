@@ -1,15 +1,14 @@
 """
-MT5 Integration module for ICT Ultra v2.
+REAL MT5 Integration module for ICT Ultra v2.
 
-This module handles all interactions with MetaTrader 5 including:
-- Connection management
-- Market data retrieval
-- Order execution
-- Account management
-- MQL5 Algo Forge integration
+GERÇEK MetaTrader 5 entegrasyonu:
+- Real connection management
+- Live market data retrieval  
+- Real order execution
+- Live account management
+- Authentic MT5 data feeds
 """
 
-from .service import MT5Service
-from .models import MT5Config, OrderRequest, OrderResult
+from .service import RealMT5Service
 
-__all__ = ["MT5Service", "MT5Config", "OrderRequest", "OrderResult"] 
+__all__ = ["RealMT5Service"] 

@@ -1,10 +1,13 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { useAppContext } from '@/lib/context';
+import { useTranslations } from '@/lib/translations/context';
+import LanguageSwitcher from '@/components/ui/language-switcher';
 import {
   Zap,
   BarChart3,
@@ -23,155 +26,100 @@ import {
   XCircle,
   AlertTriangle,
   Menu,
-  X
+  X,
+  Brain,
+  Mail
 } from 'lucide-react';
-
-interface ConnectionStatus {
-  mt5: boolean;
-  api: boolean;
-  websocket: boolean;
-  lastUpdate: Date;
-}
-
-interface SystemStats {
-  activeSignals: number;
-  openPositions: number;
-  autoTraderSessions: number;
-  accountBalance: number;
-  dailyPnL: number;
-}
 
 const Header: React.FC = () => {
   const pathname = usePathname();
-  const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>({
-    mt5: false,
-    api: false,
-    websocket: false,
-    lastUpdate: new Date()
-  });
-  const [systemStats, setSystemStats] = useState<SystemStats>({
-    activeSignals: 0,
-    openPositions: 0,
-    autoTraderSessions: 0,
-    accountBalance: 0,
-    dailyPnL: 0
-  });
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [notifications, setNotifications] = useState<number>(0);
+  
+  // Use our context
+  const { 
+    connectionStatus, 
+    accountInfo, 
+    positions, 
+    isLoading, 
+    refreshAll 
+  } = useAppContext();
+  
+  // Use translations
+  const { t, language, setLanguage } = useTranslations();
 
   // Navigation items
   const navigationItems = [
     {
-      name: 'Dashboard',
+      name: t('navigation.dashboard'),
       href: '/',
       icon: BarChart3,
-      description: 'Main overview and real-time data'
+      description: t('dashboard.subtitle')
     },
     {
-      name: 'Trading',
+      name: t('navigation.trading'),
       href: '/trading',
       icon: TrendingUp,
       description: 'Execute trades and manage positions'
     },
     {
-      name: 'Signals',
+      name: t('navigation.signals'),
       href: '/signals',
       icon: Target,
       description: 'ICT signals and market analysis'
     },
     {
-      name: 'Performance',
+      name: t('navigation.performance'),
       href: '/performance',
       icon: Activity,
       description: 'Analytics and performance metrics'
     },
     {
-      name: 'Scanner',
-      href: '/scanner',
-      icon: Search,
-      description: 'Market opportunity scanner'
+      name: t('navigation.quantum'),
+      href: '/quantum',
+      icon: Brain,
+      description: 'Advanced AI trading dashboard'
     },
     {
-      name: 'AutoTrader',
-      href: '/autotrader',
-      icon: Zap,
-      description: 'Automated trading systems'
+      name: t('contact.title'),
+      href: '/contact',
+      icon: Mail,
+      description: 'Get in touch with our team'
+    },
+    {
+      name: t('navigation.ai_patterns'),
+      href: '/quantum',
+      icon: Brain,
+      description: 'AI Patterns'
+    },
+    {
+      name: t('navigation.edge_computing'),
+      href: '/edge',
+      icon: BarChart3,
+      description: 'Edge Computing'
+    },
+    {
+      name: t('navigation.social_trading'),
+      href: '/social',
+      icon: User,
+      description: 'Social Trading'
+    },
+    {
+      name: t('navigation.institutional'),
+      href: '/institutional',
+      icon: Shield,
+      description: 'Institutional'
+    },
+    {
+      name: t('navigation.quantum_tech'),
+      href: '/quantum-tech',
+      icon: Brain,
+      description: 'Quantum Tech'
     }
   ];
 
-  // Fetch connection status and system stats
-  useEffect(() => {
-    const fetchStatus = async () => {
-      try {
-        // Check API and MT5 status
-        const healthResponse = await fetch('/api/v1/health');
-        if (healthResponse.ok) {
-          const healthData = await healthResponse.json();
-          setConnectionStatus(prev => ({
-            ...prev,
-            api: true,
-            mt5: healthData.mt5_connected || false,
-            lastUpdate: new Date()
-          }));
-        }
-
-        // Get system stats
-        const [signalsResponse, positionsResponse, autoTraderResponse, accountResponse] = await Promise.all([
-          fetch('/api/v1/signals/ict?limit=100').catch(() => null),
-          fetch('/api/v1/trading/positions').catch(() => null),
-          fetch('/api/v1/auto-trader/status').catch(() => null),
-          fetch('/api/v1/trading/account').catch(() => null)
-        ]);
-
-        // Update system stats
-        let stats: SystemStats = {
-          activeSignals: 0,
-          openPositions: 0,
-          autoTraderSessions: 0,
-          accountBalance: 0,
-          dailyPnL: 0
-        };
-
-        if (signalsResponse?.ok) {
-          const signalsData = await signalsResponse.json();
-          stats.activeSignals = signalsData.signals?.filter((s: any) => s.status === 'active').length || 0;
-        }
-
-        if (positionsResponse?.ok) {
-          const positionsData = await positionsResponse.json();
-          stats.openPositions = positionsData.length || 0;
-        }
-
-        if (autoTraderResponse?.ok) {
-          const autoTraderData = await autoTraderResponse.json();
-          stats.autoTraderSessions = autoTraderData.active_sessions || 0;
-        }
-
-        if (accountResponse?.ok) {
-          const accountData = await accountResponse.json();
-          stats.accountBalance = accountData.balance || 0;
-          stats.dailyPnL = accountData.profit || 0;
-        }
-
-        setSystemStats(stats);
-
-      } catch (error) {
-        console.error('Error fetching header data:', error);
-        setConnectionStatus(prev => ({
-          ...prev,
-          api: false,
-          lastUpdate: new Date()
-        }));
-      }
-    };
-
-    fetchStatus();
-    const interval = setInterval(fetchStatus, 10000); // Update every 10 seconds
-
-    return () => clearInterval(interval);
-  }, []);
-
   const getConnectionIcon = () => {
+    if (isLoading.account) return <AlertTriangle className="h-4 w-4 text-yellow-500 animate-pulse" />;
     if (connectionStatus.api && connectionStatus.mt5) {
       return <CheckCircle className="h-4 w-4 text-green-500" />;
     } else if (connectionStatus.api) {
@@ -182,6 +130,7 @@ const Header: React.FC = () => {
   };
 
   const getConnectionText = () => {
+    if (isLoading.account) return 'Connecting...';
     if (connectionStatus.api && connectionStatus.mt5) {
       return 'All Systems Online';
     } else if (connectionStatus.api) {
@@ -206,11 +155,21 @@ const Header: React.FC = () => {
     return pathname.startsWith(href);
   };
 
+  // System stats derived from context
+  const systemStats = {
+    accountBalance: accountInfo?.balance || 0,
+    dailyPnL: accountInfo?.profit || 0,
+    activeSignals: 0, // We'll need to add this to context later
+    openPositions: positions.length,
+    autoTraderSessions: 0 // We'll need to add this to context later
+  };
+
   return (
-    <header className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          {/* Logo and Brand */}
+    <header className="bg-gray-900/90 backdrop-blur-lg border-b border-gray-800 shadow-md sticky top-0 z-50">
+      <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-16 w-full">
+          
+          {/* Left Section */}
           <div className="flex items-center gap-4">
             <Link href="/" className="flex items-center gap-2">
               <div className="relative">
@@ -218,21 +177,20 @@ const Header: React.FC = () => {
                 <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full animate-pulse" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-gray-900">ICT Ultra v2</h1>
-                <p className="text-xs text-gray-500">Algo Forge Edition</p>
+                <h1 className="text-xl font-bold text-white">ICT Ultra v2</h1>
+                <p className="text-xs text-gray-400">Algo Forge Edition</p>
               </div>
             </Link>
 
-            {/* Connection Status */}
-            <div className="hidden md:flex items-center gap-2 px-3 py-1 bg-gray-50 rounded-lg">
+            <div className="hidden md:flex items-center gap-2 px-3 py-1 bg-gray-800/50 rounded-lg">
               {getConnectionIcon()}
-              <span className="text-sm font-medium text-gray-700">
+              <span className="text-sm font-medium text-gray-300">
                 {getConnectionText()}
               </span>
             </div>
           </div>
 
-          {/* Navigation */}
+          {/* Center Section (Navigation) */}
           <nav className="hidden lg:flex items-center space-x-1">
             {navigationItems.map((item) => {
               const Icon = item.icon;
@@ -242,13 +200,11 @@ const Header: React.FC = () => {
                 <Link
                   key={item.name}
                   href={item.href}
-                  className={`
-                    flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors
-                    ${isActive 
-                      ? 'bg-blue-100 text-blue-700' 
-                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                    }
-                  `}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    isActive 
+                      ? 'bg-blue-600/20 text-blue-400' 
+                      : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800/50'
+                  }`}
                   title={item.description}
                 >
                   <Icon className="h-4 w-4" />
@@ -258,67 +214,38 @@ const Header: React.FC = () => {
             })}
           </nav>
 
-          {/* System Stats */}
-          <div className="hidden xl:flex items-center gap-4">
-            <div className="flex items-center gap-3 text-sm">
-              <div className="text-center">
-                <div className="font-bold text-green-600">
-                  {formatCurrency(systemStats.accountBalance)}
-                </div>
-                <div className="text-xs text-gray-500">Balance</div>
-              </div>
-              
-              <div className="text-center">
-                <div className={`font-bold ${systemStats.dailyPnL >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  {systemStats.dailyPnL >= 0 ? '+' : ''}{formatCurrency(systemStats.dailyPnL)}
-                </div>
-                <div className="text-xs text-gray-500">Daily P&L</div>
-              </div>
-            </div>
-
-            <div className="h-8 w-px bg-gray-200" />
-
-            <div className="flex items-center gap-3">
-              <Badge variant="outline" className="text-xs">
-                <Target className="h-3 w-3 mr-1" />
-                {systemStats.activeSignals} Signals
-              </Badge>
-              
-              <Badge variant="outline" className="text-xs">
-                <BarChart3 className="h-3 w-3 mr-1" />
-                {systemStats.openPositions} Positions
-              </Badge>
-              
-              <Badge variant="outline" className="text-xs">
-                <Zap className="h-3 w-3 mr-1" />
-                {systemStats.autoTraderSessions} Auto
-              </Badge>
-            </div>
-          </div>
-
-          {/* Action Buttons */}
+          {/* Right Section */}
           <div className="flex items-center gap-2">
-            {/* Notifications */}
-            <Button variant="outline" size="sm" className="relative">
-              <Bell className="h-4 w-4" />
-              {notifications > 0 && (
-                <Badge className="absolute -top-2 -right-2 h-5 w-5 p-0 text-xs">
-                  {notifications}
-                </Badge>
-              )}
-            </Button>
+            <div className="hidden xl:flex items-center gap-3 text-sm">
+                <div className="text-center">
+                  <div className="font-bold text-green-400">
+                    {formatCurrency(systemStats.accountBalance)}
+                  </div>
+                  <div className="text-xs text-gray-400">Balance</div>
+                </div>
+                <div className="text-center">
+                  <div className={`font-bold ${systemStats.dailyPnL >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                    {systemStats.dailyPnL >= 0 ? '+' : ''}{formatCurrency(systemStats.dailyPnL)}
+                  </div>
+                  <div className="text-xs text-gray-400">Daily P&L</div>
+                </div>
+              </div>
 
-            {/* Settings */}
-            <Button variant="outline" size="sm">
-              <Settings className="h-4 w-4" />
-            </Button>
+              <div className="h-8 w-px bg-gray-700 mx-2 hidden xl:block" />
 
-            {/* User Menu */}
-            <Button variant="outline" size="sm">
-              <User className="h-4 w-4" />
-            </Button>
+              <div className="hidden lg:flex items-center gap-2">
+                  <Badge variant="outline" className="text-xs bg-gray-800/50 text-gray-300 border-gray-700">
+                    <Target className="h-3 w-3 mr-1 text-purple-400" />
+                    {systemStats.activeSignals} Signals
+                  </Badge>
+                  <Badge variant="outline" className="text-xs bg-gray-800/50 text-gray-300 border-gray-700">
+                    <BarChart3 className="h-3 w-3 mr-1 text-blue-400" />
+                    {systemStats.openPositions} Positions
+                  </Badge>
+              </div>
 
-            {/* Mobile Menu Toggle */}
+            <LanguageSwitcher onLanguageChange={setLanguage} />
+
             <Button
               variant="outline"
               size="sm"
@@ -332,7 +259,7 @@ const Header: React.FC = () => {
 
         {/* Mobile Navigation */}
         {isMenuOpen && (
-          <div className="lg:hidden border-t border-gray-200 py-4">
+          <div className="lg:hidden border-t border-gray-800 py-4">
             <div className="space-y-2">
               {navigationItems.map((item) => {
                 const Icon = item.icon;
@@ -345,8 +272,8 @@ const Header: React.FC = () => {
                     className={`
                       flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors
                       ${isActive 
-                        ? 'bg-blue-100 text-blue-700' 
-                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                        ? 'bg-blue-600/20 text-blue-400' 
+                        : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800/50'
                       }
                     `}
                     onClick={() => setIsMenuOpen(false)}
@@ -362,39 +289,39 @@ const Header: React.FC = () => {
             </div>
 
             {/* Mobile Stats */}
-            <div className="mt-4 pt-4 border-t border-gray-200">
+            <div className="mt-4 pt-4 border-t border-gray-800">
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div className="text-center">
-                  <div className="font-bold text-green-600">
+                  <div className="font-bold text-green-400">
                     {formatCurrency(systemStats.accountBalance)}
                   </div>
-                  <div className="text-xs text-gray-500">Account Balance</div>
+                  <div className="text-xs text-gray-400">Account Balance</div>
                 </div>
                 
                 <div className="text-center">
-                  <div className={`font-bold ${systemStats.dailyPnL >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  <div className={`font-bold ${systemStats.dailyPnL >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                     {systemStats.dailyPnL >= 0 ? '+' : ''}{formatCurrency(systemStats.dailyPnL)}
                   </div>
-                  <div className="text-xs text-gray-500">Daily P&L</div>
+                  <div className="text-xs text-gray-400">Daily P&L</div>
                 </div>
               </div>
 
               <div className="flex items-center justify-center gap-2 mt-4">
-                <Badge variant="outline" className="text-xs">
+                <Badge variant="outline" className="text-xs bg-gray-800/50 text-gray-300 border-gray-700">
                   {systemStats.activeSignals} Signals
                 </Badge>
-                <Badge variant="outline" className="text-xs">
+                <Badge variant="outline" className="text-xs bg-gray-800/50 text-gray-300 border-gray-700">
                   {systemStats.openPositions} Positions
                 </Badge>
-                <Badge variant="outline" className="text-xs">
+                <Badge variant="outline" className="text-xs bg-gray-800/50 text-gray-300 border-gray-700">
                   {systemStats.autoTraderSessions} Auto
                 </Badge>
               </div>
 
               {/* Mobile Connection Status */}
-              <div className="flex items-center justify-center gap-2 mt-4 px-3 py-2 bg-gray-50 rounded-lg">
+              <div className="flex items-center justify-center gap-2 mt-4 px-3 py-2 bg-gray-800/50 rounded-lg">
                 {getConnectionIcon()}
-                <span className="text-sm font-medium text-gray-700">
+                <span className="text-sm font-medium text-gray-300">
                   {getConnectionText()}
                 </span>
               </div>
@@ -406,4 +333,4 @@ const Header: React.FC = () => {
   );
 };
 
-export default Header; 
+export default Header;

@@ -78,7 +78,16 @@ async def get_auto_trader_status():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.get("/status/{session_id}", response_model=dict)
+@router.get("/strategies", response_model=List[TradingStrategy])
+async def get_strategies():
+    """Get list of available trading strategies"""
+    try:
+        strategies = auto_trader_service.get_available_strategies()
+        return strategies
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/session_status/{session_id}", response_model=dict)
 async def get_session_status(session_id: str):
     """Get specific trading session status"""
     try:
@@ -91,16 +100,6 @@ async def get_session_status(session_id: str):
             )
         
         return status
-        
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@router.get("/strategies", response_model=List[TradingStrategy])
-async def get_available_strategies():
-    """Get list of available trading strategies"""
-    try:
-        strategies = auto_trader_service.get_available_strategies()
-        return strategies
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

@@ -103,71 +103,51 @@ fi
 # Create logs directory if it doesn't exist
 mkdir -p logs
 
-# Start backend
-echo -e "${YELLOW}Starting backend...${NC}"
-cd backend || exit
-if [ ! -d "venv" ]; then
-    echo -e "${YELLOW}Creating virtual environment...${NC}"
-    $PYTHON_CMD -m venv venv
-    echo -e "${GREEN}✓ Virtual environment created${NC}"
-fi
-
-# Activate virtual environment
-if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "win32" ]]; then
-    # Windows Git Bash
-    source venv/Scripts/activate
+# Check if tmux is installed
+if ! command -v tmux &> /dev/null; then
+    echo -e "${YELLOW}tmux is not installed. Running in standard mode.${NC}"
+    
+    # Start backend in background
+    echo -e "${GREEN}Starting backend server...${NC}"
+    cd backend && python main.py &
+    BACKEND_PID=$!
+    
+    # Start frontend
+    echo -e "${GREEN}Starting frontend server...${NC}"
+    cd frontend && npm run dev
+    
+    # Kill backend when frontend is stopped
+    kill $BACKEND_PID
 else
-    # Linux/Mac
-    source venv/bin/activate
+    # Create a new tmux session
+    echo -e "${GREEN}Starting services in tmux session...${NC}"
+    SESSION="ict-ultra-v2"
+    
+    # Kill existing session if it exists
+    tmux kill-session -t $SESSION 2>/dev/null
+    
+    # Create new session with backend
+    tmux new-session -d -s $SESSION -n "backend" "cd backend && python main.py"
+    
+    # Create window for frontend
+    tmux new-window -t $SESSION:1 -n "frontend" "cd frontend && npm run dev"
+    
+    # Create window for logs
+    tmux new-window -t $SESSION:2 -n "logs" "tail -f backend/logs/app.log"
+    
+    # Select the backend window
+    tmux select-window -t $SESSION:0
+    
+    # Attach to the session
+    echo -e "${GREEN}ICT Ultra v2 started in tmux session '${SESSION}'${NC}"
+    echo -e "${YELLOW}Use 'tmux attach -t ${SESSION}' to view the session${NC}"
+    echo -e "${YELLOW}Press Ctrl+B then number (0,1,2) to switch windows${NC}"
+    echo -e "${YELLOW}Press Ctrl+B then D to detach from session${NC}"
+    
+    tmux attach -t $SESSION
+    
+    echo -e "${GREEN}Stopping ICT Ultra v2...${NC}"
+    tmux kill-session -t $SESSION
 fi
 
-# Install requirements
-echo -e "${YELLOW}Installing backend requirements...${NC}"
-pip install -r requirements.txt
-echo -e "${GREEN}✓ Backend requirements installed${NC}"
-
-# Start backend server
-echo -e "${YELLOW}Starting backend server...${NC}"
-$PYTHON_CMD main.py > ../logs/backend.log 2>&1 &
-BACKEND_PID=$!
-echo -e "${GREEN}✓ Backend server started with PID $BACKEND_PID${NC}"
-
-# Give backend time to start
-echo -e "${YELLOW}Waiting for backend to initialize...${NC}"
-sleep 5
-
-# Start frontend
-echo -e "${YELLOW}Starting frontend...${NC}"
-cd ../frontend || exit
-
-# Install dependencies
-echo -e "${YELLOW}Installing frontend dependencies...${NC}"
-$NPM_CMD install
-echo -e "${GREEN}✓ Frontend dependencies installed${NC}"
-
-# Start frontend server
-echo -e "${YELLOW}Starting frontend server...${NC}"
-$NPM_CMD run dev > ../logs/frontend.log 2>&1 &
-FRONTEND_PID=$!
-echo -e "${GREEN}✓ Frontend server started with PID $FRONTEND_PID${NC}"
-
-# Return to root directory
-cd ..
-
-# Save PIDs for later use
-echo "$BACKEND_PID" > logs/backend.pid
-echo "$FRONTEND_PID" > logs/frontend.pid
-
-# Final instructions
-echo ""
-echo -e "${GREEN}ICT Ultra v2 is now running!${NC}"
-echo -e "Backend API: ${BLUE}http://localhost:8001${NC}"
-echo -e "Frontend: ${BLUE}http://localhost:3000${NC}"
-echo ""
-echo -e "To stop the servers, run: ${YELLOW}./stop.sh${NC}"
-echo ""
-
-# Keep the script running to catch Ctrl+C
-echo -e "${YELLOW}Press Ctrl+C to stop the servers${NC}"
-trap "echo -e '${RED}Stopping servers...${NC}'; kill $BACKEND_PID $FRONTEND_PID 2>/dev/null; exit" INT
-wait 
+echo -e "${GREEN}ICT Ultra v2 has been stopped.${NC}" 

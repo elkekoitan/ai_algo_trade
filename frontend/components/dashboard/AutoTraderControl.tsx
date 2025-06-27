@@ -109,13 +109,24 @@ const AutoTraderControl: React.FC = () => {
   const fetchStrategies = async () => {
     try {
       const response = await fetch('/api/v1/auto-trader/strategies');
-      const data = await response.json();
-      setStrategies(data);
-      if (data.length > 0 && !selectedStrategy) {
-        setSelectedStrategy(data[0].name);
+      if (response.ok) {
+        const data = await response.json();
+        // Ensure data is an array before setting it
+        if (Array.isArray(data)) {
+          setStrategies(data);
+          if (data.length > 0 && !selectedStrategy) {
+            setSelectedStrategy(data[0].name);
+          }
+        } else {
+          console.warn("Strategies data is not an array:", data);
+          setStrategies([]); // Set to empty array on unexpected format
+        }
+      } else {
+        setStrategies([]); // Also clear on error response
       }
     } catch (err) {
       console.error('Error fetching strategies:', err);
+      setStrategies([]); // Also clear on fetch error
     }
   };
 
