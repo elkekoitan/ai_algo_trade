@@ -1,17 +1,18 @@
 'use client'
 import React, { useEffect, useState } from 'react';
-import { ForceGraph2D } from 'react-force-graph-2d';
+import ForceGraph2D from 'react-force-graph-2d';
 import { motion } from 'framer-motion';
 import { GitCommit } from 'lucide-react';
+import { LinkObject, NodeObject } from 'force-graph';
 
-interface Node {
+interface CustomNode extends NodeObject {
     id: string;
     name: string;
     val: number;
     color: string;
 }
 
-interface Link {
+interface CustomLink extends LinkObject {
     source: string;
     target: string;
     label: string;
@@ -41,11 +42,11 @@ const getAssetColor = (asset: string) => {
 }
 
 export default function InfluenceMap({ protagonist, correlations }: InfluenceMapProps) {
-    const [graphData, setGraphData] = useState<{ nodes: Node[], links: Link[] }>({ nodes: [], links: [] });
+    const [graphData, setGraphData] = useState<{ nodes: CustomNode[], links: CustomLink[] }>({ nodes: [], links: [] });
 
     useEffect(() => {
-        const nodes: Node[] = [];
-        const links: Link[] = [];
+        const nodes: CustomNode[] = [];
+        const links: CustomLink[] = [];
 
         // Add protagonist node
         nodes.push({
@@ -95,13 +96,13 @@ export default function InfluenceMap({ protagonist, correlations }: InfluenceMap
                     nodeAutoColorBy="color"
                     linkSource="source"
                     linkTarget="target"
-                    linkColor={() => 'rgba(255,255,255,0.2)'}
+                    linkColor={(link: any) => link.color}
                     linkWidth="width"
                     linkDirectionalParticles={2}
                     linkDirectionalParticleWidth={2}
-                    linkDirectionalParticleColor={link => link.color}
+                    linkDirectionalParticleColor={(link: any) => link.color}
                     backgroundColor="transparent"
-                    nodeCanvasObject={(node, ctx, globalScale) => {
+                    nodeCanvasObject={(node: any, ctx: CanvasRenderingContext2D, globalScale: number) => {
                         const label = node.name;
                         const fontSize = 12 / globalScale;
                         ctx.font = `${fontSize}px Sans-Serif`;
