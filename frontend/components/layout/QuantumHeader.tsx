@@ -41,6 +41,7 @@ const navigationItems = [
   { id: "institutional", icon: Shield, label: "Institutional", path: "/institutional" },
   { id: "quantum_tech", icon: Brain, label: "Quantum Tech", path: "/quantum-tech" },
   { id: "god_mode", icon: Brain, label: "God Mode", path: "/god-mode" },
+  { id: "shadow_mode", icon: Shield, label: "Shadow Mode", path: "/shadow" },
 ];
 
 interface ConnectionStatus {

@@ -200,10 +200,12 @@ async def get_performance_summary():
     return {"message": "Performance analytics are under development. Coming soon."}
 
 from api.v1.god_mode import router as god_mode_router
+from api.v1.shadow_mode import router as shadow_mode_router
 
 # Include routers
 app.include_router(api_router)
 app.include_router(god_mode_router)  # Add God Mode router
+app.include_router(shadow_mode_router)  # Add Shadow Mode router
 
 # --- Main execution ---
 if __name__ == "__main__":
