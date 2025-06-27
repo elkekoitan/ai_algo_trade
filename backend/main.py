@@ -23,7 +23,10 @@ from api.v1 import (
     edge_computing,      # Phase 2: Real-time Edge Computing
     social_trading,      # Phase 3: Social Trading & Copy Trading
     institutional,       # Phase 5: Institutional-Grade Features
-    quantum_tech         # Phase 6: Next-Gen Trading Technologies
+    quantum_tech,        # Phase 6: Next-Gen Trading Technologies
+    god_mode,           # Revolutionary: God Mode
+    shadow_mode,        # Revolutionary: Shadow Mode
+    strategy_whisperer  # Revolutionary: Strategy Whisperer
 )
 
 from core.logger import setup_logger
@@ -70,6 +73,11 @@ app.include_router(institutional.router, prefix="/api/v1")
 
 # Phase 6: Next-Gen Trading Technologies APIs
 app.include_router(quantum_tech.router, prefix="/api/v1")
+
+# Revolutionary Features
+app.include_router(god_mode.router, prefix="/api/v1")
+app.include_router(shadow_mode.router, prefix="/api/v1")
+app.include_router(strategy_whisperer.router, prefix="/api/v1")
 
 @app.get("/")
 async def root():

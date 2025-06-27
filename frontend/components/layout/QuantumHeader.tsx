@@ -18,7 +18,8 @@ import {
   Shield,
   Mail,
   BarChart3,
-  Target
+  Target,
+  MessageSquare
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import Link from 'next/link';
@@ -42,6 +43,7 @@ const navigationItems = [
   { id: "quantum_tech", icon: Brain, label: "Quantum Tech", path: "/quantum-tech" },
   { id: "god_mode", icon: Brain, label: "God Mode", path: "/god-mode" },
   { id: "shadow_mode", icon: Shield, label: "Shadow Mode", path: "/shadow" },
+  { id: "strategy_whisperer", icon: MessageSquare, label: "Whisperer", path: "/strategy-whisperer" },
 ];
 
 interface ConnectionStatus {
