@@ -52,10 +52,10 @@ export default function RiskDashboard({ risks, data }: RiskDashboardProps) {
     };
 
     const exposureBySymbolData = {
-        labels: [...new Set(risks.map(r => r.symbol))],
+        labels: Array.from(new Set(risks.map(r => r.symbol))),
         datasets: [{
             label: 'Exposure',
-            data: [...new Set(risks.map(r => r.symbol))].map(symbol => 
+            data: Array.from(new Set(risks.map(r => r.symbol))).map(symbol => 
                 risks.filter(r => r.symbol === symbol).reduce((acc, r) => acc + r.volume, 0)
             ),
             backgroundColor: 'rgba(34, 211, 238, 0.7)',
@@ -87,12 +87,11 @@ export default function RiskDashboard({ risks, data }: RiskDashboardProps) {
                     <Gauge className="w-48 h-48 text-gray-700" strokeWidth={1}/>
                     <motion.div
                         className="absolute bottom-0 left-0 w-48 h-24 overflow-hidden"
-                        initial={{'--angle': '0deg'}}
-                        animate={{'--angle': `${data.portfolio_risk_score * 1.8}deg`}}
+                        initial={{ rotate: 0 }}
+                        animate={{ rotate: data.portfolio_risk_score * 1.8 }}
                         transition={{ duration: 1, ease: "circOut" }}
                         style={{
                             clipPath: 'polygon(0% 100%, 50% 100%, 50% 0, 0 0)',
-                            transform: 'rotate(var(--angle))',
                             transformOrigin: 'bottom center',
                             background: `conic-gradient(from -90deg at 50% 100%, #10b981, #f59e0b, #ef4444)`,
                         }}

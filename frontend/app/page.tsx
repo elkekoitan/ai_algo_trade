@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { 
@@ -43,13 +43,7 @@ export default function QuantumDashboard() {
   });
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchDashboardStats();
-    const interval = setInterval(fetchDashboardStats, 15000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const fetchDashboardStats = async () => {
+  const fetchDashboardStats = useCallback(async () => {
     try {
       const [performanceRes, signalsRes, positionsRes] = await Promise.all([
         fetch('http://localhost:8000/api/v1/performance/summary'),
@@ -83,7 +77,13 @@ export default function QuantumDashboard() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchDashboardStats();
+    const interval = setInterval(fetchDashboardStats, 15000);
+    return () => clearInterval(interval);
+  }, [fetchDashboardStats]);
 
   const quickStats = !loading && stats ? [
     {
