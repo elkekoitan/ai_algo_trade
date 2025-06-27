@@ -4,20 +4,25 @@ Bu klasör, AI Algo Trade platformunun tüm görsel diyagramlarını ve şemalar
 
 ## 📁 Ana Diyagramlar
 
-### 🏗️ Architecture Diagrams
+### ✨ Genel Bakış & Matris
+- [Devrimsel Özellikler - Genel Bakış](./revolutionary-features-overview.md)
+- [Proje Özellik Matrisi](./ultimate-feature-matrix.md)
+
+### 🏗️ Mimariler
 - [Genel Sistem Mimarisi](./system-architecture.md)
 - [God Mode Mimarisi](./god-mode-architecture.md)
 - [Shadow Mode Mimarisi](./shadow-mode-architecture.md)
-- [Veri Akış Diyagramı](./data-flow-diagram.md)
-
-### 🔄 Process Flows
-- [Whale Tespit Süreci](./whale-detection-process.md)
-
-### ⚛️ UI/UX & Frontend Diagrams
 - [Frontend Bileşen Mimarisi](./frontend-component-diagram.md)
-
-### 🔧 Technical & Data Diagrams
 - [Veritabanı Şeması](./database-schema.md)
+
+### 🔄 Süreç & Planlar
+- [Veri Akış Diyagramı](./data-flow-diagram.md)
+- [Whale Tespit Süreci](./whale-detection-process.md)
+- [God Mode Entegrasyon Planı](./god-mode-integration-plan.md)
+- [Shadow Mode Entegrasyon Planı](./shadow-mode-integration-plan.md)
+
+### 🏆 Özetler
+- [God Mode Tamamlanma Özeti](./god-mode-completion-summary.md)
 
 ---
 
