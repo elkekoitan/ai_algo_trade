@@ -1,5 +1,5 @@
 'use client'
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
   MessageSquare, 
@@ -21,22 +21,17 @@ import {
   Clock,
   BarChart3,
   Globe,
-  Users,
-  Cpu,
-  Database,
-  AlertCircle
+  Users
 } from 'lucide-react'
 import QuantumLayout from '@/components/layout/QuantumLayout';
-import { StoryFeed } from '@/components/market-narrator/StoryFeed';
-import { StoryDetail } from '@/components/market-narrator/StoryDetail';
-import { InfluenceMap } from '@/components/market-narrator/InfluenceMap';
+import StoryFeed from '@/components/market-narrator/StoryFeed';
+import InfluenceMap from '@/components/market-narrator/InfluenceMap';
+import StoryDetail from '@/components/market-narrator/StoryDetail';
 import ParticleBackground from '@/components/quantum/ParticleBackground';
 import GlassCard from '@/components/quantum/GlassCard';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { systemEvents } from '@/lib/system-events';
-import { Button } from '@/components/ui/button';
-import { MarketNarrative, MarketNarratorStatus } from '@/lib/types/market-narrator';
 
 interface MarketStory {
   id: string;
@@ -109,12 +104,6 @@ export default function MarketNarratorPage() {
   const [selectedStory, setSelectedStory] = useState<MarketStory | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date())
-  const [narratives, setNarratives] = useState<MarketNarrative[]>([])
-  const [selectedNarrative, setSelectedNarrative] = useState<MarketNarrative | null>(null)
-  const [selectedSymbolForMap, setSelectedSymbolForMap] = useState<string | null>(null)
-  const [status, setStatus] = useState<MarketNarratorStatus | null>(null)
-  const [isGenerating, setIsGenerating] = useState(false)
-  const [error, setError] = useState<string | null>(null)
 
   const fetchNarratorData = async () => {
     try {
@@ -312,81 +301,11 @@ export default function MarketNarratorPage() {
     }
   };
 
-  const fetchStatus = useCallback(async () => {
-    try {
-      const response = await fetch('http://localhost:8002/api/v1/market-narrator/status');
-      if (response.ok) {
-        setStatus(await response.json());
-      }
-    } catch (err) {
-      console.error("Failed to fetch status", err);
-    }
-  }, []);
-
-  const fetchNarratives = useCallback(async () => {
-    setError(null);
-    if (!isLoading) setIsLoading(true);
-    try {
-      const response = await fetch('http://localhost:8002/api/v1/market-narrator/latest-narratives?limit=20');
-      if (!response.ok) {
-        throw new Error('Failed to fetch narratives.');
-      }
-      const data = await response.json();
-      setNarratives(data);
-      if (data.length > 0) {
-        if (!selectedNarrative || !data.find((n: MarketNarrative) => n.narrative_id === selectedNarrative.narrative_id)) {
-            setSelectedNarrative(data[0]);
-            setSelectedSymbolForMap(data[0].protagonist_symbols[0]);
-        }
-      } else {
-        setSelectedNarrative(null);
-        setSelectedSymbolForMap(null);
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An unknown error occurred.');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [selectedNarrative, isLoading]);
-  
-  const generateNarrative = async () => {
-    setError(null);
-    setIsGenerating(true);
-    try {
-      const response = await fetch('http://localhost:8002/api/v1/market-narrator/generate-narrative', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ symbol: 'EURUSD' })
-      });
-      if (!response.ok) {
-        const errData = await response.json();
-        throw new Error(errData.detail || 'Failed to generate new narrative.');
-      }
-      setTimeout(() => {
-        fetchNarratives();
-        fetchStatus();
-      }, 1000);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An unknown error occurred during generation.');
-    } finally {
-      setIsGenerating(false);
-    }
-  };
-
   useEffect(() => {
     fetchNarratorData();
     const interval = setInterval(fetchNarratorData, narratorState.is_active ? narratorState.story_frequency * 1000 : 30000);
     return () => clearInterval(interval);
   }, [narratorState.is_active, narratorState.story_frequency]);
-
-  useEffect(() => {
-    fetchStatus();
-    fetchNarratives();
-    const interval = setInterval(() => {
-        fetchStatus();
-    }, 30000);
-    return () => clearInterval(interval);
-  }, []);
 
   const getSentimentColor = (sentiment: string) => {
     switch (sentiment) {
@@ -406,18 +325,6 @@ export default function MarketNarratorPage() {
     }
   };
 
-  const handleSelectNarrative = (narrative: MarketNarrative) => {
-    setSelectedNarrative(narrative);
-    if (narrative.protagonist_symbols.length > 0) {
-      setSelectedSymbolForMap(narrative.protagonist_symbols[0]);
-    }
-  };
-
-  const handleRefresh = () => {
-      fetchStatus();
-      fetchNarratives();
-  }
-
   if (isLoading) {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
@@ -431,103 +338,377 @@ export default function MarketNarratorPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-indigo-900 to-slate-900 text-white p-6">
-      <div className="max-w-8xl mx-auto">
+    <div className="min-h-screen bg-black text-white relative overflow-hidden">
+      <ParticleBackground />
+      
+      <div className="relative z-10 p-6 space-y-6">
         {/* Header */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
-          <div>
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-indigo-400 to-cyan-400 bg-clip-text text-transparent mb-2">
-              📖 Market Narrator
-            </h1>
-            <p className="text-gray-300">AI-Powered Market Storytelling & Influence Analysis</p>
-          </div>
-          <div className="flex items-center gap-4 mt-4 md:mt-0">
-            <Button onClick={generateNarrative} disabled={isGenerating} className="bg-indigo-600 hover:bg-indigo-700">
-              <Zap className={`h-4 w-4 mr-2 ${isGenerating ? 'animate-spin' : ''}`} />
-              {isGenerating ? 'Generating...' : 'Generate New Narrative'}
-            </Button>
-            <Button onClick={handleRefresh} variant="outline" className="border-indigo-400 text-indigo-400 hover:bg-indigo-500/10 hover:text-indigo-300">
-              <RefreshCw className="h-4 w-4" />
-            </Button>
+        <div className="flex items-center justify-between">
+          <h1 className="text-3xl font-bold flex items-center gap-3">
+            <MessageSquare className="w-8 h-8 text-yellow-400" />
+            Market Narrator
+            {narratorState.is_active && <div className="w-3 h-3 bg-yellow-400 rounded-full animate-pulse" />}
+          </h1>
+          
+          <div className="flex items-center gap-4">
+            <Badge className={`${getSentimentColor(sentimentData && sentimentData.overall_sentiment > 10 ? 'BULLISH' : sentimentData && sentimentData.overall_sentiment < -10 ? 'BEARISH' : 'NEUTRAL')}`}>
+              Sentiment: {sentimentData?.overall_sentiment.toFixed(1) || '0.0'}
+            </Badge>
+            <button
+              onClick={toggleNarrator}
+              className={`px-4 py-2 rounded-lg flex items-center gap-2 ${
+                narratorState.is_active 
+                  ? 'bg-red-600 hover:bg-red-700 text-white' 
+                  : 'bg-yellow-600 hover:bg-yellow-700 text-white'
+              }`}
+            >
+              {narratorState.is_active ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+              {narratorState.is_active ? 'Narrator ON' : 'Activate Narrator'}
+            </button>
           </div>
         </div>
 
-        {/* Status Dashboard */}
-        {status && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            <Card className="bg-black/40 border-gray-700">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-gray-400">Status</CardTitle>
-                <Cpu className="h-4 w-4 text-gray-500" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-green-400">{status.status.toUpperCase()}</div>
-                <p className="text-xs text-gray-500">
-                    {status.last_story_generated_at ? `Last story at ${new Date(status.last_story_generated_at).toLocaleTimeString()}` : 'No stories yet'}
+        {/* Sentiment Dashboard */}
+        {sentimentData && (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <GlassCard className="p-4">
+              <div className="text-center">
+                <p className="text-sm text-gray-400">Market Fear/Greed</p>
+                <p className="text-2xl font-bold text-purple-400">{sentimentData.market_fear_greed.toFixed(0)}</p>
+                <div className="w-full bg-gray-700 rounded-full h-2 mt-2">
+                  <div className="bg-purple-400 h-2 rounded-full" style={{ width: `${sentimentData.market_fear_greed}%` }}></div>
+                </div>
+              </div>
+            </GlassCard>
+            
+            <GlassCard className="p-4">
+              <div className="text-center">
+                <p className="text-sm text-gray-400">Bullish Signals</p>
+                <p className="text-2xl font-bold text-green-400">{sentimentData.bullish_signals.toFixed(0)}%</p>
+              </div>
+            </GlassCard>
+            
+            <GlassCard className="p-4">
+              <div className="text-center">
+                <p className="text-sm text-gray-400">Bearish Signals</p>
+                <p className="text-2xl font-bold text-red-400">{sentimentData.bearish_signals.toFixed(0)}%</p>
+              </div>
+            </GlassCard>
+            
+            <GlassCard className="p-4">
+              <div className="text-center">
+                <p className="text-sm text-gray-400">Institutional</p>
+                <p className={`text-2xl font-bold ${sentimentData.institutional_sentiment >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                  {sentimentData.institutional_sentiment >= 0 ? '+' : ''}{sentimentData.institutional_sentiment.toFixed(1)}
                 </p>
-              </CardContent>
-            </Card>
-            <Card className="bg-black/40 border-gray-700">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-gray-400">Stories (24h)</CardTitle>
-                <BookOpen className="h-4 w-4 text-gray-500" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-indigo-400">{status.stories_generated_24h}</div>
-                <p className="text-xs text-gray-500">narratives generated</p>
-              </CardContent>
-            </Card>
-            <Card className="bg-black/40 border-gray-700">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-gray-400">Data Sources</CardTitle>
-                <Database className="h-4 w-4 text-gray-500" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-cyan-400">{status.data_sources_connected}</div>
-                <p className="text-xs text-gray-500">active connections</p>
-              </CardContent>
-            </Card>
-            <Card className="bg-black/40 border-gray-700">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-gray-400">Error Rate</CardTitle>
-                <AlertCircle className="h-4 w-4 text-gray-500" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-orange-400">{(status.error_rate * 100).toFixed(1)}%</div>
-                <p className="text-xs text-gray-500">system stability</p>
-              </CardContent>
-            </Card>
+              </div>
+            </GlassCard>
           </div>
         )}
-        
-        {error && <div className="bg-red-500/20 text-red-300 p-3 rounded-md mb-6 text-center">Error: {error}</div>}
 
-        {/* Main Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Column 1: Story Feed */}
-          <div className="lg:col-span-1">
-            <Card className="bg-black/40 border-gray-700 h-[80vh]">
-                <CardHeader>
-                  <CardTitle className="text-white flex items-center gap-2">
-                      <BookOpen className="text-indigo-400"/>
-                      Narrative Feed
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <StoryFeed
-                        narratives={narratives}
-                        onSelectNarrative={handleSelectNarrative}
-                        selectedNarrativeId={selectedNarrative?.narrative_id}
-                        isLoading={isLoading}
+        {/* Control Panel */}
+        <GlassCard className="p-6">
+          <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+            <Settings className="h-6 w-6 text-yellow-400" />
+            Narrator Control Panel
+          </h2>
+          
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-400 mb-2">
+                Story Generation Frequency (seconds)
+              </label>
+              <select
+                value={narratorState.story_frequency}
+                onChange={(e) => updateSettings({ story_frequency: parseInt(e.target.value) })}
+                className="w-full bg-gray-800 text-white border border-gray-700 rounded px-3 py-2"
+              >
+                <option value={60}>1 minute</option>
+                <option value={300}>5 minutes</option>
+                <option value={600}>10 minutes</option>
+                <option value={1800}>30 minutes</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-400 mb-2">
+                Story Types
+              </label>
+              <div className="space-y-2">
+                {['BREAKING', 'ANALYSIS', 'PREDICTION', 'ALERT'].map(type => (
+                  <label key={type} className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      checked={narratorState.story_types.includes(type)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          updateSettings({ story_types: [...narratorState.story_types, type] });
+                        } else {
+                          updateSettings({ story_types: narratorState.story_types.filter(t => t !== type) });
+                        }
+                      }}
+                      className="rounded"
                     />
-                </CardContent>
-            </Card>
+                    <span className="text-sm text-white">{type}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <label className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  checked={narratorState.auto_generation}
+                  onChange={(e) => updateSettings({ auto_generation: e.target.checked })}
+                  className="rounded"
+                />
+                <span className="text-sm text-white">Auto Generation</span>
+              </label>
+              <label className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  checked={narratorState.sentiment_tracking}
+                  onChange={(e) => updateSettings({ sentiment_tracking: e.target.checked })}
+                  className="rounded"
+                />
+                <span className="text-sm text-white">Sentiment Tracking</span>
+              </label>
+              <label className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  checked={narratorState.influence_analysis}
+                  onChange={(e) => updateSettings({ influence_analysis: e.target.checked })}
+                  className="rounded"
+                />
+                <span className="text-sm text-white">Influence Analysis</span>
+              </label>
+            </div>
+
+            <div className="flex items-end">
+              <button
+                onClick={generateNewStory}
+                className="w-full px-4 py-2 bg-yellow-600 hover:bg-yellow-700 rounded-lg"
+              >
+                Generate New Story
+              </button>
+            </div>
+          </div>
+        </GlassCard>
+
+        {/* Main Content */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Story Feed */}
+          <div className="lg:col-span-2">
+            <GlassCard className="p-6">
+              <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+                <BookOpen className="h-6 w-6 text-cyan-400" />
+                Live Story Feed ({stories.length})
+              </h2>
+              
+              <div className="space-y-4 max-h-96 overflow-y-auto">
+                {stories.map((story) => (
+                  <motion.div
+                    key={story.id}
+                    className="p-4 bg-gray-800/50 rounded-lg border border-gray-700 hover:border-yellow-500/50 cursor-pointer transition-all"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    onClick={() => setSelectedStory(story)}
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <Badge className={getStoryTypeColor(story.story_type)}>
+                          {story.story_type}
+                        </Badge>
+                        <Badge className={getSentimentColor(story.sentiment)}>
+                          {story.sentiment}
+                        </Badge>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-bold text-yellow-400">{story.confidence.toFixed(0)}%</p>
+                        <p className="text-xs text-gray-400">Impact: {story.impact_score.toFixed(0)}</p>
+                      </div>
+                    </div>
+                    
+                    <h3 className="font-bold text-white mb-2">{story.title}</h3>
+                    <p className="text-sm text-gray-300 mb-3">{story.summary}</p>
+                    
+                    <div className="flex items-center justify-between">
+                      <div className="flex gap-2">
+                        {story.affected_symbols.map(symbol => (
+                          <Badge key={symbol} variant="outline" className="text-xs">
+                            {symbol}
+                          </Badge>
+                        ))}
+                      </div>
+                      <div className="flex items-center gap-4 text-xs text-gray-400">
+                        <div className="flex items-center gap-1">
+                          <Eye className="w-3 h-3" />
+                          <span>{story.engagement.views}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Clock className="w-3 h-3" />
+                          <span>{new Date(story.timestamp).toLocaleTimeString()}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+                
+                {stories.length === 0 && (
+                  <div className="text-center py-8">
+                    <MessageSquare className="w-12 h-12 mx-auto mb-4 text-gray-500" />
+                    <p className="text-gray-400">No stories generated yet</p>
+                    <p className="text-sm text-gray-500">AI narrator analyzing market patterns...</p>
+                  </div>
+                )}
+              </div>
+            </GlassCard>
           </div>
 
-          {/* Column 2: Details & Map */}
-          <div className="lg:col-span-2 space-y-6">
-            <StoryDetail narrative={selectedNarrative} />
-            <InfluenceMap symbol={selectedSymbolForMap} />
+          {/* Influence Map */}
+          <div>
+            <GlassCard className="p-6">
+              <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+                <Network className="h-6 w-6 text-purple-400" />
+                Market Influence Map
+              </h2>
+              
+              <div className="h-64 bg-gray-900/50 rounded-lg relative overflow-hidden">
+                {influenceNodes.map((node) => (
+                  <div
+                    key={node.id}
+                    className={`absolute w-12 h-12 rounded-full flex items-center justify-center text-xs font-bold cursor-pointer transition-all hover:scale-110 ${
+                      node.type === 'SYMBOL' ? 'bg-cyan-500/30 text-cyan-400 border-2 border-cyan-500' :
+                      node.type === 'EVENT' ? 'bg-yellow-500/30 text-yellow-400 border-2 border-yellow-500' :
+                      node.type === 'INDICATOR' ? 'bg-purple-500/30 text-purple-400 border-2 border-purple-500' :
+                      'bg-green-500/30 text-green-400 border-2 border-green-500'
+                    }`}
+                    style={{
+                      left: `${(node.position.x / 300) * 100}%`,
+                      top: `${(node.position.y / 250) * 100}%`,
+                      transform: 'translate(-50%, -50%)'
+                    }}
+                    title={`${node.name} - Influence: ${node.influence}%`}
+                  >
+                    {node.name.slice(0, 3)}
+                  </div>
+                ))}
+                
+                {/* Connection lines */}
+                <svg className="absolute inset-0 w-full h-full pointer-events-none">
+                  {influenceNodes.map((node) =>
+                    node.connections.map((connId) => {
+                      const connNode = influenceNodes.find(n => n.id === connId);
+                      if (!connNode) return null;
+                      return (
+                        <line
+                          key={`${node.id}-${connId}`}
+                          x1={`${(node.position.x / 300) * 100}%`}
+                          y1={`${(node.position.y / 250) * 100}%`}
+                          x2={`${(connNode.position.x / 300) * 100}%`}
+                          y2={`${(connNode.position.y / 250) * 100}%`}
+                          stroke="rgba(99, 102, 241, 0.3)"
+                          strokeWidth="2"
+                        />
+                      );
+                    })
+                  )}
+                </svg>
+              </div>
+              
+              <div className="mt-4 space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-400">Network Density</span>
+                  <span className="text-white">78%</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-400">Correlation Strength</span>
+                  <span className="text-cyan-400">High</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-400">Market Regime</span>
+                  <span className="text-yellow-400">Trending</span>
+                </div>
+              </div>
+            </GlassCard>
+          </div>
+        </div>
+
+        {/* Story Detail Modal */}
+        {selectedStory && (
+          <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-6">
+            <motion.div
+              className="bg-gray-900 rounded-xl p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold text-white">{selectedStory.title}</h2>
+                <button
+                  onClick={() => setSelectedStory(null)}
+                  className="text-gray-400 hover:text-white"
+                >
+                  ✕
+                </button>
+              </div>
+              
+              <div className="space-y-4">
+                <div className="flex gap-2">
+                  <Badge className={getStoryTypeColor(selectedStory.story_type)}>
+                    {selectedStory.story_type}
+                  </Badge>
+                  <Badge className={getSentimentColor(selectedStory.sentiment)}>
+                    {selectedStory.sentiment}
+                  </Badge>
+                  <Badge variant="outline">
+                    Confidence: {selectedStory.confidence.toFixed(0)}%
+                  </Badge>
+                </div>
+                
+                <p className="text-gray-300 leading-relaxed">{selectedStory.content}</p>
+                
+                <div>
+                  <h4 className="font-semibold text-white mb-2">Affected Symbols</h4>
+                  <div className="flex gap-2">
+                    {selectedStory.affected_symbols.map(symbol => (
+                      <Badge key={symbol} className="bg-cyan-500/20 text-cyan-400">
+                        {symbol}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+                
+                <div>
+                  <h4 className="font-semibold text-white mb-2">Correlations</h4>
+                  <div className="space-y-2">
+                    {selectedStory.correlations.map((corr, index) => (
+                      <div key={index} className="flex items-center justify-between p-2 bg-gray-800/50 rounded">
+                        <span className="text-white">{corr.symbol}</span>
+                        <span className="text-gray-400">{corr.impact}</span>
+                        <span className={`font-mono ${corr.correlation >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                          {corr.correlation >= 0 ? '+' : ''}{corr.correlation.toFixed(2)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                
+                <div className="flex items-center justify-between text-sm text-gray-400 pt-4 border-t border-gray-700">
+                  <span>By {selectedStory.author.replace('_', ' ')}</span>
+                  <span>{new Date(selectedStory.timestamp).toLocaleString()}</span>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+
+        {/* System Status */}
+        <div className="flex items-center justify-between text-sm text-gray-400">
+          <span>Last update: {lastUpdate.toLocaleTimeString()}</span>
+          <div className="flex items-center gap-2">
+            <div className={`w-2 h-2 rounded-full ${narratorState.is_active ? 'bg-yellow-400 animate-pulse' : 'bg-gray-400'}`} />
+            <span>Broadcasting to {narratorState.is_active ? 'all modules' : 'system'}</span>
           </div>
         </div>
       </div>

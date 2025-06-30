@@ -1,7 +1,4 @@
 {
-  "/not-found": "app/not-found.js",
   "/page": "app/page.js",
-  "/god-mode/page": "app/god-mode/page.js",
-  "/trading/page": "app/trading/page.js",
-  "/shadow/page": "app/shadow/page.js"
+  "/adaptive-trade-manager/page": "app/adaptive-trade-manager/page.js"
 }

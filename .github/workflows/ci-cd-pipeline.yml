@@ -1,0 +1,245 @@
+name: 🚀 AI Algo Trade - CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    - cron: '0 6 * * *'  # Daily at 6 AM UTC
+
+env:
+  PYTHON_VERSION: '3.11'
+  NODE_VERSION: '18'
+  DOCKER_REGISTRY: 'ghcr.io'
+  IMAGE_NAME: 'ai-algo-trade'
+
+jobs:
+  # 🧪 Backend Testing & Linting
+  backend-tests:
+    name: 🐍 Backend Tests & Quality
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        python-version: ['3.10', '3.11']
+    
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: ai_algo_trade_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      
+      redis:
+        image: redis:7
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+    
+    steps:
+    - name: 📥 Checkout Code
+      uses: actions/checkout@v4
+    
+    - name: 🐍 Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+        cache: 'pip'
+    
+    - name: 📦 Install Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r backend/requirements.txt
+        pip install pytest pytest-asyncio pytest-cov black flake8 mypy
+    
+    - name: 🔍 Code Quality Checks
+      run: |
+        # Black formatting check
+        black --check backend/
+        
+        # Flake8 linting
+        flake8 backend/ --max-line-length=100 --exclude=migrations,venv
+        
+        # MyPy type checking
+        mypy backend/ --ignore-missing-imports
+    
+    - name: 🧪 Run Backend Tests
+      env:
+        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/ai_algo_trade_test
+        REDIS_URL: redis://localhost:6379
+        MT5_DEMO_LOGIN: ${{ secrets.MT5_DEMO_LOGIN }}
+        MT5_DEMO_PASSWORD: ${{ secrets.MT5_DEMO_PASSWORD }}
+        MT5_DEMO_SERVER: ${{ secrets.MT5_DEMO_SERVER }}
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      run: |
+        cd backend
+        pytest tests/ -v --cov=. --cov-report=xml --cov-report=term-missing
+    
+    - name: 📊 Upload Coverage Reports
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./backend/coverage.xml
+        flags: backend
+        name: backend-coverage
+        fail_ci_if_error: false
+
+  # 🎨 Frontend Testing & Linting
+  frontend-tests:
+    name: ⚛️ Frontend Tests & Quality
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 📥 Checkout Code
+      uses: actions/checkout@v4
+    
+    - name: 🟢 Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: frontend/package-lock.json
+    
+    - name: 📦 Install Dependencies
+      run: |
+        cd frontend
+        npm ci
+    
+    - name: 🔍 ESLint & Type Checking
+      run: |
+        cd frontend
+        npm run lint
+        npm run type-check
+    
+    - name: 🧪 Run Frontend Tests
+      run: |
+        cd frontend
+        npm run test:ci
+    
+    - name: 🏗️ Build Frontend
+      run: |
+        cd frontend
+        npm run build
+    
+    - name: 📊 Upload Frontend Coverage
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./frontend/coverage/lcov.info
+        flags: frontend
+        name: frontend-coverage
+        fail_ci_if_error: false
+
+  # 🔒 Security Scanning
+  security-scan:
+    name: 🛡️ Security Analysis
+    runs-on: ubuntu-latest
+    needs: [backend-tests, frontend-tests]
+    
+    steps:
+    - name: 📥 Checkout Code
+      uses: actions/checkout@v4
+    
+    - name: 🔍 Run Trivy Security Scan
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'fs'
+        scan-ref: '.'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+    
+    - name: 📊 Upload Trivy Results
+      uses: github/codeql-action/upload-sarif@v2
+      with:
+        sarif_file: 'trivy-results.sarif'
+    
+    - name: 🔐 Python Security Scan
+      run: |
+        pip install bandit
+        bandit -r backend/ -f json -o bandit-report.json || true
+    
+    - name: 📦 Node.js Security Audit
+      run: |
+        cd frontend
+        npm audit --audit-level high
+
+  # 🐳 Docker Build & Push
+  docker-build:
+    name: 🐳 Docker Build & Push
+    runs-on: ubuntu-latest
+    needs: [backend-tests, frontend-tests, security-scan]
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
+    
+    outputs:
+      image-tag: ${{ steps.meta.outputs.tags }}
+      image-digest: ${{ steps.build.outputs.digest }}
+    
+    steps:
+    - name: 📥 Checkout Code
+      uses: actions/checkout@v4
+    
+    - name: 🔧 Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    
+    - name: 🔐 Login to Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.DOCKER_REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: 📝 Extract Metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.DOCKER_REGISTRY }}/${{ github.repository }}/${{ env.IMAGE_NAME }}
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=sha,prefix={{branch}}-
+          type=raw,value=latest,enable={{is_default_branch}}
+    
+    - name: 🏗️ Build Backend Docker Image
+      id: build
+      uses: docker/build-push-action@v5
+      with:
+        context: ./backend
+        file: ./backend/Dockerfile.backend
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        platforms: linux/amd64,linux/arm64
+
+  # 🔔 Jobs Summary
+  jobs-summary:
+    name: 📋 Jobs Summary
+    runs-on: ubuntu-latest
+    needs: [backend-tests, frontend-tests, security-scan, docker-build]
+    if: always()
+    
+    steps:
+    - name: 📊 Workflow Summary
+      run: |
+        echo "## 🚀 AI Algo Trade CI/CD Summary" >> $GITHUB_STEP_SUMMARY
+        echo "| Job | Status |" >> $GITHUB_STEP_SUMMARY
+        echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY
+        echo "| Backend Tests | ${{ needs.backend-tests.result }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Frontend Tests | ${{ needs.frontend-tests.result }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Security Scan | ${{ needs.security-scan.result }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Docker Build | ${{ needs.docker-build.result }} |" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Build Number:** ${{ github.run_number }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Branch:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY 

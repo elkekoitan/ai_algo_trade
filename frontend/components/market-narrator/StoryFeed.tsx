@@ -1,90 +1,93 @@
 'use client'
 import React from 'react'
 import { motion } from 'framer-motion'
-import { ScrollArea } from '@/components/ui/scroll-area'
-import { Badge } from '@/components/ui/badge'
-import { BookOpen } from 'lucide-react'
-import { MarketNarrative } from '@/lib/types/market-narrator'
+import { BookOpen, TrendingUp, TrendingDown, Clock, Feather } from 'lucide-react'
 
-interface StoryFeedProps {
-    narratives: MarketNarrative[];
-    onSelectNarrative: (narrative: MarketNarrative) => void;
-    selectedNarrativeId?: string;
-    isLoading: boolean;
+// Mock Type
+interface MarketStory {
+    story_id: string;
+    timestamp: string;
+    title: string;
+    narrative: string;
+    protagonist_asset: string;
+    sentiment: 'positive' | 'negative' | 'neutral';
+    key_takeaway: string;
 }
 
-const getConfidenceColor = (level: number) => {
-    if (level > 0.8) return 'border-green-400 text-green-300';
-    if (level > 0.6) return 'border-yellow-400 text-yellow-300';
-    return 'border-orange-400 text-orange-300';
-};
+interface StoryFeedProps {
+    stories: MarketStory[];
+    onStorySelect: (storyId: string) => void;
+}
 
-export function StoryFeed({ narratives, onSelectNarrative, selectedNarrativeId, isLoading }: StoryFeedProps) {
-    if (isLoading) {
-        return (
-            <div className="space-y-4">
-                {[...Array(5)].map((_, i) => (
-                    <div key={i} className="bg-gray-800/50 rounded-lg p-4 animate-pulse">
-                        <div className="h-4 bg-gray-700 rounded w-3/4 mb-2"></div>
-                        <div className="h-3 bg-gray-700 rounded w-full mb-3"></div>
-                        <div className="h-3 bg-gray-700 rounded w-1/2"></div>
-                    </div>
-                ))}
-            </div>
-        );
-    }
-
-    if (narratives.length === 0) {
-        return (
-            <div className="text-center text-gray-500 py-10">
-                <BookOpen size={48} className="mx-auto mb-4" />
-                <p>No narratives available.</p>
-                <p className="text-sm">Try generating a new one.</p>
-            </div>
-        );
-    }
+const StoryCard = ({ story, onSelect }: { story: MarketStory, onSelect: (id: string) => void }) => {
+    const sentimentColor = story.sentiment === 'positive' ? 'border-green-500/50' :
+                           story.sentiment === 'negative' ? 'border-red-500/50' :
+                           'border-gray-500/50';
+    const SentimentIcon = story.sentiment === 'positive' ? TrendingUp : TrendingDown;
 
     return (
-        <ScrollArea className="h-[calc(80vh-100px)]">
-            <div className="space-y-3 pr-4">
-                {narratives.map((narrative) => (
-                    <motion.div
-                        key={narrative.narrative_id}
-                        onClick={() => onSelectNarrative(narrative)}
-                        className={`p-4 rounded-lg border-2 transition-all duration-200 cursor-pointer ${
-                            selectedNarrativeId === narrative.narrative_id
-                                ? 'bg-indigo-500/30 border-indigo-400'
-                                : 'bg-black/30 border-transparent hover:border-indigo-500/50'
-                        }`}
-                        layout
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.3 }}
-                    >
-                        <div className="flex justify-between items-start mb-2">
-                            <p className="text-sm font-bold text-white">{narrative.title}</p>
-                            <Badge variant="outline" className={`text-xs ${getConfidenceColor(narrative.confidence_level)}`}>
-                                {(narrative.confidence_level * 100).toFixed(0)}%
-                            </Badge>
-                        </div>
-
-                        <p className="text-xs text-gray-400 mb-3">{narrative.summary}</p>
-                        
-                        <div className="flex items-center justify-between">
-                            <div className="flex gap-2">
-                                {narrative.protagonist_symbols.slice(0, 3).map((symbol) => (
-                                    <Badge key={symbol} variant="secondary" className="text-xs bg-gray-700 text-gray-300">
-                                        {symbol}
-                                    </Badge>
-                                ))}
-                            </div>
-                            <span className="text-xs text-gray-500">
-                                {new Date(narrative.timestamp).toLocaleTimeString()}
-                            </span>
-                        </div>
-                    </motion.div>
-                ))}
+        <motion.div
+            layout
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -30 }}
+            whileHover={{ y: -5, boxShadow: '0 10px 20px rgba(0, 255, 255, 0.1)' }}
+            onClick={() => onSelect(story.story_id)}
+            className={`bg-gray-900/50 rounded-2xl p-6 border ${sentimentColor}
+                        backdrop-blur-lg cursor-pointer overflow-hidden`}
+        >
+            <div className="flex justify-between items-start mb-3">
+                <div className="flex items-center gap-3">
+                    <div className={`w-10 h-10 flex items-center justify-center rounded-full bg-gray-800`}>
+                        <Feather className="w-5 h-5 text-cyan-400" />
+                    </div>
+                    <div>
+                        <h3 className="text-lg font-bold text-white">{story.title}</h3>
+                        <p className="text-sm text-gray-400">
+                            Focus: <span className="font-semibold text-cyan-400">{story.protagonist_asset}</span>
+                        </p>
+                    </div>
+                </div>
+                <div className={`flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-gray-800`}>
+                    <SentimentIcon className={`w-4 h-4 ${story.sentiment === 'positive' ? 'text-green-400' : 'text-red-400'}`} />
+                    <span className="text-gray-300">{story.sentiment.toUpperCase()}</span>
+                </div>
             </div>
-        </ScrollArea>
-    );
+
+            <p className="text-gray-300 text-sm mb-4 leading-relaxed">
+                {story.narrative.substring(0, 150)}...
+            </p>
+            
+            <div className="bg-cyan-900/50 border-t border-cyan-500/20 p-3 -m-6 mt-4">
+                 <p className="text-sm text-cyan-300 font-semibold">
+                    Key Takeaway: <span className="font-normal text-gray-200">{story.key_takeaway}</span>
+                </p>
+            </div>
+
+             <div className="absolute bottom-2 right-4 text-xs text-gray-600 flex items-center gap-1">
+                <Clock className="w-3 h-3"/>
+                <span>{new Date(story.timestamp).toLocaleTimeString()}</span>
+            </div>
+        </motion.div>
+    )
+}
+
+export default function StoryFeed({ stories, onStorySelect }: StoryFeedProps) {
+  if (stories.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center h-96 bg-gray-900/50 rounded-2xl border border-dashed border-gray-700">
+        <BookOpen className="w-16 h-16 text-gray-600 mb-4" />
+        <h3 className="text-2xl font-semibold text-gray-400">No Market Stories Available</h3>
+        <p className="text-gray-500">The AI Narrator is analyzing the markets. Stories will appear here shortly.</p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-6">
+        {stories.map(story => (
+            <StoryCard key={story.story_id} story={story} onSelect={onStorySelect} />
+        ))}
+    </div>
+  )
 } 
