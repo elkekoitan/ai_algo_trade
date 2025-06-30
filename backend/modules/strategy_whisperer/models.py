@@ -9,8 +9,11 @@ from pydantic import BaseModel, Field
 
 
 class Language(str, Enum):
-    TURKISH = "tr"
-    ENGLISH = "en"
+    TURKISH = "turkish"
+    ENGLISH = "english"
+    GERMAN = "german"
+    FRENCH = "french"
+    SPANISH = "spanish"
 
 
 class StrategyType(str, Enum):
@@ -61,6 +64,49 @@ class IndicatorType(str, Enum):
     ICHIMOKU = "ICHIMOKU"
     FIBONACCI = "FIBONACCI"
     PIVOT = "PIVOT"
+
+
+class RiskLevel(str, Enum):
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+    VERY_HIGH = "very_high"
+
+
+class StrategyRequest(BaseModel):
+    description: str
+    language: Language = Language.TURKISH
+    preferred_timeframe: Optional[str] = "H1"
+    risk_tolerance: RiskLevel = RiskLevel.MEDIUM
+    max_trades_per_day: Optional[int] = None
+
+
+class StrategyResponse(BaseModel):
+    strategy_id: str
+    name: str
+    description: str
+    mql5_code: str
+    parameters: Dict[str, Any]
+    risk_level: RiskLevel
+    complexity_score: float
+    estimated_performance: Dict[str, float]
+    warnings: List[str] = []
+    suggestions: List[str] = []
+    created_at: datetime
+
+
+class StrategyMetrics(BaseModel):
+    strategy_id: str
+    total_trades: int
+    winning_trades: int
+    losing_trades: int
+    win_rate: float
+    profit_factor: float
+    max_drawdown: float
+    total_return: float
+    sharpe_ratio: float
+    sortino_ratio: float
+    last_updated: datetime
 
 
 class StrategyIntent(BaseModel):
@@ -278,4 +324,125 @@ class ConversationContext(BaseModel):
     
     # Timestamps
     started_at: datetime = Field(default_factory=datetime.now)
-    last_activity: datetime = Field(default_factory=datetime.now) 
+    last_activity: datetime = Field(default_factory=datetime.now)
+
+
+class StrategyRequest(BaseModel):
+    description: str
+    language: Language = Language.TURKISH
+    preferred_timeframe: Optional[str] = "H1"
+    risk_tolerance: RiskLevel = RiskLevel.MEDIUM
+    max_trades_per_day: Optional[int] = None
+
+
+class StrategyResponse(BaseModel):
+    strategy_id: str
+    name: str
+    description: str
+    mql5_code: str
+    parameters: Dict[str, Any]
+    risk_level: RiskLevel
+    complexity_score: float
+    estimated_performance: Dict[str, float]
+    warnings: List[str] = []
+    suggestions: List[str] = []
+    created_at: datetime
+
+
+class StrategyMetrics(BaseModel):
+    strategy_id: str
+    total_trades: int
+    winning_trades: int
+    losing_trades: int
+    win_rate: float
+    profit_factor: float
+    max_drawdown: float
+    total_return: float
+    sharpe_ratio: float
+    sortino_ratio: float
+    last_updated: datetime
+
+
+class BacktestRequest(BaseModel):
+    mql5_code: str
+    symbol: str = "EURUSD"
+    timeframe: str = "H1"
+    start_date: datetime
+    end_date: datetime
+    initial_balance: float = 10000.0
+
+
+class BacktestResult(BaseModel):
+    success: bool
+    total_trades: int
+    winning_trades: int
+    losing_trades: int
+    total_profit: float
+    max_drawdown: float
+    profit_factor: float
+    sharpe_ratio: float
+    equity_curve: List[Dict[str, Any]]
+    detailed_trades: List[Dict[str, Any]]
+    generated_at: datetime
+
+
+class DeploymentRequest(BaseModel):
+    strategy_code: str
+    symbol: str = "EURUSD"
+    lot_size: float = 0.1
+    magic_number: Optional[int] = None
+
+
+class DeploymentResult(BaseModel):
+    success: bool
+    deployment_id: str
+    message: str
+    expert_advisor_path: Optional[str] = None
+    deployed_at: datetime
+
+
+class CodeSection(BaseModel):
+    section_name: str
+    code: str
+    description: str
+
+
+class MQL5Code(BaseModel):
+    code: str
+    sections: List[CodeSection] = []
+    warnings: List[str] = []
+    suggestions: List[str] = []
+    estimated_complexity: float = 0.5
+
+
+# Legacy models for backward compatibility
+class StrategyIntent(BaseModel):
+    intent_type: str
+    confidence: float
+    clarifications_needed: List[str] = []
+    parameters: Dict[str, Any] = {}
+
+
+class StrategyParameters(BaseModel):
+    name: str
+    description: str
+    timeframe: str = "H1"
+    risk_level: RiskLevel = RiskLevel.MEDIUM
+    parameters: Dict[str, Any] = {}
+    complexity_score: float = 0.5
+    estimated_performance: Dict[str, float] = {}
+
+
+class DeploymentStatus(BaseModel):
+    deployment_id: str
+    status: str
+    message: str
+    deployed_at: Optional[datetime] = None
+
+
+class ConversationContext(BaseModel):
+    conversation_id: str
+    state: str = "listening"
+    current_intent: Optional[StrategyIntent] = None
+    current_parameters: Optional[StrategyParameters] = None
+    messages: List[Dict[str, Any]] = [] 

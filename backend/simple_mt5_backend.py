@@ -20,8 +20,11 @@ import json
 from modules.mt5_integration.service import MT5Service
 from modules.mt5_integration.config import MT5_LOGIN, MT5_PASSWORD, MT5_SERVER
 
-# Shadow Mode import
+# Module imports
 from api.v1.shadow_mode import router as shadow_mode_router
+from api.v1.market_narrator import router as market_narrator_router
+from api.v1.adaptive_trade_manager import router as atm_router
+from api.v1.strategy_whisperer import router as strategy_whisperer_router
 
 # Logging
 logging.basicConfig(level=logging.INFO)
@@ -59,6 +62,9 @@ app.add_middleware(
 
 # Include routers
 app.include_router(shadow_mode_router, prefix="/api/v1")
+app.include_router(market_narrator_router, prefix="/api/v1")
+app.include_router(atm_router, prefix="/api/v1")
+app.include_router(strategy_whisperer_router, prefix="/api/v1")
 
 # Dependency
 def get_mt5_service() -> MT5Service:
