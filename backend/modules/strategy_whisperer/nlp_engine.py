@@ -7,10 +7,7 @@ import re
 import json
 from typing import Dict, List, Optional, Tuple, Any
 from datetime import datetime
-import openai
-from langchain.chat_models import ChatOpenAI
-from langchain.prompts import ChatPromptTemplate
-from langchain.output_parsers import PydanticOutputParser
+import google.generativeai as genai
 
 from backend.core.logger import setup_logger
 from .models import (
@@ -25,18 +22,14 @@ class NLPEngine:
     """Natural language processing for strategy creation"""
     
     def __init__(self):
-        self.api_key = os.getenv("OPENAI_API_KEY", "")
+        self.api_key = os.getenv("GEMINI_API_KEY", "AIzaSyA_I6AtQI7xLjFBgLDkBpANfc8DNBPFIuo")
         if not self.api_key:
-            logger.warning("OpenAI API key not found. Using mock mode.")
+            logger.warning("Gemini API key not found. Using mock mode.")
             self.mock_mode = True
         else:
             self.mock_mode = False
-            openai.api_key = self.api_key
-            self.llm = ChatOpenAI(
-                model="gpt-4",
-                temperature=0.3,
-                openai_api_key=self.api_key
-            )
+            genai.configure(api_key=self.api_key)
+            self.model = genai.GenerativeModel('gemini-1.5-flash')
         
         # Financial terms dictionary
         self.financial_terms = self._load_financial_terms()
@@ -103,10 +96,19 @@ class NLPEngine:
             if self.mock_mode:
                 return self._mock_process_input(text, language)
             
+            # Use Gemini for enhanced analysis
+            enhanced_analysis = await self._gemini_analyze_intent(text)
+            
             # Detect intent and extract entities
             intent_type = self._detect_strategy_type(text)
             entities = self._extract_entities(text)
             confidence = self._calculate_confidence(text, entities)
+            
+            # Enhance with Gemini insights
+            if enhanced_analysis:
+                confidence = max(confidence, enhanced_analysis.get("confidence", confidence))
+                if enhanced_analysis.get("strategy_type"):
+                    intent_type = StrategyType(enhanced_analysis["strategy_type"])
             
             # Check what clarifications are needed
             clarifications = self._check_clarifications_needed(entities)
@@ -122,7 +124,47 @@ class NLPEngine:
             
         except Exception as e:
             logger.error(f"Error processing input: {str(e)}")
-            raise
+            # Fallback to mock mode on error
+            return self._mock_process_input(text, language)
+    
+    async def _gemini_analyze_intent(self, text: str) -> Optional[Dict]:
+        """Use Gemini to analyze trading strategy intent"""
+        try:
+            prompt = f"""
+            Analyze this trading strategy description and extract information:
+            
+            Text: "{text}"
+            
+            Please identify:
+            1. Strategy type (trend_following, mean_reversion, breakout, scalping)
+            2. Technical indicators mentioned
+            3. Timeframe
+            4. Confidence level (0-1)
+            5. Trading conditions
+            
+            Respond in JSON format:
+            {{
+                "strategy_type": "trend_following",
+                "indicators": ["RSI", "MACD"],
+                "timeframe": "H1",
+                "confidence": 0.85,
+                "conditions": ["above", "crosses_above"]
+            }}
+            """
+            
+            response = self.model.generate_content(prompt)
+            
+            # Try to parse JSON response
+            try:
+                result = json.loads(response.text.strip())
+                return result
+            except json.JSONDecodeError:
+                logger.warning("Could not parse Gemini response as JSON")
+                return None
+                
+        except Exception as e:
+            logger.error(f"Gemini analysis error: {str(e)}")
+            return None
     
     def _detect_strategy_type(self, text: str) -> Optional[StrategyType]:
         """Detect strategy type from text"""
@@ -264,30 +306,50 @@ class NLPEngine:
             raise
     
     async def generate_strategy_description(self, intent: StrategyIntent) -> str:
-        """Generate human-readable strategy description"""
+        """Generate human-readable strategy description using Gemini"""
         try:
-            indicators = intent.entities.get("indicators", [])
-            timeframe = intent.entities.get("timeframe", "H1")
-            conditions = intent.entities.get("conditions", [])
+            if self.mock_mode:
+                return self._generate_mock_description(intent)
             
-            description = f"Bu strateji {timeframe} zaman diliminde "
+            # Use Gemini to generate better descriptions
+            prompt = f"""
+            Create a clear, professional trading strategy description in Turkish based on:
             
-            if indicators:
-                description += f"{', '.join(indicators)} göstergelerini kullanarak "
+            Strategy Type: {intent.detected_type}
+            Indicators: {intent.entities.get('indicators', [])}
+            Timeframe: {intent.entities.get('timeframe', 'H1')}
+            Conditions: {intent.entities.get('conditions', [])}
             
-            if intent.detected_type:
-                type_names = {
-                    StrategyType.TREND_FOLLOWING: "trend takip",
-                    StrategyType.MEAN_REVERSION: "ortalamaya dönüş",
-                    StrategyType.BREAKOUT: "kırılım",
-                    StrategyType.SCALPING: "scalping"
-                }
-                description += f"{type_names.get(intent.detected_type, 'özel')} yaklaşımı ile "
+            Make it concise, professional, and explain the trading logic clearly.
+            """
             
-            description += "işlem yapar."
-            
-            return description
+            response = self.model.generate_content(prompt)
+            return response.text.strip()
             
         except Exception as e:
-            logger.error(f"Error generating description: {str(e)}")
-            return "Strateji açıklaması oluşturulamadı." 
+            logger.error(f"Error generating description with Gemini: {str(e)}")
+            return self._generate_mock_description(intent)
+    
+    def _generate_mock_description(self, intent: StrategyIntent) -> str:
+        """Fallback description generation"""
+        indicators = intent.entities.get("indicators", [])
+        timeframe = intent.entities.get("timeframe", "H1")
+        conditions = intent.entities.get("conditions", [])
+        
+        description = f"Bu strateji {timeframe} zaman diliminde "
+        
+        if indicators:
+            description += f"{', '.join(indicators)} göstergelerini kullanarak "
+        
+        if intent.detected_type:
+            type_names = {
+                StrategyType.TREND_FOLLOWING: "trend takip",
+                StrategyType.MEAN_REVERSION: "ortalamaya dönüş",
+                StrategyType.BREAKOUT: "kırılım",
+                StrategyType.SCALPING: "scalping"
+            }
+            description += f"{type_names.get(intent.detected_type, 'özel')} yaklaşımı ile "
+        
+        description += "işlem yapar."
+        
+        return description 

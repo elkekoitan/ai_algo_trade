@@ -15,25 +15,38 @@ from backend.modules.shadow_mode.models import (
     StealthOrder, ShadowAnalytics, WhaleAlert, ShadowModeStatus
 )
 from backend.modules.mt5_integration.service import MT5Service
+from backend.modules.mt5_integration.config import MT5_LOGIN, MT5_PASSWORD, MT5_SERVER
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/shadow-mode", tags=["Shadow Mode"])
 
-# Dependency to get Shadow Mode service
-async def get_shadow_service():
-    from ...modules.mt5_integration.service import MT5Service
-    from ...modules.mt5_integration.config import MT5_LOGIN, MT5_PASSWORD, MT5_SERVER
+# Global shadow service instance
+_shadow_service_instance = None
+
+def get_shadow_service() -> ShadowModeService:
+    """Get Shadow Mode service instance"""
+    global _shadow_service_instance
     
-    mt5_service = MT5Service(
-        login=MT5_LOGIN,
-        password=MT5_PASSWORD,
-        server=MT5_SERVER
-    )
-    return ShadowModeService(mt5_service)
+    if _shadow_service_instance is None:
+        try:
+            mt5_service = MT5Service(
+                login=MT5_LOGIN,
+                password=MT5_PASSWORD,
+                server=MT5_SERVER
+            )
+            _shadow_service_instance = ShadowModeService(mt5_service)
+        except Exception as e:
+            logger.error(f"Failed to initialize Shadow Mode service: {e}")
+            raise HTTPException(
+                status_code=500, 
+                detail=f"Shadow Mode service initialization failed: {str(e)}"
+            )
+    
+    return _shadow_service_instance
 
 @router.post("/activate")
-async def activate_shadow_mode(stealth_level: int = 5) -> Dict:
+async def activate_shadow_mode(stealth_level: int = 5, shadow_service: ShadowModeService = Depends(get_shadow_service)) -> Dict:
     """
     🥷 Shadow Mode'u aktifleştir
     
@@ -58,7 +71,7 @@ async def activate_shadow_mode(stealth_level: int = 5) -> Dict:
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/deactivate")
-async def deactivate_shadow_mode() -> Dict:
+async def deactivate_shadow_mode(shadow_service: ShadowModeService = Depends(get_shadow_service)) -> Dict:
     """
     🛑 Shadow Mode'u deaktifleştir
     """
@@ -88,7 +101,7 @@ async def get_shadow_mode_status(
         raise HTTPException(status_code=500, detail=f"Error getting shadow status: {str(e)}")
 
 @router.get("/alerts")
-async def get_recent_alerts() -> List[Dict]:
+async def get_recent_alerts(shadow_service: ShadowModeService = Depends(get_shadow_service)) -> List[Dict]:
     """
     🚨 Son Shadow Mode alertlerini getir
     """

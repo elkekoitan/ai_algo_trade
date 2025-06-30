@@ -1,37 +1,43 @@
 'use client'
-import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+
+import { useState, useEffect } from 'react'
+import { motion } from 'framer-motion'
 import { 
-  MessageSquare, 
   BookOpen, 
   TrendingUp, 
-  TrendingDown, 
-  Activity, 
-  Brain,
-  Network,
-  Zap,
-  Eye,
-  Target,
+  Users, 
+  Zap, 
+  Search,
+  Filter,
   RefreshCw,
+  BarChart3,
+  Globe,
+  Newspaper,
+  AlertCircle,
+  MessageSquare,
   Settings,
   Play,
   Pause,
-  Heart,
-  Share,
+  Eye,
   Clock,
-  BarChart3,
-  Globe,
-  Users
+  Network
 } from 'lucide-react'
-import QuantumLayout from '@/components/layout/QuantumLayout';
-import StoryFeed from '@/components/market-narrator/StoryFeed';
-import InfluenceMap from '@/components/market-narrator/InfluenceMap';
-import StoryDetail from '@/components/market-narrator/StoryDetail';
-import ParticleBackground from '@/components/quantum/ParticleBackground';
-import GlassCard from '@/components/quantum/GlassCard';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { systemEvents } from '@/lib/system-events';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Badge } from '@/components/ui/badge'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Progress } from '@/components/ui/progress'
+import QuantumLayout from '@/components/layout/QuantumLayout'
+import ParticleBackground from '@/components/quantum/ParticleBackground'
+import GlassCard from '@/components/quantum/GlassCard'
+
+// Market Narrator components
+import StoryFeed from '@/components/market-narrator/StoryFeed'
+import InfluenceMap from '@/components/market-narrator/InfluenceMap'
+import StoryDetail from '@/components/market-narrator/StoryDetail'
+import { systemEvents } from '@/lib/system-events'
 
 interface MarketStory {
   id: string;
@@ -606,112 +612,4 @@ export default function MarketNarratorPage() {
                           key={`${node.id}-${connId}`}
                           x1={`${(node.position.x / 300) * 100}%`}
                           y1={`${(node.position.y / 250) * 100}%`}
-                          x2={`${(connNode.position.x / 300) * 100}%`}
-                          y2={`${(connNode.position.y / 250) * 100}%`}
-                          stroke="rgba(99, 102, 241, 0.3)"
-                          strokeWidth="2"
-                        />
-                      );
-                    })
-                  )}
-                </svg>
-              </div>
-              
-              <div className="mt-4 space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-400">Network Density</span>
-                  <span className="text-white">78%</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-400">Correlation Strength</span>
-                  <span className="text-cyan-400">High</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-400">Market Regime</span>
-                  <span className="text-yellow-400">Trending</span>
-                </div>
-              </div>
-            </GlassCard>
-          </div>
-        </div>
-
-        {/* Story Detail Modal */}
-        {selectedStory && (
-          <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-6">
-            <motion.div
-              className="bg-gray-900 rounded-xl p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto"
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-            >
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-bold text-white">{selectedStory.title}</h2>
-                <button
-                  onClick={() => setSelectedStory(null)}
-                  className="text-gray-400 hover:text-white"
-                >
-                  ✕
-                </button>
-              </div>
-              
-              <div className="space-y-4">
-                <div className="flex gap-2">
-                  <Badge className={getStoryTypeColor(selectedStory.story_type)}>
-                    {selectedStory.story_type}
-                  </Badge>
-                  <Badge className={getSentimentColor(selectedStory.sentiment)}>
-                    {selectedStory.sentiment}
-                  </Badge>
-                  <Badge variant="outline">
-                    Confidence: {selectedStory.confidence.toFixed(0)}%
-                  </Badge>
-                </div>
-                
-                <p className="text-gray-300 leading-relaxed">{selectedStory.content}</p>
-                
-                <div>
-                  <h4 className="font-semibold text-white mb-2">Affected Symbols</h4>
-                  <div className="flex gap-2">
-                    {selectedStory.affected_symbols.map(symbol => (
-                      <Badge key={symbol} className="bg-cyan-500/20 text-cyan-400">
-                        {symbol}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-                
-                <div>
-                  <h4 className="font-semibold text-white mb-2">Correlations</h4>
-                  <div className="space-y-2">
-                    {selectedStory.correlations.map((corr, index) => (
-                      <div key={index} className="flex items-center justify-between p-2 bg-gray-800/50 rounded">
-                        <span className="text-white">{corr.symbol}</span>
-                        <span className="text-gray-400">{corr.impact}</span>
-                        <span className={`font-mono ${corr.correlation >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                          {corr.correlation >= 0 ? '+' : ''}{corr.correlation.toFixed(2)}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                
-                <div className="flex items-center justify-between text-sm text-gray-400 pt-4 border-t border-gray-700">
-                  <span>By {selectedStory.author.replace('_', ' ')}</span>
-                  <span>{new Date(selectedStory.timestamp).toLocaleString()}</span>
-                </div>
-              </div>
-            </motion.div>
-          </div>
-        )}
-
-        {/* System Status */}
-        <div className="flex items-center justify-between text-sm text-gray-400">
-          <span>Last update: {lastUpdate.toLocaleTimeString()}</span>
-          <div className="flex items-center gap-2">
-            <div className={`w-2 h-2 rounded-full ${narratorState.is_active ? 'bg-yellow-400 animate-pulse' : 'bg-gray-400'}`} />
-            <span>Broadcasting to {narratorState.is_active ? 'all modules' : 'system'}</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-} 
+                          x2={`

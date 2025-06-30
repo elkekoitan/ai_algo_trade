@@ -1,149 +1,331 @@
 """
-AI Story Generator for the Market Narrator
-
-The AI core that weaves data into compelling market narratives.
+AI-powered market story generation using Gemini
 """
+
 import os
-from typing import List, Dict, Any, Optional
+import json
+from typing import Dict, List, Optional, Any
+from datetime import datetime, timedelta
+import google.generativeai as genai
 
 from backend.core.logger import setup_logger
-from .models import MarketEvent, MarketStory, Sentiment, CausalityLink
-from openai import AsyncOpenAI
+from .models import MarketStory, NewsEvent, StoryType, InfluenceLevel
 
 logger = setup_logger(__name__)
 
-class StoryGenerator:
-    def __init__(self):
-        self.api_key = os.getenv("OPENAI_API_KEY")
-        if not self.api_key:
-            logger.warning("OpenAI API key not found. Story Generator will use template-based fallbacks.")
-            self.client = None
-        else:
-            self.client = AsyncOpenAI(api_key=self.api_key)
 
-    async def generate_story(self, events: List[MarketEvent], correlations: Dict[str, Any]) -> Optional[MarketStory]:
-        """
-        Takes market events and correlations and generates a single, coherent story.
-        """
-        if not events:
+class StoryGenerator:
+    """Generate market narratives using Gemini AI"""
+    
+    def __init__(self):
+        self.api_key = os.getenv("GEMINI_API_KEY", "AIzaSyA_I6AtQI7xLjFBgLDkBpANfc8DNBPFIuo")
+        if not self.api_key:
+            logger.warning("Gemini API key not found. Using mock mode.")
+            self.mock_mode = True
+        else:
+            self.mock_mode = False
+            genai.configure(api_key=self.api_key)
+            self.model = genai.GenerativeModel('gemini-1.5-flash')
+        
+        # Story templates for fallback
+        self.story_templates = self._load_story_templates()
+    
+    def _load_story_templates(self) -> Dict[str, str]:
+        """Load story templates for different market scenarios"""
+        return {
+            "whale_activity": """
+            🐋 **Büyük Oyuncu Aktivitesi Tespit Edildi**
+            
+            {symbol} paritesinde {volume:,.0f} USD büyüklüğünde bir {order_type} pozisyonu tespit edildi.
+            
+            📊 **Analiz Detayları:**
+            - Whale Boyutu: {whale_size}
+            - Impact Score: {impact_score}/10
+            - Güven Seviyesi: %{confidence:.1f}
+            
+            💡 **Değerlendirme:** {evaluation}
+            """,
+            "technical_analysis": """
+            📈 **Teknik Analiz Güncellemesi**
+            
+            {symbol} için güncellenen teknik göstergeler:
+            
+            📋 **Gösterge Durumu:**
+            - RSI: {rsi_value}
+            - MACD: {macd_status}
+            - Trend: {trend_direction}
+            
+            🎯 **Öneriler:** {recommendations}
+            """,
+            "market_sentiment": """
+            🌡️ **Piyasa Duygusu Analizi**
+            
+            {symbol} için güncel sentiment analizi:
+            
+            📊 **Sentiment Metrikleri:**
+            - Genel Duygu: {sentiment_score}
+            - Sosyal Medya: {social_sentiment}
+            - Haber Etkisi: {news_impact}
+            
+            📝 **Özet:** {summary}
+            """
+        }
+    
+    async def generate_story(
+        self,
+        story_type: StoryType,
+        symbol: str,
+        data: Dict[str, Any],
+        language: str = "turkish"
+    ) -> MarketStory:
+        """Generate a market story using Gemini AI"""
+        try:
+            if self.mock_mode:
+                return self._generate_mock_story(story_type, symbol, data)
+            
+            # Generate story with Gemini
+            story_content = await self._generate_with_gemini(story_type, symbol, data, language)
+            
+            if story_content:
+                return self._create_story_object(story_type, symbol, story_content, data)
+            else:
+                # Fallback to template
+                return self._generate_template_story(story_type, symbol, data)
+                
+        except Exception as e:
+            logger.error(f"Error generating story: {str(e)}")
+            return self._generate_template_story(story_type, symbol, data)
+    
+    async def _generate_with_gemini(
+        self,
+        story_type: StoryType,
+        symbol: str,
+        data: Dict[str, Any],
+        language: str
+    ) -> Optional[str]:
+        """Use Gemini to generate market story"""
+        try:
+            # Prepare context based on story type
+            context = self._prepare_context(story_type, symbol, data)
+            
+            prompt = f"""
+            Create a professional market analysis story in {language} based on the following information:
+            
+            Story Type: {story_type}
+            Symbol: {symbol}
+            Context: {context}
+            
+            Requirements:
+            1. Write in {language} language
+            2. Use professional financial terminology
+            3. Include specific data points and metrics
+            4. Provide actionable insights
+            5. Keep it concise but informative (200-300 words)
+            6. Use appropriate emojis for visual appeal
+            7. Structure with clear sections (Analysis, Data, Recommendations)
+            
+            Make the story engaging and informative for traders and investors.
+            """
+            
+            response = self.model.generate_content(prompt)
+            return response.text.strip()
+            
+        except Exception as e:
+            logger.error(f"Gemini story generation error: {str(e)}")
             return None
 
-        # Identify the most important event to be the "protagonist"
-        main_event = max(events, key=lambda e: self._calculate_event_importance(e))
-        
-        # Use AI to generate the narrative if available
-        if self.client:
-            try:
-                return await self._generate_story_with_ai(main_event, events, correlations)
-            except Exception as e:
-                logger.error(f"AI story generation failed: {e}. Falling back to template.")
-                return self._generate_story_with_template(main_event, events, correlations)
+    def _prepare_context(self, story_type: StoryType, symbol: str, data: Dict[str, Any]) -> str:
+        """Prepare context string for Gemini prompt"""
+        if story_type == StoryType.WHALE_ACTIVITY:
+            return f"""
+            Whale Detection Data:
+            - Volume: ${data.get('volume', 0):,.0f}
+            - Order Type: {data.get('order_type', 'Unknown')}
+            - Whale Size: {data.get('whale_size', 'Unknown')}
+            - Impact Score: {data.get('impact_score', 0)}/10
+            - Confidence: {data.get('confidence', 0):.1%}
+            - Price Level: {data.get('price_level', 'N/A')}
+            """
+        elif story_type == StoryType.TECHNICAL_ANALYSIS:
+            return f"""
+            Technical Indicators:
+            - RSI: {data.get('rsi', 'N/A')}
+            - MACD: {data.get('macd', 'N/A')}
+            - Moving Averages: {data.get('ma_status', 'N/A')}
+            - Trend Direction: {data.get('trend', 'Unknown')}
+            - Support/Resistance: {data.get('levels', 'N/A')}
+            """
+        elif story_type == StoryType.MARKET_SENTIMENT:
+            return f"""
+            Sentiment Analysis:
+            - Overall Sentiment: {data.get('sentiment_score', 'Neutral')}
+            - Social Media Buzz: {data.get('social_sentiment', 'N/A')}
+            - News Impact: {data.get('news_impact', 'N/A')}
+            - Institutional Flow: {data.get('institutional_flow', 'N/A')}
+            """
         else:
-            return self._generate_story_with_template(main_event, events, correlations)
-
-    def _calculate_event_importance(self, event: MarketEvent) -> int:
-        """Calculates a simple importance score for an event."""
-        # This can be made more sophisticated
-        importance = 1
-        if event.event_type == "Economic Data": importance += 3
-        if event.event_type == "Central Bank": importance += 5
-        if abs(event.sentiment_score) > 0.7: importance += 2
-        return importance
-
-    def _generate_story_with_template(self, main_event: MarketEvent, all_events: List[MarketEvent], correlations: Dict[str, Any]) -> MarketStory:
-        """Generates a story using a simple template system."""
-        logger.info(f"Generating story for '{main_event.headline}' using templates.")
+            return json.dumps(data, indent=2)
+    
+    def _generate_template_story(
+        self,
+        story_type: StoryType,
+        symbol: str,
+        data: Dict[str, Any]
+    ) -> MarketStory:
+        """Generate story using templates (fallback)"""
+        try:
+            if story_type == StoryType.WHALE_ACTIVITY:
+                template = self.story_templates["whale_activity"]
+                content = template.format(
+                    symbol=symbol,
+                    volume=data.get('volume', 0),
+                    order_type=data.get('order_type', 'UNKNOWN'),
+                    whale_size=data.get('whale_size', 'UNKNOWN'),
+                    impact_score=data.get('impact_score', 0),
+                    confidence=data.get('confidence', 0) * 100,
+                    evaluation=self._generate_evaluation(data)
+                )
+            elif story_type == StoryType.TECHNICAL_ANALYSIS:
+                template = self.story_templates["technical_analysis"]
+                content = template.format(
+                    symbol=symbol,
+                    rsi_value=data.get('rsi', 'N/A'),
+                    macd_status=data.get('macd', 'N/A'),
+                    trend_direction=data.get('trend', 'SIDEWAYS'),
+                    recommendations=self._generate_tech_recommendations(data)
+                )
+            else:
+                template = self.story_templates["market_sentiment"]
+                content = template.format(
+                    symbol=symbol,
+                    sentiment_score=data.get('sentiment_score', 'NEUTRAL'),
+                    social_sentiment=data.get('social_sentiment', 'N/A'),
+                    news_impact=data.get('news_impact', 'LOW'),
+                    summary=self._generate_sentiment_summary(data)
+                )
+            
+            return self._create_story_object(story_type, symbol, content, data)
+            
+        except Exception as e:
+            logger.error(f"Template story generation error: {str(e)}")
+            raise
+    
+    def _generate_mock_story(
+        self,
+        story_type: StoryType,
+        symbol: str,
+        data: Dict[str, Any]
+    ) -> MarketStory:
+        """Generate mock story for testing"""
+        mock_content = f"""
+        🤖 **Mock Story - {story_type.value}**
         
-        protagonist = main_event.symbol
-        title = f"Market Focus: {protagonist} Jolted by {main_event.event_type}"
+        Bu {symbol} için otomatik oluşturulan test hikayesidir.
         
-        # Build narrative
-        narrative = f"{main_event.summary} This event appears to be the main driver in today's session for {protagonist}.\n\n"
+        📊 **Test Verileri:**
+        - Story Type: {story_type.value}
+        - Symbol: {symbol}
+        - Generated At: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
         
-        # Add secondary event effects
-        causal_links = []
-        for event in all_events:
-            if event.event_id == main_event.event_id:
-                continue
-            narrative += f"Meanwhile, the {event.event_type} event, '{event.headline}', contributed to the overall market sentiment. "
-            link = CausalityLink(
-                source_event_id=main_event.event_id,
-                target_event_id=event.event_id,
-                description=f"likely influenced by",
-                strength=0.6
-            )
-            causal_links.append(link)
-
-        # Add correlation effects
-        if protagonist in correlations:
-            corr_info = correlations[protagonist][0] # Take the strongest one
-            corr_asset, corr_value = corr_info
-            narrative += f"\nThis move in {protagonist} has a strong {'positive' if corr_value > 0 else 'negative'} correlation of {corr_value} with {corr_asset}, which is also seeing significant movement. "
-
-        key_takeaway = f"The primary driver for {protagonist} is the '{main_event.event_type}' event, with a notable correlation to {corr_asset}."
-
-        return MarketStory(
-            title=title,
-            narrative=narrative,
-            protagonist_asset=protagonist,
-            key_events=all_events,
-            causal_links=causal_links,
-            sentiment=main_event.sentiment,
-            key_takeaway=key_takeaway,
-            confidence_score=0.65 # Lower confidence for templates
-        )
-
-    async def _generate_story_with_ai(self, main_event: MarketEvent, all_events: List[MarketEvent], correlations: Dict[str, Any]) -> MarketStory:
-        """Generates a story using the OpenAI API for a more sophisticated narrative."""
-        logger.info(f"Generating story for '{main_event.headline}' using AI.")
-
-        prompt = self._build_ai_prompt(main_event, all_events, correlations)
-        
-        response = await self.client.chat.completions.create(
-            model="gpt-4-turbo-preview",
-            messages=[
-                {"role": "system", "content": "You are a master financial analyst and storyteller. Your task is to look at a set of market data and weave it into a compelling, insightful, and easy-to-understand narrative. Explain the cause-and-effect relationships. Output ONLY a JSON object in the specified format."},
-                {"role": "user", "content": prompt}
-            ],
-            response_format={"type": "json_object"}
-        )
-
-        story_json = response.choices[0].message.content
-        story_data = json.loads(story_json)
-        
-        # We must still provide some data from our side
-        story_data['key_events'] = all_events
-        story_data['causal_links'] = [] # AI provides this in the narrative
-
-        return MarketStory.parse_obj(story_data)
-
-    def _build_ai_prompt(self, main_event: MarketEvent, all_events: List[MarketEvent], correlations: Dict[str, Any]) -> str:
-        """Builds the detailed prompt for the AI."""
-        
-        events_str = "\n".join([f"- {e.event_type} for {e.symbol}: {e.headline} (Sentiment: {e.sentiment.value})" for e in all_events])
-        correlations_str = "\n".join([f"- {asset}: {corr_info}" for asset, corr_info in correlations.items()])
-
-        return f"""
-        Here is the market data for today. The main event seems to be '{main_event.headline}'.
-
-        **Key Events:**
-        {events_str}
-
-        **Observed Correlations:**
-        {correlations_str}
-
-        Please analyze this data and generate a market story. Identify the main protagonist asset. Explain the chain of events and the underlying reasons. What is the most important takeaway for a trader?
-
-        **Output Format (JSON only):**
-        {{
-          "title": "A catchy, descriptive headline for the story.",
-          "narrative": "A detailed, multi-paragraph story explaining what happened, why it happened, and what the connections are. Use a professional but engaging tone.",
-          "protagonist_asset": "The main symbol the story is about (e.g., 'USDJPY').",
-          "sentiment": "The overall market sentiment for the protagonist asset ('positive', 'negative', 'neutral').",
-          "key_takeaway": "A single, powerful sentence summarizing the most critical insight.",
-          "confidence_score": "Your confidence in this narrative, from 0.0 to 1.0."
-        }}
+        💡 **Not:** Gerçek AI story generation için Gemini API key gereklidir.
         """
-
-# Need to import json for the AI response parsing
-import json 
+        
+        return self._create_story_object(story_type, symbol, mock_content, data)
+    
+    def _create_story_object(
+        self,
+        story_type: StoryType,
+        symbol: str,
+        content: str,
+        data: Dict[str, Any]
+    ) -> MarketStory:
+        """Create MarketStory object"""
+        return MarketStory(
+            story_id=f"story_{int(datetime.now().timestamp())}",
+            title=self._generate_title(story_type, symbol),
+            content=content,
+            story_type=story_type,
+            symbol=symbol,
+            influence_level=self._calculate_influence_level(data),
+            confidence_score=data.get('confidence', 0.7),
+            data_sources=data.get('sources', []),
+            related_events=data.get('events', []),
+            generated_at=datetime.now()
+        )
+    
+    def _generate_title(self, story_type: StoryType, symbol: str) -> str:
+        """Generate story title"""
+        title_templates = {
+            StoryType.WHALE_ACTIVITY: f"🐋 {symbol} - Büyük Oyuncu Aktivitesi",
+            StoryType.TECHNICAL_ANALYSIS: f"📈 {symbol} - Teknik Analiz Güncellemesi",
+            StoryType.MARKET_SENTIMENT: f"🌡️ {symbol} - Piyasa Duygusu Analizi",
+            StoryType.NEWS_IMPACT: f"📰 {symbol} - Haber Etkisi Analizi",
+            StoryType.RISK_ALERT: f"⚠️ {symbol} - Risk Uyarısı"
+        }
+        return title_templates.get(story_type, f"📊 {symbol} - Piyasa Analizi")
+    
+    def _calculate_influence_level(self, data: Dict[str, Any]) -> InfluenceLevel:
+        """Calculate influence level based on data"""
+        impact_score = data.get('impact_score', 0)
+        volume = data.get('volume', 0)
+        confidence = data.get('confidence', 0)
+        
+        # Combine factors to determine influence level
+        combined_score = (impact_score * 0.4 + min(volume / 1000000, 10) * 0.3 + confidence * 10 * 0.3)
+        
+        if combined_score >= 8:
+            return InfluenceLevel.CRITICAL
+        elif combined_score >= 6:
+            return InfluenceLevel.HIGH
+        elif combined_score >= 4:
+            return InfluenceLevel.MEDIUM
+        else:
+            return InfluenceLevel.LOW
+    
+    def _generate_evaluation(self, data: Dict[str, Any]) -> str:
+        """Generate evaluation text for whale activity"""
+        impact = data.get('impact_score', 0)
+        confidence = data.get('confidence', 0)
+        
+        if impact >= 8 and confidence >= 0.8:
+            return "Yüksek güvenilirlik ile kritik seviye etki bekleniyor. Yakın takip önerilir."
+        elif impact >= 6:
+            return "Orta-yüksek seviye etki potansiyeli. Pozisyon ayarlaması değerlendirilebilir."
+        elif impact >= 4:
+            return "Sınırlı etki bekleniyor. Normal izleme süreci yeterli."
+        else:
+            return "Düşük etki seviyesi. Rutin piyasa aktivitesi kapsamında."
+    
+    def _generate_tech_recommendations(self, data: Dict[str, Any]) -> str:
+        """Generate technical analysis recommendations"""
+        trend = data.get('trend', '').lower()
+        rsi = data.get('rsi', 50)
+        
+        recommendations = []
+        
+        if trend == 'bullish':
+            recommendations.append("Yükseliş trendi devam ediyor")
+        elif trend == 'bearish':
+            recommendations.append("Düşüş trendi gözleniyor")
+        
+        if isinstance(rsi, (int, float)):
+            if rsi > 70:
+                recommendations.append("RSI aşırı alım bölgesinde")
+            elif rsi < 30:
+                recommendations.append("RSI aşırı satım bölgesinde")
+        
+        return ". ".join(recommendations) if recommendations else "Mevcut seviyeler takip edilmelidir"
+    
+    def _generate_sentiment_summary(self, data: Dict[str, Any]) -> str:
+        """Generate sentiment analysis summary"""
+        sentiment = data.get('sentiment_score', 'NEUTRAL').upper()
+        
+        summaries = {
+            'BULLISH': "Genel piyasa duygusu olumlu. Alıcı baskısı güçlü.",
+            'BEARISH': "Piyasa duygusu olumsuz. Satış baskısı görülüyor.",
+            'NEUTRAL': "Karışık sinyaller. Dikkatli izleme önerilir.",
+            'POSITIVE': "Pozitif sentiment hakim. Yükseliş potansiyeli var.",
+            'NEGATIVE': "Negatif duygu ağırlıkta. Risk yönetimi önemli."
+        }
+        
+        return summaries.get(sentiment, "Piyasa duygusu analiz ediliyor.") 

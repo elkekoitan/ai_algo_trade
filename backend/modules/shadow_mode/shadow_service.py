@@ -41,7 +41,7 @@ from dataclasses import dataclass
 from .models import (
     WhaleDetection, WhaleSize, DarkPoolActivity, InstitutionalFlow, 
     InstitutionalType, OrderType, StealthOrder, ShadowAnalytics,
-    WhaleAlert, ShadowModeStatus
+    WhaleAlert, ShadowModeStatus, ShadowModeState, ShadowAlert, ShadowMetrics, ShadowModeConfig
 )
 from .institutional_tracker import InstitutionalTracker
 from .whale_detector import WhaleDetector
@@ -84,7 +84,7 @@ class ShadowModeService:
         self.last_analysis_time: Dict[str, datetime] = {}
         
         self.state = ShadowModeState(
-            status=ShadowModeStatus.INACTIVE,
+            status="inactive",
             stealth_level=5,
             last_update=datetime.now()
         )
@@ -106,7 +106,7 @@ class ShadowModeService:
             logger.info(f"🥷 Activating Shadow Mode - Stealth Level: {stealth_level}")
             
             # Update state
-            self.state.status = ShadowModeStatus.ACTIVE
+            self.state.status = "active"
             self.state.stealth_level = stealth_level
             self.state.last_update = datetime.now()
             
@@ -139,7 +139,7 @@ class ShadowModeService:
             logger.info("🥷 Deactivating Shadow Mode...")
             
             # Update state
-            self.state.status = ShadowModeStatus.INACTIVE
+            self.state.status = "inactive"
             self.state.last_update = datetime.now()
             
             # Stop monitoring loop
@@ -168,7 +168,7 @@ class ShadowModeService:
         try:
             logger.info("🔍 Shadow Mode monitoring loop started")
             
-            while self.state.status in [ShadowModeStatus.ACTIVE, ShadowModeStatus.STEALTH, ShadowModeStatus.HUNTING]:
+            while self.state.status in ["active", "stealth", "hunting"]:
                 # Monitor major symbols
                 symbols = self.state.config.symbols_to_monitor
                 
@@ -267,7 +267,7 @@ class ShadowModeService:
     async def create_stealth_order(self, symbol: str, side: str, quantity: float) -> Dict:
         """Gizli emir oluştur"""
         try:
-            if self.state.status == ShadowModeStatus.INACTIVE:
+            if self.state.status == "inactive":
                 return {'error': 'Shadow Mode is not active'}
             
             stealth_order = await self.stealth_executor.create_stealth_order(
@@ -301,7 +301,7 @@ class ShadowModeService:
         """Shadow Mode durumunu döndür"""
         try:
             return {
-                'status': self.state.status.value,
+                'status': self.state.status,
                 'stealth_level': self.state.stealth_level,
                 'active_components': {
                     'institutional_tracker': self.institutional_tracker.get_status(),
