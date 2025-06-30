@@ -41,7 +41,8 @@ from dataclasses import dataclass
 from .models import (
     WhaleDetection, WhaleSize, DarkPoolActivity, InstitutionalFlow, 
     InstitutionalType, OrderType, StealthOrder, ShadowAnalytics,
-    WhaleAlert, ShadowModeStatus, ShadowModeState, ShadowAlert, ShadowMetrics, ShadowModeConfig
+    WhaleAlert, ShadowModeStatus, ShadowModeState, ShadowAlert, ShadowMetrics, ShadowModeConfig,
+    ShadowModeStatusResponse
 )
 from .institutional_tracker import InstitutionalTracker
 from .whale_detector import WhaleDetector
@@ -374,7 +375,7 @@ class ShadowModeService:
             return await self.institutional_tracker.get_flow_summary()
         except Exception as e:
             logger.error(f"Get institutional flow summary error: {str(e)}")
-            return {}
+            return {} 
 
     async def detect_whales(self, symbol: str = "BTCUSD") -> List[WhaleDetection]:
         """Detect whale activity based on volume and value analysis"""
@@ -652,27 +653,39 @@ class ShadowModeService:
                 trend_strength=0
             )
 
-    async def get_shadow_status(self) -> ShadowModeStatus:
+    async def get_shadow_status(self) -> ShadowModeStatusResponse:
         """Get current Shadow Mode system status"""
-        recent_time = datetime.now() - timedelta(hours=24)
-        
-        whales_24h = len([w for w in self.whale_detections if w.timestamp > recent_time])
-        dark_pools_count = len(set(d.symbol for d in self.dark_pool_activities))
-        flows_count = len([f for f in self.institutional_flows if f.timestamp > recent_time])
-        stealth_orders_count = len([s for s in self.stealth_orders if s.status == "pending"])
-        
-        # Calculate system health
-        system_health = min(100, (whales_24h * 2 + flows_count * 3 + dark_pools_count * 5))
-        
-        return ShadowModeStatus(
-            status="active",
-            whales_detected_24h=whales_24h,
-            dark_pools_monitored=dark_pools_count,
-            institutional_flows_tracked=flows_count,
-            stealth_orders_active=stealth_orders_count,
-            system_health=float(system_health),
-            last_update=datetime.now()
-        )
+        try:
+            # Calculate 24h metrics
+            cutoff_time = datetime.now() - timedelta(hours=24)
+            whales_24h = len([w for w in self.whale_detections if w.timestamp > cutoff_time])
+            
+            # Count active components
+            dark_pools_monitored = len(set(d.symbol for d in self.dark_pool_activities))
+            flows_tracked = len(self.institutional_flows)
+            stealth_active = len([o for o in self.stealth_orders if o.status != "completed"])
+            
+            # Calculate system health (0-100)
+            system_health = 100.0
+            if self.state.status == "inactive":
+                system_health = 0.0
+            elif self.state.status == "active":
+                system_health = 85.0
+            elif self.state.status == "stealth":
+                system_health = 95.0
+            
+            return ShadowModeStatusResponse(
+                status=self.state.status,
+                whales_detected_24h=whales_24h,
+                dark_pools_monitored=dark_pools_monitored,
+                institutional_flows_tracked=flows_tracked,
+                stealth_orders_active=stealth_active,
+                system_health=system_health,
+                last_update=self.state.last_update
+            )
+        except Exception as e:
+            logger.error(f"Error getting shadow status: {e}")
+            raise
 
     # Helper methods
     def _classify_whale_size(self, value: float) -> WhaleSize:

@@ -6,7 +6,7 @@ import {
   BookOpen, 
   TrendingUp, 
   Users, 
-  Zap, 
+  Zap,
   Search,
   Filter,
   RefreshCw,

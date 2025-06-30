@@ -199,7 +199,7 @@ class WhaleAlert(BaseModel):
     whale_data: WhaleDetection
     recommended_action: str
 
-class ShadowModeStatus(BaseModel):
+class ShadowModeStatusResponse(BaseModel):
     status: str = "active"
     whales_detected_24h: int
     dark_pools_monitored: int

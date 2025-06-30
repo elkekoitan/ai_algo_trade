@@ -12,7 +12,7 @@ from datetime import datetime, timedelta
 from backend.modules.shadow_mode.shadow_service import ShadowModeService
 from backend.modules.shadow_mode.models import (
     WhaleDetection, DarkPoolActivity, InstitutionalFlow, 
-    StealthOrder, ShadowAnalytics, WhaleAlert, ShadowModeStatus
+    StealthOrder, ShadowAnalytics, WhaleAlert, ShadowModeStatusResponse
 )
 from backend.modules.mt5_integration.service import MT5Service
 from backend.modules.mt5_integration.config import MT5_LOGIN, MT5_PASSWORD, MT5_SERVER
@@ -89,7 +89,7 @@ async def deactivate_shadow_mode(shadow_service: ShadowModeService = Depends(get
         logger.error(f"Shadow Mode deactivation error: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.get("/status", response_model=ShadowModeStatus)
+@router.get("/status", response_model=ShadowModeStatusResponse)
 async def get_shadow_mode_status(
     shadow_service: ShadowModeService = Depends(get_shadow_service)
 ):
@@ -427,7 +427,7 @@ async def _continuous_analysis_task(
             
             # Wait for next iteration
             await asyncio.sleep(interval_seconds)
-            
+        
     except Exception as e:
         print(f"Continuous analysis error: {e}")
         # Log error but don't stop the background task 
