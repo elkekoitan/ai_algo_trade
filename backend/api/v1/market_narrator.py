@@ -352,6 +352,6 @@ async def _live_narration_task(symbols: List[str], interval_minutes: int):
             
             # Wait for next iteration
             await asyncio.sleep(interval_minutes * 60)
-            
+        
     except Exception as e:
         logger.error(f"Live narration task error: {str(e)}") 

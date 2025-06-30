@@ -18,7 +18,8 @@ class StoryGenerator:
     """Generate market narratives using Gemini AI"""
     
     def __init__(self):
-        self.api_key = os.getenv("GEMINI_API_KEY", "AIzaSyA_I6AtQI7xLjFBgLDkBpANfc8DNBPFIuo")
+        # Updated Gemini API key
+        self.api_key = os.getenv("GEMINI_API_KEY", "AIzaSyDNKT7NQTf8VX2PmEYa3TLjH9v_4K2sQWE")
         if not self.api_key:
             logger.warning("Gemini API key not found. Using mock mode.")
             self.mock_mode = True

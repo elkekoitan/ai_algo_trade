@@ -18,7 +18,8 @@ from backend.modules.strategy_whisperer import (
 from backend.modules.strategy_whisperer.models import (
     StrategyIntent, StrategyParameters, BacktestRequest,
     BacktestResult, MQL5Code, DeploymentRequest,
-    DeploymentStatus, ConversationContext, Language, StrategyResponse, StrategyMetrics, CodeSection
+    DeploymentStatus, ConversationContext, Language, StrategyResponse, StrategyMetrics, CodeSection,
+    StrategyRequest, DeploymentResult, RiskLevel
 )
 from backend.modules.mt5_integration.service import MT5Service
 

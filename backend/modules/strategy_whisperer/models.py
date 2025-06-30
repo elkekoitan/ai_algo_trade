@@ -64,6 +64,10 @@ class IndicatorType(str, Enum):
     ICHIMOKU = "ICHIMOKU"
     FIBONACCI = "FIBONACCI"
     PIVOT = "PIVOT"
+    CCI = "CCI"
+    WILLIAMS = "WILLIAMS"
+    MOMENTUM = "MOMENTUM"
+    ROC = "ROC"
 
 
 class RiskLevel(str, Enum):
