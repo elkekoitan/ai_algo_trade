@@ -2,12 +2,13 @@
 Trading API endpoints.
 """
 
-from fastapi import APIRouter, HTTPException, Depends, Query
+from fastapi import APIRouter, HTTPException, Depends, Query, Request
 from typing import List, Dict, Any
 from pydantic import BaseModel, Field
 
 from backend.core.logger import setup_logger
 from backend.modules.mt5_integration import MT5Service, OrderRequest, OrderType
+from backend.core.unified_trading_engine import UnifiedTradingEngine
 
 logger = setup_logger("api.trading")
 router = APIRouter()
@@ -34,16 +35,13 @@ class OrderResponse(BaseModel):
 
 
 @router.post("/place_order", response_model=OrderResponse)
-async def place_order(request: PlaceOrderRequest) -> OrderResponse:
+async def place_order(request: PlaceOrderRequest, req: Request) -> OrderResponse:
     """
     Place a new trading order.
     """
     try:
-        # Get MT5 service from app state (will be injected in main.py)
-        from backend.main import get_mt5_service
-        mt5_service = await get_mt5_service()
-        
-        if not mt5_service.is_connected:
+        engine = req.app.state.trading_engine
+        if not engine or not engine.connected:
             raise HTTPException(status_code=503, detail="MT5 not connected")
         
         # Create order request
@@ -59,7 +57,7 @@ async def place_order(request: PlaceOrderRequest) -> OrderResponse:
         )
         
         # Place order
-        result = await mt5_service.place_order(order_req)
+        result = await engine.mt5_service.place_order(order_req)
         
         if result.success:
             return OrderResponse(
@@ -86,38 +84,34 @@ async def place_order(request: PlaceOrderRequest) -> OrderResponse:
 
 
 @router.get("/positions")
-async def get_positions() -> List[Dict[str, Any]]:
+async def get_positions(request: Request) -> List[Dict[str, Any]]:
     """
     Get all open positions.
     """
     try:
-        from backend.main import get_mt5_service
-        mt5_service = await get_mt5_service()
-        
-        if not mt5_service.is_connected:
+        engine = request.app.state.trading_engine
+        if not engine or not engine.connected:
             raise HTTPException(status_code=503, detail="MT5 not connected")
         
-        positions = await mt5_service.get_positions()
+        positions = await engine.mt5_service.get_positions()
         return positions
         
     except Exception as e:
-        logger.error(f"Error getting positions: {e}")
+        logger.error(f"Error getting positions: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.post("/close_position/{ticket}", response_model=OrderResponse)
-async def close_position(ticket: int) -> OrderResponse:
+async def close_position(ticket: int, request: Request) -> OrderResponse:
     """
     Close a position by ticket number.
     """
     try:
-        from backend.main import get_mt5_service
-        mt5_service = await get_mt5_service()
-        
-        if not mt5_service.is_connected:
+        engine = request.app.state.trading_engine
+        if not engine or not engine.connected:
             raise HTTPException(status_code=503, detail="MT5 not connected")
         
-        success = await mt5_service.close_position(ticket)
+        success = await engine.mt5_service.close_position(ticket)
         
         if success:
             return OrderResponse(
@@ -136,53 +130,43 @@ async def close_position(ticket: int) -> OrderResponse:
 
 
 @router.get("/account_info")
-async def get_account_info() -> Dict[str, Any]:
+async def get_account_info(request: Request) -> Dict[str, Any]:
     """
     Get account information.
     """
     try:
-        from backend.main import get_mt5_service
-        mt5_service = await get_mt5_service()
-        
-        if not mt5_service.is_connected:
+        engine = request.app.state.trading_engine
+        if not engine or not engine.connected:
             raise HTTPException(status_code=503, detail="MT5 not connected")
         
-        account_info = await mt5_service.refresh_account_info()
+        account_info = await engine.mt5_service.get_account_info()
         
         if account_info:
-            return {
-                "login": account_info.login,
-                "balance": account_info.balance,
-                "equity": account_info.equity,
-                "margin": account_info.margin,
-                "margin_free": account_info.margin_free,
-                "margin_level": account_info.margin_level,
-                "profit": account_info.profit,
-                "leverage": account_info.leverage,
-                "currency": account_info.currency,
-                "server": account_info.server,
-                "company": account_info.company,
-                "margin_used_percent": account_info.margin_used_percent
-            }
+            return account_info
         else:
             raise HTTPException(status_code=500, detail="Failed to get account info")
             
     except Exception as e:
-        logger.error(f"Error getting account info: {e}")
+        logger.error(f"Error getting account info: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@router.get("/account")
+async def get_account_simple(request: Request) -> Dict[str, Any]:
+    """
+    Get account information - alias for frontend compatibility.
+    """
+    return await get_account_info(request)
+
+
 @router.post("/trade", response_model=OrderResponse)
-async def place_trade(request: PlaceOrderRequest) -> OrderResponse:
+async def place_trade(request: PlaceOrderRequest, req: Request) -> OrderResponse:
     """
     Place a new trading order for any available instrument.
     """
     try:
-        # Get MT5 service from app state
-        from backend.main import get_mt5_service
-        mt5_service = await get_mt5_service()
-        
-        if not mt5_service.is_connected:
+        engine = req.app.state.trading_engine
+        if not engine or not engine.connected:
             raise HTTPException(status_code=503, detail="MT5 not connected")
         
         # Create order request
@@ -198,7 +182,7 @@ async def place_trade(request: PlaceOrderRequest) -> OrderResponse:
         )
         
         # Place order
-        result = await mt5_service.place_order(order_req)
+        result = await engine.mt5_service.place_order(order_req)
         
         if result.success:
             return OrderResponse(
@@ -224,23 +208,19 @@ async def place_trade(request: PlaceOrderRequest) -> OrderResponse:
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/history", response_model=List[Dict[str, Any]])
-async def get_trade_history(
-    days: int = Query(30, description="Number of days to retrieve history for")
-) -> List[Dict[str, Any]]:
+@router.get("/history", summary="Get recent trade history")
+async def get_trade_history(request: Request):
     """
-    Get trade history from MT5.
+    Fetches the recent trading history from the MT5 account.
     """
     try:
-        from backend.main import get_mt5_service
-        mt5_service = await get_mt5_service()
+        engine = request.app.state.trading_engine
+        if not engine or not engine.connected:
+            raise HTTPException(status_code=503, detail="MT5 service unavailable")
         
-        if not mt5_service.is_connected:
-            raise HTTPException(status_code=503, detail="MT5 not connected")
-        
-        history = await mt5_service.get_history(days=days)
+        # 30 günlük geçmişi al
+        history = await engine.mt5_service.get_trade_history(days=30)
         return history
-        
     except Exception as e:
-        logger.error(f"Error getting trade history: {e}")
-        raise HTTPException(status_code=500, detail=str(e)) 
+        logger.error(f"Error fetching trade history: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to fetch trade history") 

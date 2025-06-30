@@ -5,10 +5,10 @@ The core decision-making component that recommends adaptive actions.
 """
 from typing import Optional
 
-from backend.core.logger import get_logger
+from backend.core.logger import setup_logger
 from .models import ManagedPosition, RiskMetrics, MarketCondition, AdaptiveAction, ActionType, MarketRegime
 
-logger = get_logger(__name__)
+logger = setup_logger(__name__)
 
 class OptimizationEngine:
 

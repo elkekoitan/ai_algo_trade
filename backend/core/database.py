@@ -7,15 +7,15 @@ from typing import AsyncGenerator
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from sqlalchemy.orm import declarative_base
 
-from .config import settings
+from .config.settings import get_settings
+
+settings = get_settings()
 
 # Create async engine
 engine = create_async_engine(
     settings.DATABASE_URL,
     echo=settings.DATABASE_ECHO,
-    pool_pre_ping=True,
-    pool_size=10,
-    max_overflow=20,
+    future=True
 )
 
 # Create async session factory
@@ -47,4 +47,11 @@ async def init_db():
     Initialize database by creating all tables.
     """
     async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all) 
+        await conn.run_sync(Base.metadata.create_all)
+
+
+async def create_db_and_tables():
+    """
+    Create database and tables. Alias for init_db for compatibility.
+    """
+    return await init_db() 

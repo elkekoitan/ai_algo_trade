@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 import asyncio
 import logging
 
-from backend.modules.edge_computing.high_frequency_processor import (
+from ...modules.edge_computing.high_frequency_processor import (
     HighFrequencyProcessor, DataStreamType
 )
 

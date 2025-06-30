@@ -7,10 +7,10 @@ import pandas as pd
 from scipy.stats import pearsonr
 from typing import List, Dict, Tuple
 
-from backend.core.logger import get_logger
+from backend.core.logger import setup_logger
 from backend.modules.mt5_integration.service import MT5Service
 
-logger = get_logger(__name__)
+logger = setup_logger(__name__)
 
 class CorrelationEngine:
     def __init__(self, mt5_service: MT5Service):

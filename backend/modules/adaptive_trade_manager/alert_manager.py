@@ -8,10 +8,10 @@ from typing import List, Dict
 from datetime import datetime
 import uuid
 
-from backend.core.logger import get_logger
+from backend.core.logger import setup_logger
 from .models import ManagedPosition, RiskMetrics, AdaptiveAction, AdaptiveAlert, RiskLevel
 
-logger = get_logger(__name__)
+logger = setup_logger(__name__)
 
 class AlertManager:
     def __init__(self):

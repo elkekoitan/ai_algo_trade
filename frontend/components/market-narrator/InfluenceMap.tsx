@@ -1,123 +1,135 @@
 'use client'
-import React, { useEffect, useState } from 'react';
-import ForceGraph2D from 'react-force-graph-2d';
-import { motion } from 'framer-motion';
-import { GitCommit } from 'lucide-react';
-import { LinkObject, NodeObject } from 'force-graph';
-
-interface CustomNode extends NodeObject {
-    id: string;
-    name: string;
-    val: number;
-    color: string;
-}
-
-interface CustomLink extends LinkObject {
-    source: string;
-    target: string;
-    label: string;
-    color: string;
-    width: number;
-}
+import React, { useEffect, useState, useMemo } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Share2, RotateCw, Sigma } from 'lucide-react';
+import ForceGraph2D, { GraphData, NodeObject, LinkObject } from 'react-force-graph-2d';
 
 interface InfluenceMapProps {
-    protagonist: string;
-    correlations: Record<string, number>;
+    symbol: string | null;
 }
 
-const assetColors = {
-    FX: '#3b82f6',
-    COMMODITY: '#f59e0b',
-    CRYPTO: '#8b5cf6',
-    INDEX: '#10b981',
-    DEFAULT: '#6b7280',
-};
-
-const getAssetColor = (asset: string) => {
-    if (['EUR', 'USD', 'JPY', 'GBP'].some(c => asset.includes(c))) return assetColors.FX;
-    if (['XAU', 'WTI', 'OIL'].some(c => asset.includes(c))) return assetColors.COMMODITY;
-    if (['BTC', 'ETH'].some(c => asset.includes(c))) return assetColors.CRYPTO;
-    if (['DXY', 'SPX'].some(c => asset.includes(c))) return assetColors.INDEX;
-    return assetColors.DEFAULT;
+interface ApiNode {
+    id: string; 
+    type: string; 
+    label?: string; 
+    size?: number;
 }
 
-export default function InfluenceMap({ protagonist, correlations }: InfluenceMapProps) {
-    const [graphData, setGraphData] = useState<{ nodes: CustomNode[], links: CustomLink[] }>({ nodes: [], links: [] });
+interface ApiEdge {
+    from: string; 
+    to: string; 
+    strength?: number;
+}
+interface ApiData {
+  nodes: ApiNode[];
+  edges: ApiEdge[];
+}
+
+export function InfluenceMap({ symbol }: InfluenceMapProps) {
+    const [data, setData] = useState<GraphData>({ nodes: [], links: [] });
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [key, setKey] = useState(0); // To re-mount graph
+
+    const fetchInfluenceMap = async (currentSymbol: string) => {
+        setIsLoading(true);
+        setError(null);
+        try {
+            const response = await fetch(`http://localhost:8002/api/v1/market-narrator/influence-map/${currentSymbol}`);
+            if (!response.ok) {
+                throw new Error(`Failed to fetch influence map for ${currentSymbol}.`);
+            }
+            const rawData: ApiData = await response.json();
+            
+            const adaptedData: GraphData = {
+                nodes: rawData.nodes.map((n) => ({ ...n, id: n.id, val: n.size || 1 })),
+                links: rawData.edges.map((e) => ({ ...e, source: e.from, target: e.to }))
+            }
+            setData(adaptedData);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'An unknown error occurred.');
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     useEffect(() => {
-        const nodes: CustomNode[] = [];
-        const links: CustomLink[] = [];
+        if (symbol) {
+            fetchInfluenceMap(symbol);
+        } else {
+            setIsLoading(false);
+            setData({ nodes: [], links: [] });
+        }
+        setKey(prev => prev + 1); 
+    }, [symbol]);
+    
+    const graphData = useMemo(() => data, [data]);
 
-        // Add protagonist node
-        nodes.push({
-            id: protagonist,
-            name: protagonist,
-            val: 20, // Main node is larger
-            color: getAssetColor(protagonist),
-        });
+    const handleNodeCanvasObject = (node: NodeObject, ctx: CanvasRenderingContext2D, globalScale: number) => {
+        const label = (node as any).label || '';
+        const fontSize = 12 / globalScale;
+        ctx.font = `${fontSize}px Sans-Serif`;
+        const textWidth = ctx.measureText(label).width;
+        const bckgDimensions = [textWidth, fontSize].map(n => n + fontSize * 0.2);
 
-        // Add correlated nodes and links
-        Object.entries(correlations).forEach(([asset, corrValue]) => {
-            nodes.push({
-                id: asset,
-                name: asset,
-                val: 10,
-                color: getAssetColor(asset),
-            });
-            links.push({
-                source: protagonist,
-                target: asset,
-                label: `${(corrValue * 100).toFixed(0)}%`,
-                color: corrValue > 0 ? 'rgba(34, 197, 94, 0.5)' : 'rgba(239, 68, 68, 0.5)',
-                width: Math.abs(corrValue) * 5,
-            });
-        });
-
-        setGraphData({ nodes, links });
-    }, [protagonist, correlations]);
-
-    if (!protagonist) return null;
+        ctx.fillStyle = 'rgba(20, 20, 30, 0.7)';
+        if(node.x !== undefined && node.y !== undefined) {
+            ctx.fillRect(node.x - bckgDimensions[0] / 2, node.y - bckgDimensions[1] / 2, bckgDimensions[0], bckgDimensions[1]);
+        }
+        
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = 'white';
+        if(node.x !== undefined && node.y !== undefined) {
+            ctx.fillText(label, node.x, node.y);
+        }
+    }
 
     return (
-        <motion.div 
-            className="bg-gray-900/50 rounded-2xl p-4 border border-gray-700/50 backdrop-blur-lg"
-            initial={{opacity: 0, y: 20}}
-            animate={{opacity: 1, y: 0}}
-        >
-            <h3 className="text-lg font-bold text-white mb-2 flex items-center gap-2">
-                <GitCommit className="w-5 h-5 text-cyan-400"/>
-                Influence Map: {protagonist}
-            </h3>
-            <div className="w-full h-80 rounded-lg overflow-hidden">
-                <ForceGraph2D
-                    graphData={graphData}
-                    nodeLabel="name"
-                    nodeVal="val"
-                    nodeAutoColorBy="color"
-                    linkSource="source"
-                    linkTarget="target"
-                    linkColor={(link: any) => link.color}
-                    linkWidth="width"
-                    linkDirectionalParticles={2}
-                    linkDirectionalParticleWidth={2}
-                    linkDirectionalParticleColor={(link: any) => link.color}
-                    backgroundColor="transparent"
-                    nodeCanvasObject={(node: any, ctx: CanvasRenderingContext2D, globalScale: number) => {
-                        const label = node.name;
-                        const fontSize = 12 / globalScale;
-                        ctx.font = `${fontSize}px Sans-Serif`;
-                        ctx.textAlign = 'center';
-                        ctx.textBaseline = 'middle';
-                        ctx.fillStyle = node.color as string;
-                        ctx.fillText(label, node.x as number, node.y as number + 15);
-                        
-                        ctx.beginPath();
-                        ctx.arc(node.x as number, node.y as number, node.val as number, 0, 2 * Math.PI, false);
-                        ctx.fillStyle = node.color as string;
-                        ctx.fill();
-                    }}
-                />
-            </div>
-        </motion.div>
+        <Card className="bg-black/40 border-gray-700">
+            <CardHeader className="flex flex-row items-center justify-between">
+                <div className="flex items-center gap-2">
+                    <Share2 className="text-cyan-400" />
+                    <CardTitle className="text-white">Influence Map: {symbol || 'N/A'}</CardTitle>
+                </div>
+                <button onClick={() => symbol && fetchInfluenceMap(symbol)} className="text-gray-400 hover:text-white">
+                    <RotateCw size={16} className={isLoading ? 'animate-spin' : ''}/>
+                </button>
+            </CardHeader>
+            <CardContent className="h-[40vh] relative">
+                {isLoading && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/50 z-10">
+                        <p>Loading Map for {symbol}...</p>
+                    </div>
+                )}
+                {error && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-red-900/80 z-10">
+                        <p className="text-red-300">{error}</p>
+                    </div>
+                )}
+                {!isLoading && !error && graphData.nodes.length === 0 && (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="text-center text-gray-500">
+                            <Sigma size={48} className="mx-auto mb-4"/>
+                            <p>No influence data available for {symbol}.</p>
+                        </div>
+                    </div>
+                )}
+                
+                <div className="rounded-lg overflow-hidden absolute inset-0">
+                    <ForceGraph2D
+                        key={key}
+                        graphData={graphData}
+                        nodeLabel="label"
+                        nodeAutoColorBy="type"
+                        linkDirectionalArrowLength={3.5}
+                        linkDirectionalArrowRelPos={1}
+                        linkCurvature={0.25}
+                        backgroundColor="rgba(0,0,0,0)"
+                        nodeCanvasObject={handleNodeCanvasObject}
+                    />
+                </div>
+            </CardContent>
+        </Card>
     );
 } 

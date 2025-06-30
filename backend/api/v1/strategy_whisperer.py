@@ -7,7 +7,7 @@ from datetime import datetime
 from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect, Depends
 from pydantic import BaseModel
 
-from backend.core.logger import get_logger
+from backend.core.logger import setup_logger
 from backend.modules.strategy_whisperer import (
     NLPEngine, StrategyParser, MQL5Generator, 
     BacktestEngine, DeploymentService
@@ -19,7 +19,7 @@ from backend.modules.strategy_whisperer.models import (
 )
 from backend.modules.mt5_integration.service import MT5Service
 
-logger = get_logger(__name__)
+logger = setup_logger(__name__)
 
 router = APIRouter(prefix="/strategy-whisperer", tags=["Strategy Whisperer"])
 

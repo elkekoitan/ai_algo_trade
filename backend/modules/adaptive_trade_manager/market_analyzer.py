@@ -4,15 +4,15 @@ Market Analyzer for Adaptive Trade Manager
 Assesses real-time market conditions like volatility and regime.
 """
 import asyncio
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Optional
 import pandas as pd
 import numpy as np
 
-from backend.core.logger import get_logger
+from backend.core.logger import setup_logger
 from backend.modules.mt5_integration.service import MT5Service
 from .models import MarketCondition, MarketRegime
 
-logger = get_logger(__name__)
+logger = setup_logger(__name__)
 
 class MarketAnalyzer:
     def __init__(self, mt5_service: MT5Service):

@@ -7,11 +7,11 @@ import asyncio
 from typing import List, Dict, Any
 from datetime import datetime, timedelta
 
-from backend.core.logger import get_logger
+from backend.core.logger import setup_logger
 from backend.modules.mt5_integration.service import MT5Service
 from .models import MarketEvent, EventType, AssetClass, Sentiment
 
-logger = get_logger(__name__)
+logger = setup_logger(__name__)
 
 class DataAggregator:
     def __init__(self, mt5_service: MT5Service):

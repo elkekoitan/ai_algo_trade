@@ -6,13 +6,13 @@ from typing import Dict, List, Optional, Any, Tuple
 from datetime import datetime
 import re
 
-from backend.core.logger import get_logger
+from backend.core.logger import setup_logger
 from .models import (
     StrategyIntent, StrategyParameters, TradingCondition,
     IndicatorType, TimeFrame, OrderType, RiskType, StrategyType
 )
 
-logger = get_logger(__name__)
+logger = setup_logger(__name__)
 
 
 class StrategyParser:

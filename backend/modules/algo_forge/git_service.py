@@ -12,7 +12,7 @@ import git
 from git import Repo, GitCommandError
 
 from backend.core.logger import setup_logger
-from backend.core.config.settings import settings
+from backend.core.config.settings import get_settings
 from backend.core.events import event_bus, Event, EventTypes
 from .models import (
     ForgeRepository, 
@@ -25,6 +25,7 @@ from .models import (
 
 logger = setup_logger("algo_forge_git")
 
+settings = get_settings()
 
 class GitService:
     """

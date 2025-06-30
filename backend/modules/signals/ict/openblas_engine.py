@@ -8,8 +8,10 @@ from typing import Dict, List, Tuple, Optional, Any
 from datetime import datetime
 import uuid
 
+from backend.core.config.settings import get_settings
 from backend.core.logger import setup_logger
-from backend.core.config.settings import settings
+
+settings = get_settings()
 
 # Initialize logger
 logger = setup_logger("ict_openblas_engine")
@@ -28,7 +30,6 @@ try:
         logger.info("OpenBLAS optimization disabled")
 except ImportError:
     logger.warning("OpenBLAS or SciPy not available, falling back to NumPy")
-
 
 class ICTOpenBLASEngine:
     """

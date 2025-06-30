@@ -18,8 +18,9 @@ import websockets
 from concurrent.futures import ThreadPoolExecutor
 import queue
 import threading
+from ...core.logger import setup_logger
 
-logger = logging.getLogger(__name__)
+logger = setup_logger(__name__)
 
 class DataStreamType(Enum):
     TICK = "tick"

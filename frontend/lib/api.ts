@@ -15,7 +15,7 @@ export interface ApiResponse<T = any> {
 
 // Base API configuration
 const api = axios.create({
-  baseURL: 'http://localhost:8000',
+  baseURL: 'http://localhost:8002',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
@@ -173,4 +173,22 @@ export const ApiService = {
   },
 };
 
-export default ApiService; 
+export default ApiService;
+
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8002';
+
+export const API_ENDPOINTS = {
+  health: `${API_BASE_URL}/health`,
+  account: `${API_BASE_URL}/api/v1/trading/account_info`,
+  positions: `${API_BASE_URL}/api/v1/trading/positions`,
+  history: `${API_BASE_URL}/api/v1/trading/history`,
+  prices: `${API_BASE_URL}/api/v1/market_data/prices`,
+  symbols: `${API_BASE_URL}/api/v1/market_data/symbols`,
+  symbols_active: `${API_BASE_URL}/api/v1/market_data/symbols/active`,
+  symbols_crypto: `${API_BASE_URL}/api/v1/market_data/symbols/crypto`,
+  status: `${API_BASE_URL}/api/v1/market_data/status`,
+  trade: `${API_BASE_URL}/api/v1/trading/trade`,
+  signals: `${API_BASE_URL}/api/v1/signals`,
+  performance: `${API_BASE_URL}/api/v1/performance/performance_summary`,
+  equity_curve: `${API_BASE_URL}/api/v1/performance/equity_curve`,
+}; 

@@ -10,139 +10,119 @@ import {
   ShieldAlert,
   AlertTriangle
 } from "lucide-react";
-import { useAppContext } from "@/lib/context";
+import useSWR from 'swr';
+import { API_ENDPOINTS } from '@/lib/api';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+
+const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 export default function AccountInfo() {
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
   
-  // Use our context
-  const { accountInfo, isLoading, errors, refreshAccountInfo } = useAppContext();
+  // Get market status which includes account info
+  const { data: statusData, error, mutate } = useSWR(API_ENDPOINTS.status, fetcher, { refreshInterval: 5000 });
 
-  if (isLoading.account && !accountInfo) {
+  if (error) {
     return (
-      <div className="bg-gray-900/50 backdrop-blur-lg rounded-xl p-6 border border-gray-800">
-        <div className="flex items-center justify-center h-40">
-          <RefreshCw className="animate-spin text-gray-400" size={32} />
-        </div>
-      </div>
+      <Card className="bg-gray-900/50 backdrop-blur-lg border-gray-800">
+        <CardContent className="p-6">
+          <div className="text-center py-8">
+            <AlertTriangle className="mx-auto h-12 w-12 text-yellow-500 mb-3" />
+            <p className="text-red-400 mb-4">Failed to load account info</p>
+            <button 
+              onClick={() => mutate()}
+              className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 rounded-lg text-sm font-medium transition-colors"
+            >
+              Retry Connection
+            </button>
+          </div>
+        </CardContent>
+      </Card>
     );
   }
 
-  if (errors.account || !accountInfo) {
+  if (!statusData) {
     return (
-      <div className="bg-gray-900/50 backdrop-blur-lg rounded-xl p-6 border border-gray-800">
-        <div className="text-center py-8">
-          <AlertTriangle className="mx-auto h-12 w-12 text-yellow-500 mb-3" />
-          <p className="text-red-400 mb-4">{errors.account || "No account data available"}</p>
-          <button 
-            onClick={refreshAccountInfo}
-            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 rounded-lg text-sm font-medium transition-colors"
-          >
-            Retry Connection
-          </button>
-        </div>
-      </div>
+      <Card className="bg-gray-900/50 backdrop-blur-lg border-gray-800">
+        <CardContent className="p-6">
+          <div className="flex items-center justify-center h-40">
+            <RefreshCw className="animate-spin text-gray-400" size={32} />
+          </div>
+        </CardContent>
+      </Card>
     );
   }
 
-  const profitColor = accountInfo.profit >= 0 ? "text-green-400" : "text-red-400";
-  const profitIcon = accountInfo.profit >= 0 ? <TrendingUp size={16} /> : <TrendingDown size={16} />;
-  
-  // Calculate margin used percent if not available
-  const marginUsedPercent = accountInfo.margin > 0 && accountInfo.equity > 0
-    ? (accountInfo.margin / accountInfo.equity) * 100
-    : 0;
+  const accountData = statusData?.account || {};
+  const isConnected = statusData?.mt5_connected || false;
+  const weekendMode = statusData?.weekend_mode || false;
+
+  if (!isConnected) {
+    return (
+      <Card className="bg-gray-900/50 backdrop-blur-lg border-gray-800">
+        <CardContent className="p-6">
+          <div className="text-center py-8">
+            <ShieldAlert className="mx-auto h-12 w-12 text-red-500 mb-3" />
+            <p className="text-red-400 mb-2">MT5 Not Connected</p>
+            <p className="text-gray-400 text-sm">Please check your connection</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const profit = accountData.equity - accountData.balance || 0;
+  const profitColor = profit >= 0 ? "text-green-400" : "text-red-400";
+  const profitIcon = profit >= 0 ? <TrendingUp size={16} /> : <TrendingDown size={16} />;
 
   return (
-    <div className="bg-gray-900/50 backdrop-blur-lg rounded-xl p-6 border border-gray-800">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-semibold text-white">Account Overview</h2>
-        <div className="flex items-center space-x-2 text-xs text-gray-400">
-          <RefreshCw 
-            size={14} 
-            className={isLoading.account ? "animate-spin" : ""} 
-            onClick={refreshAccountInfo}
-            style={{ cursor: 'pointer' }}
-          />
-          <span>Updated {new Date().toLocaleTimeString()}</span>
-        </div>
-      </div>
-
-      {/* Account Info Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {/* Balance */}
-        <div className="bg-gray-800/50 rounded-lg p-4">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-gray-400">Balance</span>
-            <DollarSign size={16} className="text-gray-400" />
+    <div className="space-y-4">
+      <Card className="bg-gray-900/50 backdrop-blur-lg border-gray-800">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium text-white">Account Balance</CardTitle>
+          <DollarSign className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold text-white">
+            ${accountData.balance?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}
           </div>
-          <p className="text-2xl font-semibold text-white">
-            {accountInfo?.currency || 'USD'} {accountInfo?.balance?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}
+          <p className="text-xs text-gray-400">
+            Equity: ${accountData.equity?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}
           </p>
-        </div>
+        </CardContent>
+      </Card>
 
-        {/* Equity */}
-        <div className="bg-gray-800/50 rounded-lg p-4">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-gray-400">Equity</span>
-            <BarChart3 size={16} className="text-gray-400" />
+      {weekendMode && (
+        <Card className="bg-amber-900/20 backdrop-blur-lg border-amber-800">
+          <CardContent className="p-4">
+            <div className="flex items-center space-x-2">
+              <BarChart3 className="h-4 w-4 text-amber-400" />
+              <span className="text-amber-400 text-sm font-medium">Weekend Crypto Mode</span>
+            </div>
+            <p className="text-amber-300 text-xs mt-1">
+              Only crypto instruments are active during weekends
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
+      <Card className="bg-gray-900/50 backdrop-blur-lg border-gray-800">
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between">
+            <span className="text-gray-400 text-sm">Account: {accountData.login}</span>
+            <span className="text-gray-400 text-sm">{accountData.server}</span>
           </div>
-          <p className="text-2xl font-semibold text-white">
-            {accountInfo?.currency || 'USD'} {accountInfo?.equity?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}
-          </p>
-        </div>
-
-        {/* Profit */}
-        <div className="bg-gray-800/50 rounded-lg p-4">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-gray-400">Floating P&L</span>
-            {profitIcon}
+          <div className="flex items-center justify-between mt-2">
+            <span className="text-gray-400 text-sm">Currency: {accountData.currency}</span>
+            <div className={`flex items-center space-x-1 ${profitColor}`}>
+              {profitIcon}
+              <span className="text-sm font-medium">
+                ${Math.abs(profit).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </span>
+            </div>
           </div>
-          <p className={`text-2xl font-semibold ${profitColor}`}>
-            {accountInfo.profit >= 0 ? '+' : ''}{accountInfo?.currency || 'USD'} {accountInfo?.profit?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}
-          </p>
-        </div>
-
-        {/* Margin */}
-        <div className="bg-gray-800/50 rounded-lg p-4">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-gray-400">Used Margin</span>
-            <span className="text-xs text-gray-500">{marginUsedPercent?.toFixed(1) || '0.0'}%</span>
-          </div>
-          <p className="text-lg font-medium text-white">
-            {accountInfo?.currency || 'USD'} {accountInfo?.margin?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}
-          </p>
-        </div>
-
-        {/* Free Margin */}
-        <div className="bg-gray-800/50 rounded-lg p-4">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-gray-400">Free Margin</span>
-          </div>
-          <p className="text-lg font-medium text-white">
-            {accountInfo?.currency || 'USD'} {accountInfo?.free_margin?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}
-          </p>
-        </div>
-
-        {/* Leverage */}
-        <div className="bg-gray-800/50 rounded-lg p-4">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-gray-400">Leverage</span>
-          </div>
-          <p className="text-lg font-medium text-white">1:{accountInfo.leverage}</p>
-        </div>
-      </div>
-
-      {/* Server Info */}
-      <div className="mt-4 pt-4 border-t border-gray-800">
-        <div className="flex items-center justify-between text-sm">
-          <span className="text-gray-400">
-            Account: #{accountInfo?.login || '...'} • {accountInfo?.server || '...'}
-          </span>
-          <span className="text-gray-500">{accountInfo?.company || '...'}</span>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     </div>
   );
 } 

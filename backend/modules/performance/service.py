@@ -1,18 +1,19 @@
 """
-Performance analysis service for trading strategies.
+Performance tracking and analysis service for the trading platform.
 """
 
 import asyncio
+import logging
 from datetime import datetime, timedelta
-from typing import List, Dict, Any, Optional, Tuple
+from typing import Dict, List, Any, Optional, Tuple
 import pandas as pd
 import numpy as np
 from dataclasses import dataclass, asdict
 import json
-import logging
+from pathlib import Path
 
 from backend.core.logger import setup_logger
-from backend.mt5_integration.service import MT5Service
+from backend.modules.mt5_integration.service import MT5Service
 
 logger = setup_logger("performance_service")
 
@@ -74,8 +75,8 @@ class EquityCurvePoint:
 class PerformanceService:
     """Advanced performance monitoring and analytics service"""
     
-    def __init__(self):
-        self.mt5_service = MT5Service()
+    def __init__(self, mt5_service: MT5Service):
+        self.mt5_service = mt5_service
         self.trades_cache: List[TradeAnalysis] = []
         self.equity_curve: List[EquityCurvePoint] = []
         self.performance_cache: Optional[PerformanceMetrics] = None

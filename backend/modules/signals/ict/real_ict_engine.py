@@ -18,7 +18,7 @@ class RealICTEngine:
     SADECE MT5'ten gelen canlı verilerle çalışır
     """
     
-    def __init__(self, mt5_service):
+    def __init__(self, mt5_service=None):
         self.mt5_service = mt5_service
         self.timeframes = {
             "M1": mt5.TIMEFRAME_M1,
@@ -408,4 +408,41 @@ class RealICTEngine:
             return strength
             
         except:
-            return 50 
+            return 50
+    
+    async def analyze_symbol(self, symbol: str, timeframe: str = "H1", bars_count: int = 500) -> Dict[str, List[Dict[str, Any]]]:
+        """Sembol için tüm ICT sinyallerini analiz et"""
+        try:
+            # Get all signals for the symbol
+            order_blocks = self.detect_order_blocks(symbol, timeframe)
+            fair_value_gaps = self.detect_fair_value_gaps(symbol, timeframe)
+            breaker_blocks = self.detect_breaker_blocks(symbol, timeframe)
+            
+            return {
+                "order_blocks": order_blocks,
+                "fair_value_gaps": fair_value_gaps,
+                "breaker_blocks": breaker_blocks
+            }
+            
+        except Exception as e:
+            logger.error(f"Error analyzing symbol {symbol}: {e}")
+            return {
+                "order_blocks": [],
+                "fair_value_gaps": [],
+                "breaker_blocks": []
+            }
+    
+    async def find_all_signals_for_symbols(self, symbols: List[str]) -> Dict[str, Any]:
+        """Multiple symbols için tüm sinyalleri bul"""
+        try:
+            all_signals = {}
+            
+            for symbol in symbols:
+                signals = await self.analyze_symbol(symbol)
+                all_signals[symbol] = signals
+            
+            return all_signals
+            
+        except Exception as e:
+            logger.error(f"Error finding signals for symbols: {e}")
+            return {}

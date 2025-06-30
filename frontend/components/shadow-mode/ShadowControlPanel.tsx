@@ -1,286 +1,231 @@
-'use client';
+"use client"
 
-import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import React, { useState } from 'react'
 
-interface ShadowState {
-  status: string;
-  stealth_level: number;
-  active_components: any;
-  recent_activity: any;
-  metrics: any;
-  last_update: string;
+interface ShadowAnalytics {
+  timestamp: string
+  symbol: string
+  whale_activity_score: number
+  whale_sentiment: number
+  whale_volume_24h: number
+  dark_pool_intensity: number
+  hidden_liquidity: number
+  market_fragmentation: number
+  institutional_pressure: number
+  smart_money_flow: number
+  retail_sentiment: number
+  predicted_impact: number
+  volatility_forecast: number
+  trend_strength: number
 }
 
-interface ShadowAlert {
-  alert_id: string;
-  type: string;
-  priority: string;
-  title: string;
-  message: string;
-  symbol?: string;
-  stealth_required: boolean;
-  created_at: string;
+interface ShadowControlPanelProps {
+  analytics: ShadowAnalytics | null
+  selectedSymbol: string
 }
 
-export default function ShadowControlPanel() {
-  const [shadowState, setShadowState] = useState<ShadowState | null>(null);
-  const [alerts, setAlerts] = useState<ShadowAlert[]>([]);
-  const [isActivating, setIsActivating] = useState(false);
-  const [stealthLevel, setStealthLevel] = useState(5);
+export default function ShadowControlPanel({ analytics, selectedSymbol }: ShadowControlPanelProps) {
+  const [stealthMode, setStealthMode] = useState(false)
+  const [autoAlerts, setAutoAlerts] = useState(true)
+  const [sensitivity, setSensitivity] = useState(75)
 
-  useEffect(() => {
-    const fetchShadowData = async () => {
-      try {
-        const [stateResponse, alertsResponse] = await Promise.all([
-          fetch('/api/v1/shadow/status'),
-          fetch('/api/v1/shadow/alerts')
-        ]);
-        
-        const stateData = await stateResponse.json();
-        const alertsData = await alertsResponse.json();
-        
-        setShadowState(stateData);
-        setAlerts(alertsData || []);
-      } catch (error) {
-        console.error('Failed to fetch shadow data:', error);
-      }
-    };
-
-    fetchShadowData();
-    const interval = setInterval(fetchShadowData, 5000); // Update every 5 seconds
-
-    return () => clearInterval(interval);
-  }, []);
-
-  const handleActivate = async () => {
-    setIsActivating(true);
+  const startRealTimeAnalysis = async () => {
     try {
-      const response = await fetch(`/api/v1/shadow/activate?stealth_level=${stealthLevel}`, {
-        method: 'POST'
-      });
-      const result = await response.json();
+      const response = await fetch('http://localhost:8002/api/v1/shadow-mode/analyze-realtime', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          symbol: selectedSymbol,
+          interval_seconds: 30
+        })
+      })
       
-      if (result.status === 'activated') {
-        // Refresh state
-        const stateResponse = await fetch('/api/v1/shadow/status');
-        const stateData = await stateResponse.json();
-        setShadowState(stateData);
+      if (response.ok) {
+        console.log('Real-time analysis started')
       }
     } catch (error) {
-      console.error('Failed to activate Shadow Mode:', error);
-    } finally {
-      setIsActivating(false);
+      console.error('Failed to start real-time analysis:', error)
     }
-  };
+  }
 
-  const handleDeactivate = async () => {
-    try {
-      const response = await fetch('/api/v1/shadow/deactivate', {
-        method: 'POST'
-      });
-      const result = await response.json();
-      
-      if (result.status === 'deactivated') {
-        // Refresh state
-        const stateResponse = await fetch('/api/v1/shadow/status');
-        const stateData = await stateResponse.json();
-        setShadowState(stateData);
-      }
-    } catch (error) {
-      console.error('Failed to deactivate Shadow Mode:', error);
-    }
-  };
+  const getRiskLevel = () => {
+    if (!analytics) return 'UNKNOWN'
+    
+    const riskScore = (analytics.volatility_forecast + analytics.market_fragmentation + Math.abs(analytics.smart_money_flow)) / 3
+    
+    if (riskScore > 80) return 'HIGH'
+    if (riskScore > 60) return 'MEDIUM' 
+    if (riskScore > 40) return 'LOW'
+    return 'VERY_LOW'
+  }
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'active': return 'text-green-400 bg-green-500/20';
-      case 'stealth': return 'text-purple-400 bg-purple-500/20';
-      case 'hunting': return 'text-orange-400 bg-orange-500/20';
-      case 'inactive': return 'text-gray-400 bg-gray-500/20';
-      default: return 'text-gray-400 bg-gray-500/20';
+  const getRiskColor = (level: string) => {
+    switch (level) {
+      case 'HIGH': return 'text-red-400 bg-red-500/20 border-red-500/50'
+      case 'MEDIUM': return 'text-orange-400 bg-orange-500/20 border-orange-500/50'
+      case 'LOW': return 'text-yellow-400 bg-yellow-500/20 border-yellow-500/50'
+      case 'VERY_LOW': return 'text-green-400 bg-green-500/20 border-green-500/50'
+      default: return 'text-gray-400 bg-gray-500/20 border-gray-500/50'
     }
-  };
+  }
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'HIGH': return 'text-red-400 bg-red-500/20';
-      case 'MEDIUM': return 'text-yellow-400 bg-yellow-500/20';
-      case 'LOW': return 'text-green-400 bg-green-500/20';
-      default: return 'text-gray-400 bg-gray-500/20';
-    }
-  };
+  const riskLevel = getRiskLevel()
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="bg-black/40 backdrop-blur-xl border border-orange-500/30 rounded-2xl p-6"
-    >
+    <div className="bg-gray-900/50 rounded-xl border border-purple-500/30 p-6">
       <div className="flex items-center justify-between mb-6">
-        <h3 className="text-2xl font-bold text-white flex items-center gap-2">
-          🥷 Shadow Mode Control
+        <h3 className="text-xl font-bold text-purple-300 flex items-center">
+          🎛️ Shadow Control Panel
+          <span className="ml-2 text-sm bg-purple-500/20 px-2 py-1 rounded-full">
+            {selectedSymbol}
+          </span>
         </h3>
-        {shadowState && (
-          <div className={`px-3 py-1 rounded-full text-sm font-semibold ${getStatusColor(shadowState.status)}`}>
-            {shadowState.status.toUpperCase()}
-          </div>
-        )}
-      </div>
-
-      {/* Control Panel */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-        {/* Activation Controls */}
-        <div className="space-y-4">
-          <h4 className="text-lg font-semibold text-white">Activation Controls</h4>
-          
-          <div className="space-y-3">
-            <div>
-              <label className="block text-sm text-gray-400 mb-2">
-                Stealth Level: {stealthLevel}/10
-              </label>
-              <input
-                type="range"
-                min="1"
-                max="10"
-                value={stealthLevel}
-                onChange={(e) => setStealthLevel(parseInt(e.target.value))}
-                className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer"
-                disabled={shadowState?.status === 'active'}
-              />
-              <div className="flex justify-between text-xs text-gray-400 mt-1">
-                <span>Basic</span>
-                <span>Ninja</span>
-              </div>
-            </div>
-            
-            <div className="flex gap-3">
-              {shadowState?.status === 'inactive' ? (
-                <button
-                  onClick={handleActivate}
-                  disabled={isActivating}
-                  className="flex-1 bg-gradient-to-r from-orange-500 to-red-500 text-white font-semibold py-3 px-6 rounded-lg hover:from-orange-600 hover:to-red-600 transition-all disabled:opacity-50"
-                >
-                  {isActivating ? '🔄 Activating...' : '🥷 Activate Shadow Mode'}
-                </button>
-              ) : (
-                <button
-                  onClick={handleDeactivate}
-                  className="flex-1 bg-gradient-to-r from-gray-600 to-gray-700 text-white font-semibold py-3 px-6 rounded-lg hover:from-gray-700 hover:to-gray-800 transition-all"
-                >
-                  🛑 Deactivate
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Status Overview */}
-        <div className="space-y-4">
-          <h4 className="text-lg font-semibold text-white">System Status</h4>
-          
-          {shadowState && (
-            <div className="space-y-3">
-              <div className="grid grid-cols-2 gap-3">
-                <div className="bg-gray-900/50 rounded-lg p-3">
-                  <div className="text-blue-400 text-sm">Whales</div>
-                  <div className="text-white text-xl font-bold">
-                    {shadowState.recent_activity?.whale_detections || 0}
-                  </div>
-                </div>
-                <div className="bg-gray-900/50 rounded-lg p-3">
-                  <div className="text-purple-400 text-sm">Dark Pools</div>
-                  <div className="text-white text-xl font-bold">
-                    {shadowState.recent_activity?.dark_pool_activities || 0}
-                  </div>
-                </div>
-                <div className="bg-gray-900/50 rounded-lg p-3">
-                  <div className="text-green-400 text-sm">Institutions</div>
-                  <div className="text-white text-xl font-bold">
-                    {shadowState.recent_activity?.institutional_flows || 0}
-                  </div>
-                </div>
-                <div className="bg-gray-900/50 rounded-lg p-3">
-                  <div className="text-orange-400 text-sm">Patterns</div>
-                  <div className="text-white text-xl font-bold">
-                    {shadowState.recent_activity?.manipulation_patterns || 0}
-                  </div>
-                </div>
-              </div>
-              
-              {shadowState.metrics && (
-                <div className="bg-gray-900/30 rounded-lg p-3">
-                  <div className="text-sm text-gray-400 mb-2">Performance Metrics</div>
-                  <div className="grid grid-cols-2 gap-2 text-sm">
-                    <div>
-                      <span className="text-gray-400">Detection Accuracy:</span>
-                      <span className="ml-2 text-green-400">
-                        {shadowState.metrics.detection_accuracy?.toFixed(1) || 0}%
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-gray-400">Stealth Success:</span>
-                      <span className="ml-2 text-purple-400">
-                        {shadowState.metrics.stealth_success_rate?.toFixed(1) || 0}%
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Recent Alerts */}
-      <div>
-        <h4 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-          🚨 Recent Alerts
-        </h4>
         
-        {alerts.length === 0 ? (
-          <div className="text-center py-6 text-gray-400 bg-gray-900/30 rounded-lg">
-            No alerts detected
-          </div>
-        ) : (
-          <div className="space-y-3 max-h-64 overflow-y-auto">
-            {alerts.slice(0, 5).map((alert, index) => (
-              <motion.div
-                key={alert.alert_id}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: index * 0.1 }}
-                className="bg-gray-900/50 rounded-lg p-3 border border-gray-700/50"
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <span className={`px-2 py-1 rounded text-xs ${getPriorityColor(alert.priority)}`}>
-                      {alert.priority}
-                    </span>
-                    {alert.stealth_required && (
-                      <span className="px-2 py-1 rounded text-xs bg-purple-500/20 text-purple-400">
-                        STEALTH
-                      </span>
-                    )}
-                  </div>
-                  <span className="text-gray-400 text-xs">
-                    {new Date(alert.created_at).toLocaleTimeString()}
-                  </span>
-                </div>
-                
-                <div className="text-white font-medium mb-1">{alert.title}</div>
-                <div className="text-gray-300 text-sm">{alert.message}</div>
-                
-                {alert.symbol && (
-                  <div className="mt-2">
-                    <span className="text-orange-400 text-sm font-semibold">{alert.symbol}</span>
-                  </div>
-                )}
-              </motion.div>
-            ))}
-          </div>
-        )}
+        <div className="flex items-center space-x-3">
+          <span className={`px-3 py-1 rounded-full text-sm border ${getRiskColor(riskLevel)}`}>
+            Risk: {riskLevel}
+          </span>
+          <button
+            onClick={startRealTimeAnalysis}
+            className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm transition-colors"
+          >
+            🚀 Start Analysis
+          </button>
+        </div>
       </div>
-    </motion.div>
-  );
+
+      {/* Analytics Display */}
+      {analytics && (
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+          <div className="bg-gray-800/50 rounded-lg p-4 border border-purple-500/20">
+            <div className="text-sm text-gray-400 mb-1">Market Impact</div>
+            <div className="text-2xl font-bold text-purple-400">
+              {analytics.predicted_impact.toFixed(1)}%
+            </div>
+            <div className="text-xs text-gray-500">
+              Predicted influence on price
+            </div>
+          </div>
+
+          <div className="bg-gray-800/50 rounded-lg p-4 border border-blue-500/20">
+            <div className="text-sm text-gray-400 mb-1">Smart Money Flow</div>
+            <div className={`text-2xl font-bold ${analytics.smart_money_flow > 0 ? 'text-green-400' : 'text-red-400'}`}>
+              {analytics.smart_money_flow > 0 ? '+' : ''}{analytics.smart_money_flow.toFixed(1)}
+            </div>
+            <div className="text-xs text-gray-500">
+              Institutional direction
+            </div>
+          </div>
+
+          <div className="bg-gray-800/50 rounded-lg p-4 border border-orange-500/20">
+            <div className="text-sm text-gray-400 mb-1">Volatility Forecast</div>
+            <div className="text-2xl font-bold text-orange-400">
+              {analytics.volatility_forecast.toFixed(1)}%
+            </div>
+            <div className="text-xs text-gray-500">
+              Expected volatility
+            </div>
+          </div>
+
+          <div className="bg-gray-800/50 rounded-lg p-4 border border-yellow-500/20">
+            <div className="text-sm text-gray-400 mb-1">Trend Strength</div>
+            <div className="text-2xl font-bold text-yellow-400">
+              {analytics.trend_strength.toFixed(1)}%
+            </div>
+            <div className="text-xs text-gray-500">
+              Directional confidence
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Control Settings */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Sensitivity Control */}
+        <div>
+          <label className="block text-sm font-medium text-gray-300 mb-2">
+            Detection Sensitivity
+          </label>
+          <div className="space-y-2">
+            <input
+              type="range"
+              min="50"
+              max="95"
+              value={sensitivity}
+              onChange={(e) => setSensitivity(parseInt(e.target.value))}
+              className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer"
+            />
+            <div className="flex justify-between text-xs text-gray-400">
+              <span>Conservative</span>
+              <span className="text-purple-400 font-medium">{sensitivity}%</span>
+              <span>Aggressive</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Mode Toggles */}
+        <div className="space-y-4">
+          <div>
+            <label className="flex items-center space-x-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={stealthMode}
+                onChange={(e) => setStealthMode(e.target.checked)}
+                className="w-4 h-4 text-purple-600 bg-gray-700 border-gray-600 rounded focus:ring-purple-500"
+              />
+              <span className="text-sm text-gray-300">Stealth Mode</span>
+              <span className="text-xs text-gray-500">(Hide from detection)</span>
+            </label>
+          </div>
+          
+          <div>
+            <label className="flex items-center space-x-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={autoAlerts}
+                onChange={(e) => setAutoAlerts(e.target.checked)}
+                className="w-4 h-4 text-purple-600 bg-gray-700 border-gray-600 rounded focus:ring-purple-500"
+              />
+              <span className="text-sm text-gray-300">Auto Alerts</span>
+              <span className="text-xs text-gray-500">(Whale notifications)</span>
+            </label>
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="space-y-3">
+          <button className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg text-sm transition-colors flex items-center justify-center">
+            🌑 Monitor Dark Pools
+          </button>
+          <button className="w-full bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg text-sm transition-colors flex items-center justify-center">
+            🎯 Create Stealth Order
+          </button>
+          <button className="w-full bg-orange-600 hover:bg-orange-700 text-white py-2 px-4 rounded-lg text-sm transition-colors flex items-center justify-center">
+            📊 Export Analysis
+          </button>
+        </div>
+      </div>
+
+      {/* Status Information */}
+      <div className="mt-6 pt-4 border-t border-gray-700">
+        <div className="flex items-center justify-between text-sm">
+          <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2">
+              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+              <span className="text-gray-400">Shadow Mode Active</span>
+            </div>
+            <div className="text-gray-500">
+              Last Update: {analytics ? new Date(analytics.timestamp).toLocaleTimeString() : 'Never'}
+            </div>
+          </div>
+          
+          <div className="text-gray-500">
+            Monitoring: {selectedSymbol} • Sensitivity: {sensitivity}%
+          </div>
+        </div>
+      </div>
+    </div>
+  )
 } 

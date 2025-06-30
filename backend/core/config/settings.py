@@ -7,8 +7,20 @@ from functools import lru_cache
 from typing import List, Optional, Dict, Any
 from pathlib import Path
 
-from pydantic_settings import BaseSettings
-from pydantic import validator, Field
+from dotenv import load_dotenv
+from pydantic import field_validator
+
+# .env dosyasını yükle
+load_dotenv()
+
+# Pydantic v2 uyumluluğu için
+try:
+    # Önce yeni pydantic-settings paketini dene
+    from pydantic_settings import BaseSettings, SettingsConfigDict
+except ImportError:
+    # Eğer yoksa, Pydantic v1'in BaseSettings'ini fallback olarak kullan
+    from pydantic import BaseSettings
+    SettingsConfigDict = dict # Eski versiyon için dummy dict
 
 
 class Settings(BaseSettings):
@@ -18,17 +30,21 @@ class Settings(BaseSettings):
     This loads configuration from environment variables and .env files.
     """
     # API settings
-    API_V1_STR: str = "/api"
-    PROJECT_NAME: str = "ICT Ultra v2"
+    API_V1_STR: str = "/api/v1"
+    PROJECT_NAME: str = "AI Algo Trade Platform"
     VERSION: str = "2.0.0"
     
     # CORS settings
-    BACKEND_CORS_ORIGINS: List[str] = ["http://localhost:3000", "http://localhost:3001"]
+    BACKEND_CORS_ORIGINS: List[str] = [
+        "http://localhost",
+        "http://localhost:3000",
+        "http://localhost:8080",
+    ]
     
     # MetaTrader 5 settings
-    MT5_LOGIN: int = 25201110
-    MT5_SERVER: str = "Tickmill-Demo"
-    MT5_PASSWORD: str = "e|([rXU1IsiM"
+    MT5_LOGIN: int = int(os.getenv("MT5_LOGIN", 25201110))
+    MT5_SERVER: str = os.getenv("MT5_SERVER", "Tickmill-Demo")
+    MT5_PASSWORD: str = os.getenv("MT5_PASSWORD", "e|([rXU1IsiM")
     MT5_TIMEOUT: int = 60000  # milliseconds
     
     # Database settings
@@ -50,12 +66,12 @@ class Settings(BaseSettings):
     FORGE_REPOS_PATH: str = "./mql5_forge_repos"
     
     # Logging settings
-    LOG_LEVEL: str = "INFO"
+    LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
     
     # Application settings
     APP_NAME: str = "ICT Ultra v2: Algo Forge Edition"
     ENVIRONMENT: str = "development"
-    DEBUG: bool = True
+    DEBUG: bool = os.getenv("DEBUG", "False").lower() == "true"
     HOST: str = "0.0.0.0"
     PORT: int = 8001
     
@@ -63,7 +79,8 @@ class Settings(BaseSettings):
     USE_OPENBLAS: bool = True
     OPENBLAS_THREADS: int = 4
     
-    @validator("BACKEND_CORS_ORIGINS", pre=True)
+    @field_validator("BACKEND_CORS_ORIGINS", mode='before')
+    @classmethod
     def assemble_cors_origins(cls, v: Any) -> List[str]:
         """
         Parse CORS origins from string or list.
@@ -76,7 +93,7 @@ class Settings(BaseSettings):
         """
         if isinstance(v, str) and not v.startswith("["):
             return [i.strip() for i in v.split(",")]
-        if isinstance(v, (list, str)):
+        elif isinstance(v, (list, str)):
             return v
         raise ValueError(v)
     
@@ -91,9 +108,14 @@ class Settings(BaseSettings):
         auth = f":{self.REDIS_PASSWORD}@" if self.REDIS_PASSWORD else ""
         return f"redis://{auth}{self.REDIS_HOST}:{self.REDIS_PORT}/{self.REDIS_DB}"
     
-    class Config:
-        env_file = ".env"
-        case_sensitive = True
+    # Pydantic v2 için model yapılandırması
+    if 'SettingsConfigDict' in globals() and callable(SettingsConfigDict):
+        model_config = SettingsConfigDict(case_sensitive=True, env_file=".env", extra="ignore")
+    else: # Pydantic v1 için
+        class Config:
+            case_sensitive = True
+            env_file = ".env"
+            extra = "ignore"
 
 
 @lru_cache()
@@ -104,4 +126,6 @@ def get_settings() -> Settings:
     Returns:
         Settings instance
     """
-    return Settings() 
+    return Settings()
+
+settings = get_settings() 

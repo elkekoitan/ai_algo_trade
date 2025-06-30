@@ -10,14 +10,14 @@ import numpy as np
 from dataclasses import dataclass
 import MetaTrader5 as mt5
 
-from backend.core.logger import get_logger
+from backend.core.logger import setup_logger
 from backend.modules.mt5_integration.service import MT5Service
 from .models import (
     BacktestRequest, BacktestResult, StrategyParameters,
     TradingCondition, IndicatorType
 )
 
-logger = get_logger(__name__)
+logger = setup_logger(__name__)
 
 
 @dataclass

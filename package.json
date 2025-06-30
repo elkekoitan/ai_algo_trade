@@ -3,6 +3,7 @@
     "@mermaid-js/mermaid-cli": "^11.6.0"
   },
   "dependencies": {
-    "react-force-graph-2d": "^1.27.1"
+    "react-force-graph-2d": "^1.27.1",
+    "swr": "^2.3.3"
   }
 }

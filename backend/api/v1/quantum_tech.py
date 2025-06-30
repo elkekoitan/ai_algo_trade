@@ -8,14 +8,14 @@ from datetime import datetime, timedelta
 import asyncio
 import logging
 
-from backend.modules.quantum_tech.autonomous_agents import AutonomousTradingAgents
+from ...modules.quantum_tech import AutonomousTradingAgent, AgentSwarm
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/quantum", tags=["Quantum Technologies"])
 
 # Global services
-autonomous_agents = AutonomousTradingAgents(swarm_size=50)
+agent_swarm = AgentSwarm(swarm_size=50)
 
 @router.post("/agents/initialize-swarm")
 async def initialize_agent_swarm(
@@ -24,11 +24,11 @@ async def initialize_agent_swarm(
 ):
     """Initialize autonomous trading agent swarm."""
     try:
-        global autonomous_agents
-        autonomous_agents = AutonomousTradingAgents(swarm_size=swarm_size)
+        global agent_swarm
+        agent_swarm = AgentSwarm(swarm_size=swarm_size)
         
         # Initialize in background
-        background_tasks.add_task(autonomous_agents.initialize_swarm)
+        background_tasks.add_task(agent_swarm.initialize_swarm)
         
         return {
             "success": True,
@@ -45,10 +45,10 @@ async def initialize_agent_swarm(
 async def get_swarm_decision(market_data: Dict[str, Any] = Body(...)):
     """Get collective trading decision from agent swarm."""
     try:
-        if not autonomous_agents.agents:
+        if not agent_swarm.agents:
             raise HTTPException(status_code=400, detail="Agent swarm not initialized")
         
-        decision = await autonomous_agents.swarm_intelligence_decision(market_data)
+        decision = await agent_swarm.swarm_intelligence_decision(market_data)
         
         return {
             "success": True,
@@ -73,7 +73,7 @@ async def get_swarm_decision(market_data: Dict[str, Any] = Body(...)):
 async def get_swarm_metrics():
     """Get comprehensive swarm performance metrics."""
     try:
-        metrics = autonomous_agents.get_swarm_metrics()
+        metrics = agent_swarm.get_swarm_metrics()
         
         return {
             "success": True,
@@ -89,14 +89,14 @@ async def get_swarm_metrics():
 async def evolve_agent_swarm(performance_data: Dict[str, Any] = Body(...)):
     """Evolve agent swarm based on performance data."""
     try:
-        await autonomous_agents.evolve_agents(performance_data)
+        await agent_swarm.evolve_agents(performance_data)
         
-        metrics = autonomous_agents.get_swarm_metrics()
+        metrics = agent_swarm.get_swarm_metrics()
         
         return {
             "success": True,
-            "message": f"Evolution cycle {autonomous_agents.evolution_cycles} completed",
-            "evolution_cycle": autonomous_agents.evolution_cycles,
+            "message": f"Evolution cycle {agent_swarm.evolution_cycles} completed",
+            "evolution_cycle": agent_swarm.evolution_cycles,
             "swarm_metrics": metrics,
             "evolved_at": datetime.now().isoformat()
         }
@@ -350,13 +350,13 @@ async def quantum_system_status():
 async def quantum_tech_health():
     """Get quantum technologies system health."""
     try:
-        swarm_metrics = autonomous_agents.get_swarm_metrics()
+        swarm_metrics = agent_swarm.get_swarm_metrics()
         
         return {
             "success": True,
             "status": "healthy",
             "services": {
-                "autonomous_agents": "active" if autonomous_agents.agents else "inactive",
+                "autonomous_agents": "active" if agent_swarm.agents else "inactive",
                 "quantum_algorithms": "active",
                 "blockchain_integration": "connected",
                 "defi_protocols": "active",

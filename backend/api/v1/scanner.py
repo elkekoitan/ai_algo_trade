@@ -13,8 +13,6 @@ import logging
 from backend.core.database import get_db
 from backend.modules.mt5_integration.service import MT5Service
 from backend.modules.signals.ict.breaker_blocks import BreakerBlockAnalyzer
-from backend.modules.signals.ict.fair_value_gaps import FairValueGapAnalyzer
-from backend.modules.signals.ict.order_blocks import OrderBlockAnalyzer
 
 logger = logging.getLogger(__name__)
 
@@ -73,8 +71,7 @@ class ScannerService:
     def __init__(self):
         self.mt5_service = MT5Service()
         self.breaker_analyzer = BreakerBlockAnalyzer()
-        self.fvg_analyzer = FairValueGapAnalyzer()
-        self.ob_analyzer = OrderBlockAnalyzer()
+        self.ob_analyzer = None
         
     async def scan_opportunities(
         self,
@@ -178,13 +175,7 @@ class ScannerService:
         try:
             # Analyze Order Blocks
             if "order_block" in signal_types:
-                ob_signals = await self._analyze_order_blocks(symbol, timeframe, candles)
-                opportunities.extend(ob_signals)
-                
-            # Analyze Fair Value Gaps
-            if "fair_value_gap" in signal_types:
-                fvg_signals = await self._analyze_fair_value_gaps(symbol, timeframe, candles)
-                opportunities.extend(fvg_signals)
+                pass
                 
             # Analyze Breaker Blocks
             if "breaker_block" in signal_types:
@@ -204,69 +195,6 @@ class ScannerService:
         except Exception as e:
             logger.error(f"Error analyzing ICT signals for {symbol}: {e}")
             return []
-
-    async def _analyze_order_blocks(self, symbol: str, timeframe: str, candles: List[Dict]) -> List[MarketOpportunity]:
-        """Analyze Order Block signals"""
-        opportunities = []
-        
-        try:
-            # Simulate Order Block analysis
-            # In real implementation, this would use the OrderBlockAnalyzer
-            
-            # Example Order Block opportunity
-            opportunity = MarketOpportunity()
-            opportunity.id = f"ob_{symbol}_{timeframe}_{datetime.now().timestamp()}"
-            opportunity.symbol = symbol
-            opportunity.timeframe = timeframe
-            opportunity.signal_type = "order_block"
-            opportunity.direction = TrendDirection.BULLISH
-            opportunity.strength = 85.0
-            opportunity.confidence = 82.0
-            opportunity.entry_price = 1.1000
-            opportunity.sl_price = 1.0980
-            opportunity.tp_price = 1.1040
-            opportunity.risk_reward = 2.0
-            opportunity.market_structure = "Higher High Formation"
-            opportunity.volume_confirmation = True
-            opportunity.price_action_score = 88.0
-            opportunity.status = SignalStatus.ACTIVE
-            
-            opportunities.append(opportunity)
-            
-        except Exception as e:
-            logger.error(f"Error analyzing order blocks: {e}")
-            
-        return opportunities
-
-    async def _analyze_fair_value_gaps(self, symbol: str, timeframe: str, candles: List[Dict]) -> List[MarketOpportunity]:
-        """Analyze Fair Value Gap signals"""
-        opportunities = []
-        
-        try:
-            # Simulate FVG analysis
-            opportunity = MarketOpportunity()
-            opportunity.id = f"fvg_{symbol}_{timeframe}_{datetime.now().timestamp()}"
-            opportunity.symbol = symbol
-            opportunity.timeframe = timeframe
-            opportunity.signal_type = "fair_value_gap"
-            opportunity.direction = TrendDirection.BEARISH
-            opportunity.strength = 78.0
-            opportunity.confidence = 75.0
-            opportunity.entry_price = 1.0990
-            opportunity.sl_price = 1.1010
-            opportunity.tp_price = 1.0950
-            opportunity.risk_reward = 2.5
-            opportunity.market_structure = "Imbalance Fill"
-            opportunity.volume_confirmation = False
-            opportunity.price_action_score = 76.0
-            opportunity.status = SignalStatus.PENDING
-            
-            opportunities.append(opportunity)
-            
-        except Exception as e:
-            logger.error(f"Error analyzing fair value gaps: {e}")
-            
-        return opportunities
 
     async def _analyze_breaker_blocks(self, symbol: str, timeframe: str, candles: List[Dict]) -> List[MarketOpportunity]:
         """Analyze Breaker Block signals"""

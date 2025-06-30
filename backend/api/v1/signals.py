@@ -7,21 +7,20 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 import pandas as pd
 import MetaTrader5 as mt5
 from datetime import datetime
+import logging
 
-from backend.core.config.settings import settings
+from backend.core.config.settings import get_settings
 from backend.modules.signals.ict import (
-    OrderBlockDetector, 
-    FairValueGapDetector, 
-    BreakerBlockDetector,
-    ICTSignalScorer,
-    ICTOpenBLASEngine
+    RealICTEngine
 )
 from backend.modules.mt5_integration.service import MT5Service
+from backend.modules.signals.ict.real_ict_engine import RealICTEngine
 
 # Create router
 router = APIRouter(prefix="/signals", tags=["signals"])
 
 # Initialize services
+settings = get_settings()
 mt5_service = MT5Service(
     login=settings.MT5_LOGIN,
     password=settings.MT5_PASSWORD,
@@ -29,11 +28,8 @@ mt5_service = MT5Service(
     timeout=settings.MT5_TIMEOUT
 )
 
-# Initialize detectors with OpenBLAS
-ob_detector = OrderBlockDetector(use_openblas=settings.USE_OPENBLAS)
-fvg_detector = FairValueGapDetector(use_openblas=settings.USE_OPENBLAS)
-bb_detector = BreakerBlockDetector(use_openblas=settings.USE_OPENBLAS)
-signal_scorer = ICTSignalScorer()
+# Initialize RealICTEngine
+engine = RealICTEngine()
 
 
 @router.get("/order-blocks", response_model=List[Dict[str, Any]])
@@ -88,20 +84,11 @@ async def get_order_blocks(
         df['symbol'] = symbol
         df['timeframe'] = timeframe
         
-        # Detect order blocks
-        order_blocks = ob_detector.detect(
-            df,
-            min_body_size_factor=min_body_size_factor,
-            min_move_after_factor=min_move_after_factor,
-            confirmation_candles=confirmation_candles,
-            strength_threshold=strength_threshold,
-            max_results=max_results
-        )
+        # Use RealICTEngine for analysis
+        signals = await engine.analyze_symbol(symbol, timeframe, bars_count)
+        order_blocks = signals.get("order_blocks", [])[:max_results]
         
-        # Score signals
-        scored_signals = signal_scorer.score_signals(order_blocks, df)
-        
-        return scored_signals
+        return order_blocks
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error detecting order blocks: {str(e)}")
@@ -157,18 +144,11 @@ async def get_fair_value_gaps(
         df['symbol'] = symbol
         df['timeframe'] = timeframe
         
-        # Detect fair value gaps
-        fvgs = fvg_detector.detect(
-            df,
-            min_gap_factor=min_gap_factor,
-            strength_threshold=strength_threshold,
-            max_results=max_results
-        )
+        # Use RealICTEngine for analysis
+        signals = await engine.analyze_symbol(symbol, timeframe, bars_count)
+        fvgs = signals.get("fair_value_gaps", [])[:max_results]
         
-        # Score signals
-        scored_signals = signal_scorer.score_signals(fvgs, df)
-        
-        return scored_signals
+        return fvgs
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error detecting fair value gaps: {str(e)}")
@@ -223,17 +203,11 @@ async def get_breaker_blocks(
         df['symbol'] = symbol
         df['timeframe'] = timeframe
         
-        # Detect breaker blocks
-        breaker_blocks = bb_detector.detect(
-            df,
-            min_strength=min_strength,
-            max_results=max_results
-        )
+        # Use RealICTEngine for analysis
+        signals = await engine.analyze_symbol(symbol, timeframe, bars_count)
+        breaker_blocks = signals.get("breaker_blocks", [])[:max_results]
         
-        # Score signals
-        scored_signals = signal_scorer.score_signals(breaker_blocks, df)
-        
-        return scored_signals
+        return breaker_blocks
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error detecting breaker blocks: {str(e)}")
@@ -285,39 +259,14 @@ async def get_all_signals(
         df['symbol'] = symbol
         df['timeframe'] = timeframe
         
-        # Detect all signal types
-        order_blocks = ob_detector.detect(
-            df,
-            min_body_size_factor=0.6,
-            min_move_after_factor=1.5,
-            confirmation_candles=3,
-            strength_threshold=strength_threshold,
-            max_results=max_results
-        )
+        # Use RealICTEngine for analysis
+        signals = await engine.analyze_symbol(symbol, timeframe, bars_count)
         
-        fair_value_gaps = fvg_detector.detect(
-            df,
-            min_gap_factor=0.5,
-            strength_threshold=strength_threshold,
-            max_results=max_results
-        )
-        
-        breaker_blocks = bb_detector.detect(
-            df,
-            min_strength=strength_threshold,
-            max_results=max_results
-        )
-        
-        # Score all signals
-        scored_obs = signal_scorer.score_signals(order_blocks, df)
-        scored_fvgs = signal_scorer.score_signals(fair_value_gaps, df)
-        scored_bbs = signal_scorer.score_signals(breaker_blocks, df)
-        
-        # Return all signals
+        # Return all signals with max_results limit
         return {
-            "order_blocks": scored_obs,
-            "fair_value_gaps": scored_fvgs,
-            "breaker_blocks": scored_bbs
+            "order_blocks": signals.get("order_blocks", [])[:max_results],
+            "fair_value_gaps": signals.get("fair_value_gaps", [])[:max_results],
+            "breaker_blocks": signals.get("breaker_blocks", [])[:max_results]
         }
         
     except Exception as e:
@@ -363,3 +312,16 @@ async def get_top_signals(
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error getting top signals: {str(e)}")
+
+
+@router.post("/signals/ict/find_all", summary="Find all ICT signals for given symbols")
+async def find_all_signals(symbols: List[str] = ["EURUSD", "GBPUSD", "XAUUSD", "USDJPY"]):
+    """
+    Asenkron olarak tüm semboller için FVG, OB ve BB sinyallerini bulur.
+    """
+    try:
+        all_signals = await engine.find_all_signals_for_symbols(symbols)
+        return {"success": True, "signals": all_signals}
+    except Exception as e:
+        logging.error(f"Error in find_all_signals: {e}")
+        raise HTTPException(status_code=500, detail=str(e))

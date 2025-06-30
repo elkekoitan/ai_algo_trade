@@ -2,211 +2,194 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { Eye, Lock, AlertTriangle, Activity } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import GlassCard from '@/components/quantum/GlassCard';
 
-interface DarkPoolSummary {
-  total_activities: number;
-  active_pools: number;
-  total_volume: number;
-  avg_price_improvement: number;
-  most_active_pool: string;
-  arbitrage_opportunities: number;
-  institutional_activity: number;
-}
-
-interface ArbitrageOpportunity {
-  activity_id: string;
+interface DarkPoolActivity {
+  id: string;
+  timestamp: string;
   symbol: string;
-  dark_pool: string;
-  dark_pool_price: number;
-  public_price: number;
+  hidden_volume: number;
+  visible_volume: number;
+  dark_pool_ratio: number;
+  liquidity_depth: number;
+  execution_quality: number;
+  fragmentation_score: number;
   price_improvement: number;
-  volume: number;
-  estimated_profit: number;
-  opportunity_score: number;
-  time_remaining: string;
-  risk_level: string;
 }
 
-export default function DarkPoolMonitor() {
-  const [summary, setSummary] = useState<DarkPoolSummary | null>(null);
-  const [opportunities, setOpportunities] = useState<ArbitrageOpportunity[]>([]);
+interface DarkPoolMonitorProps {
+  symbol: string;
+}
+
+export default function DarkPoolMonitor({ symbol }: DarkPoolMonitorProps) {
+  const [activities, setActivities] = useState<DarkPoolActivity[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedTimeframe, setSelectedTimeframe] = useState('1h');
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [summaryResponse, opportunitiesResponse] = await Promise.all([
-          fetch('/api/v1/shadow/dark-pools'),
-          fetch('/api/v1/shadow/arbitrage-opportunities')
-        ]);
-        
-        const summaryData = await summaryResponse.json();
-        const opportunitiesData = await opportunitiesResponse.json();
-        
-        setSummary(summaryData);
-        setOpportunities(opportunitiesData || []);
-      } catch (error) {
-        console.error('Failed to fetch dark pool data:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchData();
-    const interval = setInterval(fetchData, 12000); // Update every 12 seconds
-
-    return () => clearInterval(interval);
-  }, []);
-
-  const getRiskLevelColor = (riskLevel: string) => {
-    switch (riskLevel) {
-      case 'low': return 'text-green-400 bg-green-500/20';
-      case 'medium': return 'text-yellow-400 bg-yellow-500/20';
-      case 'high': return 'text-red-400 bg-red-500/20';
-      default: return 'text-gray-400 bg-gray-500/20';
+  // Fetch dark pool activities
+  const fetchActivities = async () => {
+    try {
+      const response = await fetch(`http://localhost:8002/api/v1/shadow-mode/dark-pools?symbol=${symbol}`);
+      if (!response.ok) throw new Error('Failed to fetch dark pool data');
+      const data = await response.json();
+      setActivities(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch dark pool data');
     }
   };
 
+  useEffect(() => {
+    const loadData = async () => {
+      setIsLoading(true);
+      await fetchActivities();
+      setIsLoading(false);
+    };
+
+    loadData();
+
+    // Auto-refresh every 20 seconds
+    const interval = setInterval(fetchActivities, 20000);
+    return () => clearInterval(interval);
+  }, [symbol]);
+
+  const getIntensityColor = (ratio: number) => {
+    if (ratio > 50) return 'text-red-400 bg-red-500/20';
+    if (ratio > 30) return 'text-orange-400 bg-orange-500/20';
+    if (ratio > 15) return 'text-yellow-400 bg-yellow-500/20';
+    return 'text-green-400 bg-green-500/20';
+  };
+
+  const getQualityColor = (quality: number) => {
+    if (quality > 90) return 'text-green-400';
+    if (quality > 75) return 'text-yellow-400';
+    if (quality > 60) return 'text-orange-400';
+    return 'text-red-400';
+  };
+
+  const calculateAverages = () => {
+    if (activities.length === 0) return {
+      avgRatio: 0,
+      avgQuality: 0,
+      totalHidden: 0,
+      avgFragmentation: 0
+    };
+
+    return {
+      avgRatio: activities.reduce((sum, a) => sum + a.dark_pool_ratio, 0) / activities.length,
+      avgQuality: activities.reduce((sum, a) => sum + a.execution_quality, 0) / activities.length,
+      totalHidden: activities.reduce((sum, a) => sum + a.hidden_volume, 0),
+      avgFragmentation: activities.reduce((sum, a) => sum + a.fragmentation_score, 0) / activities.length
+    };
+  };
+
+  if (isLoading) {
+    return (
+      <div className="p-6 text-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-2"></div>
+        <p className="text-gray-400">Scanning dark pools...</p>
+      </div>
+    );
+  }
+
+  const averages = calculateAverages();
+
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="bg-black/40 backdrop-blur-xl border border-orange-500/30 rounded-2xl p-6"
-    >
+    <GlassCard className="p-6">
       <div className="flex items-center justify-between mb-6">
-        <h3 className="text-xl font-bold text-white flex items-center gap-2">
-          🌑 Dark Pool Monitor
-        </h3>
-        <div className="flex items-center gap-2">
-          <div className="w-2 h-2 bg-purple-400 rounded-full animate-pulse"></div>
-          <span className="text-purple-400 text-sm">Scanning</span>
-        </div>
+        <h2 className="text-xl font-bold flex items-center gap-2">
+          <Eye className="h-6 w-6 text-indigo-400" />
+          Dark Pool Monitor
+        </h2>
+        <Badge className={`${averages.avgRatio > 25 ? 'bg-yellow-500/20 text-yellow-400' : 'bg-gray-500/20 text-gray-400'}`}>
+          <Activity className={`h-3 w-3 mr-1 ${averages.avgRatio > 25 ? 'animate-pulse' : ''}`} />
+          {averages.avgRatio > 25 ? 'HIGH ACTIVITY' : 'IDLE'}
+        </Badge>
       </div>
 
-      {isLoading ? (
-        <div className="flex items-center justify-center py-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
+      {!activities || activities.length === 0 ? (
+        <div className="text-center py-12">
+          <Lock className="h-16 w-16 mx-auto mb-4 text-gray-600" />
+          <p className="text-gray-500">No dark pool activity detected</p>
+          <p className="text-sm text-gray-600 mt-2">Monitoring {symbol} for hidden liquidity...</p>
         </div>
       ) : (
-        <div className="space-y-6">
-          {/* Summary Stats */}
-          {summary && (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="bg-gray-900/50 rounded-lg p-3 border border-gray-700/50">
-                <div className="text-purple-400 text-sm">Active Pools</div>
-                <div className="text-white text-xl font-bold">{summary.active_pools}</div>
+        <div className="space-y-4">
+          {activities.map((activity, index) => (
+            <div key={index} className="p-4 bg-gray-800/50 rounded-lg border border-indigo-500/20">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-indigo-500/20 rounded-lg">
+                    <Lock className="h-5 w-5 text-indigo-400" />
+                  </div>
+                  <div>
+                    <p className="font-bold text-lg">{activity.symbol}</p>
+                    <p className="text-sm text-gray-400">Hidden Order Detected</p>
+                  </div>
+                </div>
+                <Badge className="bg-yellow-500/20 text-yellow-400">
+                  <AlertTriangle className="h-3 w-3 mr-1" />
+                  DARK POOL
+                </Badge>
               </div>
-              <div className="bg-gray-900/50 rounded-lg p-3 border border-gray-700/50">
-                <div className="text-blue-400 text-sm">Total Volume</div>
-                <div className="text-white text-xl font-bold">
-                  ${(summary.total_volume / 1000000).toFixed(1)}M
+
+              <div className="grid grid-cols-3 gap-3 text-sm">
+                <div className="bg-gray-900/50 p-3 rounded">
+                  <p className="text-gray-500 mb-1">Hidden Liquidity</p>
+                  <p className="font-bold text-indigo-400">
+                    ${(activity.hidden_volume / 1000000).toFixed(2)}M
+                  </p>
+                </div>
+                <div className="bg-gray-900/50 p-3 rounded">
+                  <p className="text-gray-500 mb-1">Price Diff</p>
+                  <p className={`font-bold ${
+                    activity.price_improvement > 0 ? 'text-green-400' : 'text-red-400'
+                  }`}>
+                    {activity.price_improvement > 0 ? '+' : ''}{(activity.price_improvement * 100).toFixed(3)}%
+                  </p>
+                </div>
+                <div className="bg-gray-900/50 p-3 rounded">
+                  <p className="text-gray-500 mb-1">Execution Prob</p>
+                  <p className="font-bold text-cyan-400">
+                    {(activity.execution_quality * 100).toFixed(0)}%
+                  </p>
                 </div>
               </div>
-              <div className="bg-gray-900/50 rounded-lg p-3 border border-gray-700/50">
-                <div className="text-green-400 text-sm">Activities</div>
-                <div className="text-white text-xl font-bold">{summary.total_activities}</div>
-              </div>
-              <div className="bg-gray-900/50 rounded-lg p-3 border border-gray-700/50">
-                <div className="text-orange-400 text-sm">Arbitrage</div>
-                <div className="text-white text-xl font-bold">{summary.arbitrage_opportunities}</div>
-              </div>
-            </div>
-          )}
 
-          {/* Arbitrage Opportunities */}
-          <div>
-            <h4 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-              💰 Arbitrage Opportunities
-            </h4>
-            
-            {opportunities.length === 0 ? (
-              <div className="text-center py-6 text-gray-400 bg-gray-900/30 rounded-lg">
-                No arbitrage opportunities detected
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {opportunities.slice(0, 3).map((opportunity, index) => (
-                  <motion.div
-                    key={opportunity.activity_id}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                    className="bg-gray-900/50 rounded-lg p-4 border border-gray-700/50 hover:border-purple-500/50 transition-colors"
-                  >
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-3">
-                        <span className="text-orange-400 font-semibold">{opportunity.symbol}</span>
-                        <span className={`px-2 py-1 rounded text-xs ${getRiskLevelColor(opportunity.risk_level)}`}>
-                          {opportunity.risk_level.toUpperCase()} RISK
-                        </span>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-green-400 font-bold">
-                          +${opportunity.estimated_profit.toFixed(0)}
-                        </div>
-                        <div className="text-gray-400 text-xs">
-                          Score: {opportunity.opportunity_score.toFixed(1)}/10
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="grid grid-cols-2 gap-4 text-sm mb-3">
-                      <div>
-                        <span className="text-gray-400">Dark Pool:</span>
-                        <span className="ml-2 text-purple-400">{opportunity.dark_pool}</span>
-                      </div>
-                      <div>
-                        <span className="text-gray-400">Volume:</span>
-                        <span className="ml-2 text-blue-400">
-                          ${(opportunity.volume / 1000000).toFixed(1)}M
-                        </span>
-                      </div>
-                    </div>
-                    
-                    <div className="grid grid-cols-2 gap-4 text-sm mb-3">
-                      <div>
-                        <span className="text-gray-400">Dark Price:</span>
-                        <span className="ml-2 text-white">{opportunity.dark_pool_price.toFixed(5)}</span>
-                      </div>
-                      <div>
-                        <span className="text-gray-400">Public Price:</span>
-                        <span className="ml-2 text-white">{opportunity.public_price.toFixed(5)}</span>
-                      </div>
-                    </div>
-                    
-                    <div className="flex justify-between items-center">
-                      <span className="text-green-400 text-sm">
-                        +{(opportunity.price_improvement * 10000).toFixed(1)} pips improvement
-                      </span>
-                      <span className="text-gray-400 text-xs">
-                        ⏱️ {opportunity.time_remaining}
-                      </span>
-                    </div>
-                    
-                    <div className="mt-3 bg-gray-800 rounded-full h-2">
-                      <div 
-                        className="bg-gradient-to-r from-green-500 to-blue-500 h-2 rounded-full"
-                        style={{ width: `${(opportunity.opportunity_score / 10) * 100}%` }}
-                      ></div>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Most Active Pool */}
-          {summary?.most_active_pool && (
-            <div className="bg-gray-900/30 rounded-lg p-4 border border-gray-700/50">
-              <div className="text-sm text-gray-400 mb-1">Most Active Dark Pool</div>
-              <div className="text-purple-400 font-semibold">{summary.most_active_pool}</div>
-              <div className="text-xs text-gray-400 mt-1">
-                Avg. Price Improvement: +{(summary.avg_price_improvement * 10000).toFixed(1)} pips
-              </div>
+              {/* Arbitrage Opportunity Alert */}
+              {Math.abs(activity.price_improvement) > 0.0003 && (
+                <div className="mt-3 p-3 bg-yellow-500/10 border border-yellow-500/30 rounded">
+                  <p className="text-sm text-yellow-400 flex items-center gap-2">
+                    <AlertTriangle className="h-4 w-4" />
+                    Potential arbitrage opportunity detected
+                  </p>
+                </div>
+              )}
             </div>
-          )}
+          ))}
         </div>
       )}
-    </motion.div>
+
+      {/* Scanner Status */}
+      <div className="mt-6 p-4 bg-gray-900/50 rounded-lg">
+        <div className="flex items-center justify-between text-sm">
+          <span className="text-gray-400">Scanner Status</span>
+          <span className="text-indigo-400">
+            Monitoring {activities.length} dark pools
+          </span>
+        </div>
+        <div className="mt-2 h-2 bg-gray-700 rounded-full overflow-hidden">
+          <div 
+            className="h-full bg-indigo-400 rounded-full transition-all duration-1000"
+            style={{ 
+              width: averages.avgRatio > 25 ? '100%' : '0%',
+              transition: averages.avgRatio > 25 ? 'width 2s ease-in-out' : 'width 0.5s ease-out'
+            }}
+          />
+        </div>
+      </div>
+    </GlassCard>
   );
 } 

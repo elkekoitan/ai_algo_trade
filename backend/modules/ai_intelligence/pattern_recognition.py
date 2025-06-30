@@ -5,7 +5,7 @@ Uses computer vision and ML techniques to detect chart patterns in real-time.
 
 import numpy as np
 import pandas as pd
-from typing import List, Dict, Optional, Tuple
+from typing import List, Dict, Optional, Tuple, Any
 from datetime import datetime
 import logging
 from dataclasses import dataclass
@@ -622,4 +622,46 @@ class PatternRecognitionService:
             
         except Exception as e:
             logger.error(f"Error calculating technical features: {e}")
-            return data 
+            return data
+
+class AIPatternRecognition:
+    """
+    Advanced AI-powered pattern recognition service.
+    """
+    
+    def __init__(self):
+        logger.info("AIPatternRecognition initialized")
+        
+    def analyze(self, data: pd.DataFrame) -> List[Dict[str, Any]]:
+        # Placeholder for pattern recognition logic
+        return []
+
+class MarketRegimeClassifier:
+    pass
+
+class SentimentAnalyzer:
+    """
+    Analyzes market sentiment from various sources.
+    """
+    
+    def __init__(self):
+        logger.info("SentimentAnalyzer initialized")
+        
+    def analyze(self, text: str) -> Dict[str, Any]:
+        # Placeholder for sentiment analysis logic
+        return {"sentiment": "neutral", "score": 0.5}
+
+class VolatilityPredictor:
+    """
+    Predicts market volatility.
+    """
+    
+    def __init__(self):
+        logger.info("VolatilityPredictor initialized")
+        
+    def predict(self, data: pd.DataFrame) -> Dict[str, Any]:
+        # Placeholder for volatility prediction logic
+        return {"volatility": "low", "value": 0.1}
+
+class AdvancedPatternRecognition(PatternRecognitionService):
+    pass 

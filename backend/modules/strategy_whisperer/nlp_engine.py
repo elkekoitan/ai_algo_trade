@@ -12,13 +12,13 @@ from langchain.chat_models import ChatOpenAI
 from langchain.prompts import ChatPromptTemplate
 from langchain.output_parsers import PydanticOutputParser
 
-from backend.core.logger import get_logger
+from backend.core.logger import setup_logger
 from .models import (
     StrategyIntent, Language, StrategyType, 
     IndicatorType, TimeFrame, TradingCondition
 )
 
-logger = get_logger(__name__)
+logger = setup_logger(__name__)
 
 
 class NLPEngine:

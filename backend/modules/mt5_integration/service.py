@@ -3,77 +3,97 @@ Gerçek MT5 Entegrasyon Servisi
 SADECE gerçek canlı veriler ve demo hesap kullanılır
 """
 
-import MetaTrader5 as mt5
-import pandas as pd
-import numpy as np
-from datetime import datetime, timedelta
-from typing import Optional, Dict, List, Any
 import asyncio
+import json
 import logging
+from datetime import datetime, timedelta
+from typing import Dict, List, Optional, Any, Union
+import numpy as np
+# import pandas as pd
+
+# MetaTrader5 import with fallback
+try:
+    import MetaTrader5 as mt5
+    MT5_AVAILABLE = True
+except ImportError:
+    mt5 = None
+    MT5_AVAILABLE = False
+    print("Warning: MetaTrader5 module not available. Some features may be limited.")
 
 logger = logging.getLogger(__name__)
 
-class RealMT5Service:
+class MT5Service:
     """
     Gerçek MetaTrader 5 entegrasyon servisi
     SADECE gerçek demo/live hesap verilerini kullanır
     """
     
-    def __init__(self):
+    def __init__(self, login: Optional[int] = None, password: Optional[str] = None, server: Optional[str] = None, timeout: int = 60000):
         self.connected = False
         self.account_info = None
-        self.login = None
-        self.password = None
-        self.server = None
+        self.login = login
+        self.password = password
+        self.server = server
+        self.timeout = timeout
         
     async def connect(self, login: Optional[int] = None, password: Optional[str] = None, server: Optional[str] = None) -> bool:
         """Gerçek MT5 terminaline bağlan"""
-        try:
-            terminal_path = r"C:\Program Files\MetaTrader 5\terminal64.exe"
-            logger.info(f"Attempting to initialize MT5 with path and credentials: {terminal_path}")
-            
-            # Initialize ve login işlemini tek adımda dene. Bu daha sağlam bir yöntemdir.
-            if not mt5.initialize(
-                path=terminal_path,
-                login=login,
-                password=password,
-                server=server,
-                timeout=60000 # 60 saniye bekle
-            ):
-                logger.error(f"MT5 initialize failed with path. Error: {mt5.last_error()}")
-                logger.info("Falling back to initialize without path...")
-                
-                # Path olmadan fallback
-                if not mt5.initialize(
-                    login=login,
-                    password=password,
-                    server=server,
-                    timeout=60000
-                ):
-                    logger.error(f"MT5 initialize failed on fallback. Error: {mt5.last_error()}")
-                    self.connected = False
-                    return False
+        login = login or self.login
+        password = password or self.password
+        server = server or self.server
+        
+        terminal_path = r"C:\Program Files\MetaTrader 5\terminal64.exe"
 
-            # Bağlantı sonrası bilgileri kontrol et
-            account_info = mt5.account_info()
-            if account_info is None:
-                logger.error(f"Failed to get account info after initialize. Error: {mt5.last_error()}")
-                mt5.shutdown()
-                self.connected = False
-                return False
+        logger.info(f"Attempting to connect to {server} for login {login}")
+
+        # 1. Önce pathsiz, en genel yöntemle bağlanmayı dene
+        try:
+            if mt5.initialize(login=login, password=password, server=server, timeout=self.timeout):
+                if self._verify_connection():
+                    logger.info("✅ MT5 Connection Successful (General Method)")
+                    return True
             
-            self.connected = True
-            self.account_info = account_info
-            self.login = account_info.login
-            self.server = account_info.server
-            
-            logger.info(f"✅ MT5 Real Connection Established to account {account_info.login} on {account_info.server}")
-            return True
-            
+            last_error = mt5.last_error()
+            logger.warning(f"General connection failed: {last_error}. Trying with specific path...")
+            mt5.shutdown() # Bir sonraki deneme için temizle
+
         except Exception as e:
-            logger.error(f"MT5 connection error: {e}")
+            logger.warning(f"General connection attempt threw an exception: {e}. Trying with specific path...")
+
+        # 2. Eğer ilki başarısız olursa, spesifik terminal yolu ile dene
+        try:
+            if mt5.initialize(path=terminal_path, login=login, password=password, server=server, timeout=self.timeout):
+                if self._verify_connection():
+                    logger.info("✅ MT5 Connection Successful (Specific Path Method)")
+                    return True
+
+            last_error = mt5.last_error()
+            logger.error(f"❌ Path-specific connection also failed: {last_error}")
+            self.connected = False
+            mt5.shutdown()
+            return False
+
+        except Exception as e:
+            logger.error(f"❌ Path-specific connection attempt threw an exception: {e}", exc_info=True)
             self.connected = False
             return False
+
+    def _verify_connection(self) -> bool:
+        """Bağlantı sonrası bilgileri kontrol et ve doğrula"""
+        account_info = mt5.account_info()
+        if account_info is None:
+            logger.error(f"Failed to get account info after initialize. Error: {mt5.last_error()}")
+            mt5.shutdown()
+            self.connected = False
+            return False
+        
+        self.connected = True
+        self.account_info = account_info
+        self.login = account_info.login
+        self.server = account_info.server
+        
+        logger.info(f"Connection Verified: Account {account_info.login} on {account_info.server}")
+        return True
     
     async def disconnect(self):
         """MT5 bağlantısını kapat"""
@@ -258,6 +278,80 @@ class RealMT5Service:
         except Exception as e:
             logger.error(f"Error getting symbols: {e}")
             raise
+
+    async def get_weekend_crypto_symbols(self) -> List[Dict[str, Any]]:
+        """Hafta sonu aktif kripto sembolleri al (Tickmill)"""
+        try:
+            if not self.is_connected():
+                raise Exception("MT5 not connected")
+            
+            # Tickmill'de hafta sonu aktif olan kripto sembolleri
+            crypto_symbols = [
+                "BTCUSD", "ETHUSD", "LTCUSD", "XRPUSD", "ADAUSD", 
+                "DOTUSD", "LINKUSD", "BCHUSD", "XLMUSD", "EOSUSD",
+                "TRXUSD", "ETCUSD", "DASHUSD", "ZECUSD", "XMRUSD"
+            ]
+            
+            symbols = mt5.symbols_get()
+            if symbols is None:
+                return []
+            
+            result = []
+            for symbol in symbols:
+                if symbol.visible and symbol.name in crypto_symbols:
+                    # Gerçek zamanlı tick kontrolü - hafta sonu aktif mi?
+                    tick = mt5.symbol_info_tick(symbol.name)
+                    if tick and tick.time > 0:  # Aktif tick varsa
+                        result.append({
+                            "name": symbol.name,
+                            "description": symbol.description,
+                            "currency_base": symbol.currency_base,
+                            "currency_profit": symbol.currency_profit,
+                            "digits": symbol.digits,
+                            "point": symbol.point,
+                            "spread": symbol.spread,
+                            "trade_mode": symbol.trade_mode,
+                            "min_lot": symbol.volume_min,
+                            "max_lot": symbol.volume_max,
+                            "lot_step": symbol.volume_step,
+                            "current_bid": float(tick.bid),
+                            "current_ask": float(tick.ask),
+                            "last_update": datetime.fromtimestamp(tick.time).isoformat(),
+                            "weekend_active": True
+                        })
+            
+            logger.info(f"Found {len(result)} active crypto symbols for weekend trading")
+            return result
+            
+        except Exception as e:
+            logger.error(f"Error getting weekend crypto symbols: {e}")
+            raise
+
+    async def is_weekend_mode(self) -> bool:
+        """Hafta sonu modunda mıyız kontrol et"""
+        now = datetime.now()
+        # Cuma 22:00 - Pazar 22:00 arası hafta sonu
+        if now.weekday() == 4 and now.hour >= 22:  # Cuma akşamı
+            return True
+        elif now.weekday() in [5, 6]:  # Cumartesi, Pazar
+            return True
+        elif now.weekday() == 0 and now.hour < 1:  # Pazartesi sabahı erken
+            return True
+        return False
+
+    async def get_active_symbols_for_current_time(self) -> List[Dict[str, Any]]:
+        """Mevcut zamana göre aktif sembolleri al"""
+        try:
+            if await self.is_weekend_mode():
+                logger.info("Weekend mode detected - returning crypto symbols only")
+                return await self.get_weekend_crypto_symbols()
+            else:
+                logger.info("Regular trading hours - returning all symbols")
+                return await self.get_symbols()
+                
+        except Exception as e:
+            logger.error(f"Error getting active symbols: {e}")
+            raise
     
     async def place_order(self, symbol: str, order_type: str, volume: float, 
                          price: Optional[float] = None, sl: Optional[float] = None, 
@@ -373,6 +467,44 @@ class RealMT5Service:
             
         except Exception as e:
             logger.error(f"Error closing position: {e}")
+            raise
+
+    async def get_trade_history(self, days: int = 30) -> List[Dict[str, Any]]:
+        """Hesap ticaret geçmişini al"""
+        try:
+            if not self.is_connected():
+                raise Exception("MT5 not connected")
+
+            from_date = datetime.now() - timedelta(days=days)
+            to_date = datetime.now()
+
+            deals = mt5.history_deals_get(from_date, to_date)
+
+            if deals is None:
+                logger.warning("Could not get trade history from MT5.")
+                return []
+            
+            history = []
+            for deal in deals:
+                # Sadece kapanış işlemleri (IN/OUT)
+                if deal.entry in [mt5.DEAL_ENTRY_IN, mt5.DEAL_ENTRY_OUT]:
+                    history.append({
+                        "ticket": deal.order,
+                        "symbol": deal.symbol,
+                        "type": "buy" if deal.type == mt5.DEAL_TYPE_BUY else "sell",
+                        "volume": float(deal.volume),
+                        "price": float(deal.price),
+                        "profit": float(deal.profit),
+                        "time": datetime.fromtimestamp(deal.time).isoformat(),
+                        "comment": deal.comment
+                    })
+            
+            # Zamana göre sırala
+            history.sort(key=lambda x: x['time'], reverse=True)
+            return history
+
+        except Exception as e:
+            logger.error(f"Error getting trade history: {e}")
             raise
 
     async def generate_signals(self, symbol: str, timeframe: str = "H1", count: int = 200) -> List[Dict[str, Any]]:

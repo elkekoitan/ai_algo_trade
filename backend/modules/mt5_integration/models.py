@@ -3,19 +3,20 @@ MT5 data models and configurations.
 """
 
 from dataclasses import dataclass
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 from datetime import datetime
 from enum import Enum
+from pydantic import BaseModel, Field
 
 
 class OrderType(str, Enum):
     """Order types."""
-    BUY = "BUY"
-    SELL = "SELL"
-    BUY_LIMIT = "BUY_LIMIT"
-    SELL_LIMIT = "SELL_LIMIT"
-    BUY_STOP = "BUY_STOP"
-    SELL_STOP = "SELL_STOP"
+    BUY = "buy"
+    SELL = "sell"
+    BUY_LIMIT = "buy_limit"
+    SELL_LIMIT = "sell_limit"
+    BUY_STOP = "buy_stop"
+    SELL_STOP = "sell_stop"
 
 
 class OrderStatus(str, Enum):
@@ -172,4 +173,37 @@ class OrderResult:
             10030: "Invalid order filling type",
             10031: "No connection with the trade server",
         }
-        return errors.get(self.retcode, "Unknown error") 
+        return errors.get(self.retcode, "Unknown error")
+
+
+class MT5TradeRequest(BaseModel):
+    symbol: str
+    volume: float
+    type: int
+    price: Optional[float] = None
+    sl: Optional[float] = None
+    tp: Optional[float] = None
+    deviation: int = 20
+    magic: int = 234000
+    comment: str = "python script"
+    type_time: int = 0
+    type_filling: int = 0
+
+
+class MT5Position(BaseModel):
+    ticket: int
+    time: datetime
+    type: int
+    magic: int
+    identifier: int
+    reason: int
+    volume: float
+    price_open: float
+    sl: float
+    tp: float
+    price_current: float
+    swap: float
+    profit: float
+    symbol: str
+    comment: str
+    external_id: str 

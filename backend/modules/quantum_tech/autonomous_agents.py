@@ -506,4 +506,19 @@ class AutonomousTradingAgents:
             
         except Exception as e:
             logger.error(f"Error getting swarm metrics: {e}")
-            return {} 
+            return {}
+
+class AutonomousTradingAgent:
+    """
+    Represents a single autonomous trading agent.
+    """
+    def __init__(self, agent_id: int):
+        self.agent_id = agent_id
+
+class AgentSwarm:
+    def __init__(self, swarm_size: int = 50):
+        self.swarm_size = swarm_size
+        self.agents = []
+        self.evolution_cycles = 0
+        self.swarm_decisions_made = 0
+        self.avg_fitness = 0.0 

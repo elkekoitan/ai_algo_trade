@@ -12,14 +12,14 @@ import shutil
 import subprocess
 import json
 
-from backend.core.logger import get_logger
+from backend.core.logger import setup_logger
 from backend.modules.mt5_integration.service import MT5Service
 from backend.modules.algo_forge.git_service import GitService
 from .models import (
     DeploymentRequest, DeploymentStatus, MQL5Code
 )
 
-logger = get_logger(__name__)
+logger = setup_logger(__name__)
 
 
 class DeploymentService:

@@ -5,12 +5,29 @@ The AI core that weaves data into compelling market narratives.
 """
 import os
 from typing import List, Dict, Any, Optional
+import logging
+from datetime import datetime, timedelta
+import uuid
 
-from backend.core.logger import get_logger
-from .models import MarketEvent, MarketStory, Sentiment, CausalityLink
+from backend.core.logger import setup_logger
+from .models import MarketEvent, MarketStory, Sentiment, CausalityLink, DataPoint, CorrelatedEvent, MarketNarrative, DataSource, SentimentType, MarketEventType
 from openai import AsyncOpenAI
 
-logger = get_logger(__name__)
+logger = setup_logger(__name__)
+
+# Placeholder for a real NLP library
+class MockNLP:
+    def get_sentiment(self, text: str) -> float:
+        return (len(text) % 200 - 100) / 100.0
+    
+    def extract_keywords(self, text: str) -> List[str]:
+        return [word for word in text.split() if len(word) > 5][:5]
+
+    def summarize(self, text: str, length: int = 50) -> str:
+        return " ".join(text.split()[:length]) + "..."
+
+# Initialize a mock NLP service
+mock_nlp = MockNLP()
 
 class StoryGenerator:
     def __init__(self):
@@ -147,3 +164,141 @@ class StoryGenerator:
 
 # Need to import json for the AI response parsing
 import json 
+
+class DataAggregator:
+    """Aggregates data from various sources and enriches it."""
+
+    async def fetch_data(self, sources: List[DataSource]) -> List[DataPoint]:
+        """Fetch data from specified sources and convert to DataPoint models."""
+        data_points = []
+        for source in sources:
+            # In a real implementation, this would call different APIs
+            if source == DataSource.NEWS_API:
+                data_points.extend(await self._fetch_mock_news())
+            elif source == DataSource.TWITTER:
+                data_points.extend(await self._fetch_mock_tweets())
+        
+        logger.info(f"Aggregated {len(data_points)} data points from {len(sources)} sources.")
+        return data_points
+
+    async def _fetch_mock_news(self) -> List[DataPoint]:
+        """Fetches mock news data."""
+        return [
+            DataPoint(
+                id=str(uuid.uuid4()),
+                source=DataSource.NEWS_API,
+                timestamp=datetime.now() - timedelta(hours=2),
+                content="Federal Reserve hints at potential rate cuts in the next quarter, citing slowing inflation. Market reacts positively, with S&P 500 futures climbing.",
+                author="Major News Outlet",
+                url="https://example.com/news/1",
+                sentiment_score=0.7,
+                sentiment_label=SentimentType.POSITIVE,
+                related_symbols=["US30", "SPX500"],
+                keywords=["Federal Reserve", "rate cuts", "inflation"],
+                is_verified=True,
+                credibility_score=0.9
+            )
+        ]
+
+    async def _fetch_mock_tweets(self) -> List[DataPoint]:
+        """Fetches mock Twitter data."""
+        return [
+            DataPoint(
+                id=str(uuid.uuid4()),
+                source=DataSource.TWITTER,
+                timestamp=datetime.now() - timedelta(minutes=30),
+                content="BREAKING: Big tech giant announces record-breaking earnings, stock expected to soar at market open! #investing #stocks",
+                author="@FinanceGuru",
+                url="https://twitter.com/example/123",
+                sentiment_score=0.85,
+                sentiment_label=SentimentType.VERY_POSITIVE,
+                related_symbols=["AAPL", "GOOGL"],
+                keywords=["earnings", "tech giant", "soar"],
+                is_verified=False,
+                credibility_score=0.7
+            )
+        ]
+
+class CorrelationEngine:
+    """Analyzes data points to find correlations and significant market events."""
+
+    async def find_events(self, data_points: List[DataPoint]) -> List[CorrelatedEvent]:
+        """Identifies correlated events from a list of data points."""
+        if not data_points:
+            return []
+
+        # Simple correlation logic: Group data points with overlapping symbols and close timestamps
+        sorted_points = sorted(data_points, key=lambda dp: dp.timestamp)
+        
+        event = CorrelatedEvent(
+            event_id=str(uuid.uuid4()),
+            start_time=sorted_points[0].timestamp,
+            end_time=sorted_points[-1].timestamp,
+            event_type=MarketEventType.MARKET_SHOCK, # Generic event type
+            title="Potential Market-Moving News Cluster",
+            description="A cluster of related news and social media posts suggests a significant event.",
+            involved_symbols=list(set(sym for dp in sorted_points for sym in dp.related_symbols)),
+            correlation_strength=0.75, # Mock value
+            causality_score=0.6, # Mock value
+            leading_indicator=sorted_points[0].id,
+            data_points=sorted_points,
+            predicted_impact="High volatility expected.",
+            impact_confidence=0.8
+        )
+        
+        logger.info(f"Identified 1 correlated event involving {len(event.involved_symbols)} symbols.")
+        return [event]
+
+class StoryGenerator:
+    """Generates compelling market narratives from correlated events."""
+
+    async def create_narrative(self, event: CorrelatedEvent) -> MarketNarrative:
+        """Generates a MarketNarrative from a CorrelatedEvent."""
+        
+        title = f"Market Buzz: {event.title}"
+        summary = self._generate_summary(event)
+        full_story = self._generate_full_story(event)
+        
+        narrative = MarketNarrative(
+            narrative_id=str(uuid.uuid4()),
+            timestamp=datetime.now(),
+            title=title,
+            summary=summary,
+            full_story=full_story,
+            protagonist_symbols=event.involved_symbols,
+            key_theme=event.event_type.name.replace('_', ' ').title(),
+            sentiment_arc=[dp.sentiment_score for dp in event.data_points],
+            market_implication=f"This sequence of events suggests a {event.predicted_impact.lower()} for {', '.join(event.involved_symbols)}.",
+            potential_trades=[
+                {
+                    "symbol": event.involved_symbols[0],
+                    "action": "BUY" if sum(dp.sentiment_score for dp in event.data_points) > 0 else "SELL",
+                    "reason": "Following the dominant sentiment of the narrative.",
+                    "confidence": event.impact_confidence
+                }
+            ],
+            confidence_level=event.impact_confidence,
+            projected_lifespan_hours=12, # Mock value
+            source_events=[event]
+        )
+        
+        logger.info(f"Generated narrative '{title}' for symbols {narrative.protagonist_symbols}.")
+        return narrative
+
+    def _generate_summary(self, event: CorrelatedEvent) -> str:
+        """Generates a short summary using the mock NLP service."""
+        combined_content = " ".join([dp.content for dp in event.data_points])
+        return mock_nlp.summarize(combined_content, length=30)
+
+    def _generate_full_story(self, event: CorrelatedEvent) -> str:
+        """Generates a detailed story from the event."""
+        story_parts = [f"A significant market narrative is unfolding around {', '.join(event.involved_symbols)}, driven by a {event.event_type.name.lower().replace('_', ' ')}."]
+        story_parts.append(f"The story began at {event.start_time.strftime('%Y-%m-%d %H:%M')} and has developed over several hours.")
+        
+        for dp in event.data_points:
+            story_parts.append(f"At {dp.timestamp.strftime('%H:%M')}, a {dp.source.name.lower()} report from '{dp.author}' stated: \"{dp.content}\". This carried a {dp.sentiment_label.name.lower()} sentiment.")
+            
+        story_parts.append(f"\nThe overall sentiment arc shows a trend towards {'optimism' if sum(dp.sentiment_score for dp in event.data_points) > 0 else 'pessimism'}.")
+        story_parts.append(f"With a confidence of {event.impact_confidence*100:.0f}%, the predicted impact is: {event.predicted_impact}.")
+        
+        return "\n\n".join(story_parts) 

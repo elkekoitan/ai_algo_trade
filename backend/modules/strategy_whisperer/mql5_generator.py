@@ -6,13 +6,13 @@ from typing import Dict, List, Optional, Any
 from datetime import datetime
 import re
 
-from backend.core.logger import get_logger
+from backend.core.logger import setup_logger
 from .models import (
     StrategyParameters, TradingCondition, MQL5Code,
-    IndicatorType, RiskType, OrderType
+    IndicatorType, RiskType, OrderType, TimeFrame, StrategyType
 )
 
-logger = get_logger(__name__)
+logger = setup_logger(__name__)
 
 
 class MQL5Generator:

@@ -24,6 +24,8 @@ import {
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import Link from 'next/link';
+import useSWR from 'swr';
+import { API_ENDPOINTS } from '@/lib/api';
 
 interface QuantumHeaderProps {
   title?: string;
@@ -48,37 +50,15 @@ interface ConnectionStatus {
   message: string;
 }
 
+const fetcher = (url: string) => fetch(url).then(res => res.json());
+
 export default function QuantumHeader({ title = "AI Algo Trade", subtitle = "Quantum Edition" }: QuantumHeaderProps) {
   const router = useRouter();
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [connection, setConnection] = useState<ConnectionStatus>({ connected: false, message: 'Connecting...' });
+  const { data: healthData, error } = useSWR(API_ENDPOINTS.health, fetcher, { refreshInterval: 10000 });
 
-  useEffect(() => {
-    const checkConnection = async () => {
-      try {
-        const response = await fetch('http://localhost:8000/api/v1/trading/account');
-        if (response.ok) {
-          const data = await response.json();
-          if (data.login && data.server) {
-             setConnection({ connected: true, message: `Connected to ${data.server}`});
-          } else {
-             setConnection({ connected: false, message: 'Connection Error'});
-          }
-        } else {
-          setConnection({ connected: false, message: 'Backend Offline' });
-        }
-      } catch (error) {
-        setConnection({ connected: false, message: 'Server Unreachable' });
-      }
-    };
-
-    checkConnection();
-    const intervalId = setInterval(checkConnection, 10000); 
-
-    return () => clearInterval(intervalId);
-  }, []);
-
+  const isServerReachable = healthData && healthData.status === 'healthy' && healthData.mt5_connected;
 
   return (
     <motion.header 
@@ -128,9 +108,9 @@ export default function QuantumHeader({ title = "AI Algo Trade", subtitle = "Qua
           </nav>
 
           <div className="flex items-center gap-4">
-             <div className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${connection.connected ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
-                {connection.connected ? <CheckCircle className="w-4 h-4" /> : <AlertTriangle className="w-4 h-4 animate-pulse" />}
-                <span>{connection.message}</span>
+             <div className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${isServerReachable ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
+                {isServerReachable ? <CheckCircle className="w-4 h-4" /> : <AlertTriangle className="w-4 h-4 animate-pulse" />}
+                <span>{isServerReachable ? 'Live Data' : 'MT5 Error'}</span>
              </div>
             <div className="hidden md:flex items-center gap-2">
                 <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors">

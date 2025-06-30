@@ -1,414 +1,427 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { motion } from 'framer-motion';
-import Link from 'next/link';
+import { useState, useEffect } from 'react';
 import { 
-  Activity,
-  TrendingUp,
-  TrendingDown,
-  DollarSign,
-  Target,
-  Zap,
-  BarChart3,
-  Shield,
-  Brain,
-  Cpu,
-  Eye,
-  ArrowRight,
-  RefreshCw,
-  Sparkles,
-  Clock,
-  Award
+  DollarSign, Zap, Target, BarChart3, Users, Bot, Code, Rss, Eye, GitBranch,
+  TrendingUp, Shield, Brain, MessageSquare, Activity, Cpu, Globe, 
+  ArrowUpRight, Play, Settings, ChevronRight, Sparkles, Layers,
+  PieChart, LineChart, BarChart, Radar, Map, Bell, Search, Filter
 } from 'lucide-react';
-import ParticleBackground from '@/components/quantum/ParticleBackground';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import useSWR from 'swr';
+import { API_BASE_URL, API_ENDPOINTS } from '@/lib/api';
+import { useRouter } from 'next/navigation';
+import { GodModeDemo, ShadowModeDemo } from '@/components/DemoComponents';
+import PerformanceChart from '@/components/dashboard/PerformanceChart';
+import TradeHistoryTable from '@/components/dashboard/TradeHistoryTable';
+import PerformanceMetrics from '@/components/performance/PerformanceMetrics';
 
-interface DashboardStats {
-  totalTrades: number;
-  activeSignals: number;
-  totalProfit: number;
-  winRate: number;
-  openPositions: number;
-  dailyReturn: number;
-}
+const fetcher = (url: string) => fetch(url).then(res => res.json());
 
-export default function QuantumDashboard() {
-  const [stats, setStats] = useState<DashboardStats>({
-    totalTrades: 0,
-    activeSignals: 0,
-    totalProfit: 0,
-    winRate: 0,
-    openPositions: 0,
-    dailyReturn: 0
-  });
-  const [loading, setLoading] = useState(true);
+// Enhanced Hero Module Card Component
+const ModuleHeroCard = ({ 
+  title, 
+  description, 
+  icon: Icon, 
+  value, 
+  detail, 
+  status,
+  trend,
+  route,
+  demoActions,
+  gradient,
+  isActive = false
+}: { 
+  title: string;
+  description: string;
+  icon: React.ElementType;
+  value: string | number;
+  detail: string;
+  status: 'active' | 'warning' | 'success' | 'info';
+  trend?: number;
+  route: string;
+  demoActions: { label: string; action: () => void }[];
+  gradient: string;
+  isActive?: boolean;
+}) => {
+  const router = useRouter();
+  const [isHovered, setIsHovered] = useState(false);
+  const [demoRunning, setDemoRunning] = useState(false);
 
-  const fetchDashboardStats = useCallback(async () => {
-    try {
-      const [performanceRes, signalsRes, positionsRes] = await Promise.all([
-        fetch('http://localhost:8000/api/v1/performance/summary'),
-        fetch('http://localhost:8000/api/v1/signals'),
-        fetch('http://localhost:8000/api/v1/trading/positions')
-      ]);
-
-      const performance = await performanceRes.json();
-      const signals = await signalsRes.json();
-      const positions = await positionsRes.json();
-
-      setStats({
-        totalTrades: performance.success ? performance.summary.total_trades : 156,
-        activeSignals: signals.success ? signals.count : 8,
-        totalProfit: performance.success ? performance.summary.net_profit : 2847.50,
-        winRate: performance.success ? performance.summary.win_rate : 68.2,
-        openPositions: positions.success ? positions.count : 3,
-        dailyReturn: performance.success ? performance.summary.daily_return : 0.85
-      });
-    } catch (error) {
-      console.error('Error fetching dashboard stats:', error);
-      // Use demo data as fallback
-      setStats({
-        totalTrades: 156,
-        activeSignals: 8,
-        totalProfit: 2847.50,
-        winRate: 68.2,
-        openPositions: 3,
-        dailyReturn: 0.85
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchDashboardStats();
-    const interval = setInterval(fetchDashboardStats, 15000);
-    return () => clearInterval(interval);
-  }, [fetchDashboardStats]);
-
-  const quickStats = !loading && stats ? [
-    {
-      title: 'Total Profit',
-      value: `$${stats.totalProfit.toFixed(2)}`,
-      icon: DollarSign,
-      color: stats.totalProfit >= 0 ? 'text-green-400' : 'text-red-400',
-      bgColor: stats.totalProfit >= 0 ? 'bg-green-500/20' : 'bg-red-500/20',
-      borderColor: stats.totalProfit >= 0 ? 'border-green-500/30' : 'border-red-500/30'
-    },
-    {
-      title: 'Win Rate',
-      value: `${stats.winRate.toFixed(1)}%`,
-      icon: Target,
-      color: stats.winRate >= 60 ? 'text-green-400' : stats.winRate >= 50 ? 'text-yellow-400' : 'text-red-400',
-      bgColor: stats.winRate >= 60 ? 'bg-green-500/20' : stats.winRate >= 50 ? 'bg-yellow-500/20' : 'bg-red-500/20',
-      borderColor: stats.winRate >= 60 ? 'border-green-500/30' : stats.winRate >= 50 ? 'border-yellow-500/30' : 'border-red-500/30'
-    },
-    {
-      title: 'Active Signals',
-      value: stats.activeSignals.toString(),
-      icon: Zap,
-      color: 'text-quantum-primary',
-      bgColor: 'bg-quantum-primary/20',
-      borderColor: 'border-quantum-primary/30'
-    },
-    {
-      title: 'Open Positions',
-      value: stats.openPositions.toString(),
-      icon: Activity,
-      color: 'text-blue-400',
-      bgColor: 'bg-blue-500/20',
-      borderColor: 'border-blue-500/30'
-    }
-  ] : [];
-
-  const features = [
-    {
-      title: 'Quantum Trading',
-      description: 'Advanced AI-powered trading execution with neural pattern recognition',
-      icon: Brain,
-      href: '/trading',
-      color: 'text-green-400',
-      bgColor: 'bg-green-500/20',
-      borderColor: 'border-green-500/30'
-    },
-    {
-      title: 'Signal Intelligence',
-      description: 'Real-time ICT pattern detection and high-confidence trading signals',
-      icon: Eye,
-      href: '/signals',
-      color: 'text-blue-400',
-      bgColor: 'bg-blue-500/20',
-      borderColor: 'border-blue-500/30'
-    },
-    {
-      title: 'Performance Analytics',
-      description: 'Comprehensive trading performance metrics and equity curve analysis',
-      icon: BarChart3,
-      href: '/performance',
-      color: 'text-purple-400',
-      bgColor: 'bg-purple-500/20',
-      borderColor: 'border-purple-500/30'
-    },
-    {
-      title: 'Quantum Dashboard',
-      description: 'Next-generation trading interface with holographic visualizations',
-      icon: Cpu,
-      href: '/quantum',
-      color: 'text-quantum-primary',
-      bgColor: 'bg-quantum-primary/20',
-      borderColor: 'border-quantum-primary/30'
-    }
-  ];
-
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1
-      }
-    }
+  const statusColors = {
+    active: 'border-cyan-400/50 bg-cyan-400/5',
+    warning: 'border-yellow-400/50 bg-yellow-400/5',
+    success: 'border-green-400/50 bg-green-400/5',
+    info: 'border-blue-400/50 bg-blue-400/5'
   };
 
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: {
-        type: "spring",
-        stiffness: 100
-      }
-    }
+  const runDemo = async (action: () => void) => {
+    setDemoRunning(true);
+    await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate demo
+    action();
+    setDemoRunning(false);
   };
 
   return (
-    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <motion.div
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
-        className="space-y-8"
-      >
-        {/* Hero Section */}
-        <motion.div variants={itemVariants} className="text-center py-12 relative">
-          <div className="absolute inset-0 overflow-hidden rounded-2xl">
-            <ParticleBackground />
-          </div>
-          <div className="relative z-10">
-            <motion.div
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ duration: 0.8, ease: "easeOut" }}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-quantum-primary/20 border border-quantum-primary/30 rounded-full text-quantum-primary text-sm font-medium mb-6"
-            >
-              <Sparkles className="w-4 h-4" />
-              <span>Quantum AI Trading Engine v2.0</span>
-              <Sparkles className="w-4 h-4" />
-            </motion.div>
-            
-            <motion.h1
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.2, duration: 0.8 }}
-              className="text-5xl md:text-7xl font-bold text-white mb-6"
-            >
-              The Future of
-              <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-quantum-primary via-blue-400 to-purple-400">
-                Algorithmic Trading
-              </span>
-            </motion.h1>
-            
-            <motion.p
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.4, duration: 0.8 }}
-              className="text-xl text-gray-300 mb-8 max-w-3xl mx-auto"
-            >
-              Harness the power of quantum computing, artificial intelligence, and institutional-grade 
-              trading strategies to dominate the financial markets.
-            </motion.p>
-            
-            <motion.div
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.6, duration: 0.8 }}
-              className="flex flex-col sm:flex-row gap-4 justify-center"
-            >
-              <Link href="/trading">
-                <motion.button
-                  whileHover={{ scale: 1.05, boxShadow: "0 0 30px rgba(0, 255, 136, 0.5)" }}
-                  whileTap={{ scale: 0.95 }}
-                  className="quantum-button-primary px-8 py-4 rounded-lg font-medium flex items-center gap-2"
-                >
-                  <Brain className="w-5 h-5" />
-                  Start Trading
-                  <ArrowRight className="w-5 h-5" />
-                </motion.button>
-              </Link>
-              
-              <Link href="/quantum">
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="quantum-button px-8 py-4 rounded-lg font-medium flex items-center gap-2"
-                >
-                  <Eye className="w-5 h-5" />
-                  Explore Quantum UI
-                </motion.button>
-              </Link>
-            </motion.div>
-          </div>
-        </motion.div>
+    <Card 
+      className={`group relative overflow-hidden bg-gray-900/50 border-gray-800 hover:${statusColors[status]} transition-all duration-500 transform hover:scale-[1.02] hover:shadow-2xl ${isActive ? statusColors[status] : ''}`}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      {/* Gradient Background */}
+      <div className={`absolute inset-0 opacity-0 group-hover:opacity-20 transition-opacity duration-500 ${gradient}`} />
+      
+      {/* Animated Border */}
+      <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-transparent via-cyan-400/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" style={{
+        background: 'linear-gradient(90deg, transparent, rgba(34, 211, 238, 0.2), transparent)',
+        animation: isHovered ? 'shimmer 2s infinite' : 'none'
+      }} />
 
-        {/* Quick Stats */}
-        <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {loading ? (
-             Array.from({ length: 4 }).map((_, index) => (
-                <div key={index} className="quantum-panel p-6 h-[140px] animate-pulse">
-                    <div className="w-2/3 h-4 bg-gray-700 rounded mb-4"></div>
-                    <div className="w-1/2 h-8 bg-gray-600 rounded"></div>
-                </div>
-             ))
-          ) : (
-            quickStats.map((stat, index) => (
-              <motion.div
-                key={stat.title}
-                variants={itemVariants}
-                whileHover={{ y: -5, scale: 1.02 }}
-                className={`quantum-panel p-6 border ${stat.borderColor} hover:border-opacity-60 transition-all duration-300`}
-              >
-                <div className="flex items-center justify-between mb-4">
-                  <div className={`p-3 rounded-lg ${stat.bgColor}`}>
-                    <stat.icon className={`w-6 h-6 ${stat.color}`} />
-                  </div>
-                  <motion.button
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                    onClick={fetchDashboardStats}
-                    className="p-2 hover:bg-white/10 rounded-lg transition-colors"
-                  >
-                    <RefreshCw className="w-4 h-4 text-gray-400" />
-                  </motion.button>
-                </div>
-                <h3 className="text-gray-400 text-sm font-medium mb-2">{stat.title}</h3>
-                <p className={`text-2xl font-bold ${stat.color}`}>{stat.value}</p>
-              </motion.div>
-            ))
-          )}
-        </motion.div>
-
-        {/* Features Grid */}
-        <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {features.map((feature, index) => (
-            <Link key={feature.title} href={feature.href}>
-              <motion.div
-                variants={itemVariants}
-                whileHover={{ y: -10, scale: 1.02 }}
-                className={`quantum-card p-8 border ${feature.borderColor} hover:border-opacity-60 transition-all duration-300 cursor-pointer group`}
-              >
-                <div className="flex items-start gap-6">
-                  <div className={`p-4 rounded-xl ${feature.bgColor} group-hover:scale-110 transition-transform duration-300`}>
-                    <feature.icon className={`w-8 h-8 ${feature.color}`} />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-xl font-bold text-white mb-2 group-hover:text-quantum-primary transition-colors">
-                      {feature.title}
-                    </h3>
-                    <p className="text-gray-400 leading-relaxed mb-4">
-                      {feature.description}
-                    </p>
-                    <div className="flex items-center gap-2 text-quantum-primary font-medium group-hover:gap-4 transition-all">
-                      <span>Explore</span>
-                      <ArrowRight className="w-4 h-4" />
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-            </Link>
-          ))}
-        </motion.div>
-
-        {/* Real-time Status */}
-        <motion.div variants={itemVariants} className="quantum-panel p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-              <Activity className="w-5 h-5 text-quantum-primary" />
-              System Status
-            </h3>
-            <div className="flex items-center gap-2 text-green-400 text-sm">
-              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-              <span>All Systems Operational</span>
-            </div>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
+        <div className="flex items-center space-x-3">
+          <div className={`p-2 rounded-lg ${gradient} bg-opacity-20`}>
+            <Icon className="h-5 w-5 text-white" />
           </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="text-center">
-              <div className="flex items-center justify-center gap-2 mb-2">
-                <Brain className="w-5 h-5 text-blue-400" />
-                <span className="text-white font-medium">AI Engine</span>
+          <div>
+            <CardTitle className="text-sm font-medium text-gray-300 group-hover:text-white transition-colors">
+              {title}
+            </CardTitle>
+            {isActive && (
+              <div className="flex items-center space-x-1 mt-1">
+                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
+                <span className="text-xs text-green-400">Live</span>
               </div>
-              <div className="text-green-400 text-sm">Active</div>
-              <div className="text-xs text-gray-400">Pattern Recognition: 94.2%</div>
-            </div>
-            
-            <div className="text-center">
-              <div className="flex items-center justify-center gap-2 mb-2">
-                <Shield className="w-5 h-5 text-purple-400" />
-                <span className="text-white font-medium">Risk Management</span>
-              </div>
-              <div className="text-green-400 text-sm">Optimal</div>
-              <div className="text-xs text-gray-400">Drawdown: 2.1%</div>
-            </div>
-            
-            <div className="text-center">
-              <div className="flex items-center justify-center gap-2 mb-2">
-                <Clock className="w-5 h-5 text-yellow-400" />
-                <span className="text-white font-medium">Execution Speed</span>
-              </div>
-              <div className="text-green-400 text-sm">Ultra-Fast</div>
-              <div className="text-xs text-gray-400">Latency: 12ms</div>
-            </div>
-          </div>
-        </motion.div>
-
-        {/* Performance Highlights */}
-        <motion.div variants={itemVariants} className="quantum-panel p-6">
-          <h3 className="text-lg font-semibold text-white mb-6 flex items-center gap-2">
-            <Award className="w-5 h-5 text-quantum-primary" />
-            Today's Performance Highlights
-          </h3>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {loading ? (
-                <div className="text-center text-gray-400">Loading...</div>
-            ) : (
-            <>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-green-400 mb-1">
-                    +{stats.dailyReturn.toFixed(2)}%
-                  </div>
-                  <div className="text-sm text-gray-400">Daily Return</div>
-                </div>
-                
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-blue-400 mb-1">
-                    {stats.totalTrades}
-                  </div>
-                  <div className="text-sm text-gray-400">Total Trades</div>
-                </div>
-                
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-purple-400 mb-1">
-                    {stats.winRate.toFixed(1)}%
-                  </div>
-                  <div className="text-sm text-gray-400">Success Rate</div>
-                </div>
-            </>
             )}
           </div>
-        </motion.div>
-      </motion.div>
+        </div>
+        
+        {trend && (
+          <div className={`flex items-center space-x-1 ${trend > 0 ? 'text-green-400' : 'text-red-400'}`}>
+            <TrendingUp className="h-3 w-3" />
+            <span className="text-xs font-medium">{trend > 0 ? '+' : ''}{trend}%</span>
+          </div>
+        )}
+      </CardHeader>
+
+      <CardContent className="relative z-10">
+        <div className="space-y-4">
+          {/* Main Metric */}
+          <div>
+            <div className="text-2xl font-bold text-white group-hover:text-cyan-400 transition-colors">
+              {value}
+            </div>
+            <p className="text-xs text-gray-400">{detail}</p>
+          </div>
+
+          {/* Description */}
+          <p className="text-xs text-gray-500 group-hover:text-gray-400 transition-colors line-clamp-2">
+            {description}
+          </p>
+
+          {/* Demo Actions */}
+          <div className={`space-y-2 transition-all duration-300 ${isHovered ? 'opacity-100 max-h-32' : 'opacity-0 max-h-0 overflow-hidden'}`}>
+            {demoActions.map((demo, index) => (
+              <Button
+                key={index}
+                variant="ghost"
+                size="sm"
+                className="w-full justify-start text-xs text-gray-400 hover:text-white hover:bg-white/10"
+                onClick={() => runDemo(demo.action)}
+                disabled={demoRunning}
+              >
+                <Play className="h-3 w-3 mr-2" />
+                {demoRunning ? 'Running...' : demo.label}
+              </Button>
+            ))}
+          </div>
+
+          {/* Navigate Button */}
+          <Button
+            onClick={() => router.push(route)}
+            className={`w-full transition-all duration-300 ${isHovered ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'}`}
+            variant="outline"
+            size="sm"
+          >
+            Explore Module
+            <ChevronRight className="h-3 w-3 ml-1" />
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
+// Real-time System Status Component
+const SystemStatus = () => {
+  const { data, error } = useSWR(`${API_BASE_URL}/health`, fetcher, { refreshInterval: 15000 });
+
+  const isConnected = data?.mt5_connected;
+  const statusText = isConnected ? "Connected" : "Connecting...";
+  const statusColor = isConnected ? "text-green-400" : "text-yellow-400";
+  const pulseColor = isConnected ? "bg-green-400" : "bg-yellow-400";
+
+  return (
+    <Card className="bg-gray-900/50 border-gray-800">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-sm font-medium text-gray-300 flex items-center">
+          <Activity className="h-4 w-4 mr-2" />
+          System Status
+        </CardTitle>
+        <div className="flex items-center space-x-2">
+          <div className={`w-2 h-2 rounded-full animate-pulse ${pulseColor}`} />
+          <span className={`text-xs ${statusColor}`}>{statusText}</span>
+        </div>
+      </CardHeader>
+      <CardContent>
+          <div className="text-2xl font-bold text-white">
+            {data?.status || 'Checking...'}
+          </div>
+          <p className="text-xs text-gray-400">
+            {data?.message || 'Establishing connection...'}
+          </p>
+      </CardContent>
+    </Card>
+  );
+};
+
+// Enhanced Account Info with Real-time Updates
+const AccountInfoCard = () => {
+  const { data, error } = useSWR(API_ENDPOINTS.account, fetcher, { refreshInterval: 5000 });
+  
+  const accountData = data?.data || {};
+
+  return (
+    <Card className="bg-gray-900/50 border-gray-800 relative overflow-hidden">
+      <div className="absolute inset-0 bg-gradient-to-br from-green-400/5 to-cyan-400/5" />
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
+        <CardTitle className="text-sm font-medium text-gray-300 flex items-center">
+          <DollarSign className="h-4 w-4 mr-2" />
+          Account Equity
+        </CardTitle>
+        <div className="flex items-center space-x-1">
+          <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
+          <span className="text-xs text-green-400">Live</span>
+        </div>
+      </CardHeader>
+      <CardContent className="relative z-10">
+        <div className="space-y-2">
+          <div className="text-2xl font-bold text-white">
+            ${(accountData.equity || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          </div>
+          <div className="flex justify-between text-xs">
+            <span className="text-gray-400">P&L:</span>
+            <span className={accountData.profit >=0 ? 'text-green-400' : 'text-red-400'}>
+              ${accountData.profit?.toFixed(2) || '0.00'}
+            </span>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
+export default function Dashboard() {
+  const [selectedTimeframe, setSelectedTimeframe] = useState('24h');
+  const [showNotifications, setShowNotifications] = useState(false);
+
+  const moduleConfigs = [
+    {
+      title: "God Mode",
+      description: "Omniscient market analysis with prophetic predictions and divine insights.",
+      icon: Eye,
+      value: "94.7%",
+      detail: "Prediction Accuracy",
+      status: "success" as const,
+      trend: 5.2,
+      route: "/god-mode",
+      gradient: "bg-gradient-to-br from-purple-500 to-pink-500",
+      demoActions: [
+        { label: "Run Prediction", action: () => console.log("Running prediction...") },
+        { label: "Market Oracle", action: () => console.log("Consulting oracle...") }
+      ],
+      isActive: true
+    },
+    {
+      title: "Shadow Mode",
+      description: "Institutional tracking, whale detection, and stealth execution.",
+      icon: Users,
+      value: "WHALE",
+      detail: "Activity Detected",
+      status: "warning" as const,
+      trend: 12.8,
+      route: "/shadow",
+      gradient: "bg-gradient-to-br from-gray-700 to-black",
+      demoActions: [
+        { label: "Track Whales", action: () => console.log("Tracking whales...") },
+        { label: "Dark Pool Monitor", action: () => console.log("Monitoring dark pools...") }
+      ],
+      isActive: true
+    },
+    {
+      title: "Adaptive Trade Manager",
+      description: "AI-powered position management with dynamic risk adjustment.",
+      icon: Zap,
+      value: "LOW",
+      detail: "Portfolio Risk",
+      status: "success" as const,
+      trend: -2.1,
+      route: "/adaptive-trade-manager",
+      gradient: "bg-gradient-to-br from-yellow-400 to-orange-500",
+      demoActions: [
+        { label: "Optimize Positions", action: () => console.log("Optimizing...") },
+        { label: "Risk Analysis", action: () => console.log("Analyzing risk...") }
+      ],
+      isActive: true
+    },
+    {
+      title: "Strategy Whisperer",
+      description: "Natural language to MQL5 strategy creation with AI assistance.",
+      icon: Bot,
+      value: "23",
+      detail: "Active Strategies",
+      status: "info" as const,
+      trend: 8.5,
+      route: "/strategy-whisperer",
+      gradient: "bg-gradient-to-br from-blue-500 to-cyan-500",
+      demoActions: [
+        { label: "Create Strategy", action: () => console.log("Creating strategy...") },
+        { label: "Backtest", action: () => console.log("Running backtest...") }
+      ],
+      isActive: true
+    },
+    {
+      title: "Market Narrator",
+      description: "AI storytelling for market movements with correlation analysis.",
+      icon: MessageSquare,
+      value: "BULLISH",
+      detail: "Market Sentiment",
+      status: "success" as const,
+      trend: 3.7,
+      route: "/market-narrator",
+      gradient: "bg-gradient-to-br from-green-500 to-teal-500",
+      demoActions: [
+        { label: "Generate Story", action: () => console.log("Generating story...") },
+        { label: "Sentiment Analysis", action: () => console.log("Analyzing sentiment...") }
+      ],
+      isActive: true
+    },
+    {
+      title: "Quantum Tech",
+      description: "Advanced quantum algorithms for market prediction and analysis.",
+      icon: Cpu,
+      value: "∞",
+      detail: "Quantum States",
+      status: "info" as const,
+      trend: 15.3,
+      route: "/quantum-tech",
+      gradient: "bg-gradient-to-br from-indigo-500 to-purple-500",
+      demoActions: [
+        { label: "Quantum Scan", action: () => console.log("Quantum scanning...") },
+        { label: "Probability Matrix", action: () => console.log("Calculating probabilities...") }
+      ]
+    },
+    {
+      title: "Signal Scanner",
+      description: "ICT-based signal detection with breaker blocks and FVG analysis.",
+      icon: Radar,
+      value: "47",
+      detail: "Active Signals",
+      status: "active" as const,
+      trend: 6.9,
+      route: "/signals",
+      gradient: "bg-gradient-to-br from-red-500 to-pink-500",
+      demoActions: [
+        { label: "Scan Market", action: () => console.log("Scanning market...") },
+        { label: "Signal Alert", action: () => console.log("Setting alerts...") }
+      ],
+      isActive: true
+    },
+    {
+      title: "Social Trading",
+      description: "Copy trading and social sentiment analysis platform.",
+      icon: Globe,
+      value: "1.2K",
+      detail: "Active Traders",
+      status: "success" as const,
+      trend: 4.2,
+      route: "/social",
+      gradient: "bg-gradient-to-br from-pink-500 to-rose-500",
+      demoActions: [
+        { label: "Find Traders", action: () => console.log("Finding traders...") },
+        { label: "Social Signals", action: () => console.log("Analyzing social signals...") }
+      ]
+    }
+  ];
+
+  return (
+    <div className="flex-1 space-y-6 p-6">
+      {/* System Overview */}
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        <SystemStatus />
+        <AccountInfoCard />
+        
+        {/* Market Status */}
+        <Card className="bg-gray-900/50 border-gray-800">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-gray-300">Market Status</CardTitle>
+            <TrendingUp className="h-4 w-4 text-green-400" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-400">OPEN</div>
+            <p className="text-xs text-gray-400">NYSE • 6h 23m remaining</p>
+          </CardContent>
+        </Card>
+
+        {/* Active Strategies */}
+        <Card className="bg-gray-900/50 border-gray-800">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-gray-300">Active Strategies</CardTitle>
+            <Layers className="h-4 w-4 text-cyan-400" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-cyan-400">12</div>
+            <p className="text-xs text-gray-400">8 profitable • 4 monitoring</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Performance & History */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="lg:col-span-1 flex flex-col gap-6">
+          <PerformanceMetrics />
+          <PerformanceChart />
+        </div>
+        <TradeHistoryTable />
+      </div>
+
+      {/* Module Grid */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-semibold text-white">Core Modules</h2>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {moduleConfigs.map((module, index) => (
+            <ModuleHeroCard key={index} {...module} />
+          ))}
+        </div>
+      </div>
+
+      {/* Custom Styles */}
+      <style jsx global>{`
+        @keyframes shimmer {
+          0% { transform: translateX(-100%); }
+          100% { transform: translateX(100%); }
+        }
+        
+        .line-clamp-2 {
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+        }
+      `}</style>
     </div>
   );
 } 

@@ -3,6 +3,12 @@
 import { useState, useEffect } from 'react';
 import { TrendingUp, TrendingDown, Send, Repeat, AlertCircle } from 'lucide-react';
 import ApiService from '@/lib/api';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { API_ENDPOINTS } from '@/lib/api';
 
 interface TickData {
   time: string;
@@ -20,6 +26,8 @@ const QuickTrade = () => {
   const [lastOrder, setLastOrder] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [action, setAction] = useState('BUY');
+  const [responseMsg, setResponseMsg] = useState('');
 
   // Fetch all available symbols on component mount
   useEffect(() => {
@@ -84,32 +92,42 @@ const QuickTrade = () => {
     return () => clearInterval(interval);
   }, [selectedSymbol]);
 
-  const handleTrade = async (orderType: 'BUY' | 'SELL') => {
+  const handleTrade = async () => {
     setIsSubmitting(true);
     setLastOrder(null);
+    setResponseMsg('');
+
+    const orderData = {
+      symbol: selectedSymbol,
+      order_type: action, // 'BUY' or 'SELL'
+      volume: parseFloat(volume) || 0.01,
+      price: 0, // Market order
+      sl: 0,
+      tp: 0,
+      magic: 234001,
+      comment: "QuickTrade"
+    };
 
     try {
-      const response = await ApiService.placeOrder({
-        symbol: selectedSymbol,
-        order_type: orderType,
-        volume: parseFloat(volume),
-        comment: `QuickTrade via ICT Ultra v2`
-      });
-
-      if (!response.error && response.data) {
+      const response = await ApiService.placeOrder(orderData);
+      
+      if (!response.error && response.data?.success) {
         setLastOrder({ success: true, ...response.data });
+        setResponseMsg(`Success: Order #${response.data.order_id} placed.`);
       } else {
         setLastOrder({ 
           success: false, 
           message: response.message || 'Failed to place trade.' 
         });
+        setResponseMsg(`Error: ${response.message || 'Failed to place trade.'}`);
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error placing trade:", error);
       setLastOrder({ 
         success: false, 
-        message: error.message || 'Failed to place trade.' 
+        message: 'Error: Network request failed.' 
       });
+      setResponseMsg('Error: Network request failed.');
     } finally {
       setIsSubmitting(false);
     }
@@ -123,87 +141,42 @@ const QuickTrade = () => {
   const displaySymbols = symbols.length > 0 ? symbols : defaultSymbols;
 
   return (
-    <div className="bg-gray-900/50 backdrop-blur-lg rounded-xl border border-gray-800 p-6">
-      <h3 className="text-lg font-semibold text-white mb-4">Quick Trade</h3>
-      
-      {/* Symbol Selector */}
-      <div className="mb-4">
-        <label htmlFor="symbol-select" className="block text-sm font-medium text-gray-400 mb-2">Instrument</label>
-        <select
-          id="symbol-select"
-          value={selectedSymbol}
-          onChange={(e) => setSelectedSymbol(e.target.value)}
-          className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:border-emerald-500 focus:outline-none"
-          disabled={loading || isSubmitting}
-        >
-          {displaySymbols.map((symbol) => (
-            <option key={symbol} value={symbol}>{symbol}</option>
-          ))}
-        </select>
-      </div>
-      
-      {/* Price Display */}
-      <div className="text-center mb-4">
-        <p className={`text-4xl font-bold transition-colors duration-300 ${priceColor}`}>
-          {currentPrice > 0 ? currentPrice.toFixed(5) : 'Loading...'}
-        </p>
-        <p className="text-xs text-gray-500">{tick ? new Date(tick.time).toLocaleTimeString() : '...'}</p>
-      </div>
-
-      {/* Trade Controls */}
-      <div className="space-y-4">
-        <div>
-          <label className="block text-sm text-gray-400 mb-2">Volume (Lots)</label>
-          <input
-            type="number"
-            value={volume}
-            onChange={(e) => setVolume(e.target.value)}
-            step="0.01"
-            min="0.01"
-            className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:border-emerald-500 focus:outline-none"
-          />
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <button
-            onClick={() => handleTrade('BUY')}
-            disabled={isSubmitting || !tick}
-            className="w-full py-3 rounded-lg font-medium transition-all flex items-center justify-center space-x-2 bg-green-600 hover:bg-green-700 text-white disabled:bg-gray-700 disabled:cursor-not-allowed"
-          >
-            <TrendingUp size={18} />
-            <span>BUY</span>
-          </button>
-          <button
-            onClick={() => handleTrade('SELL')}
-            disabled={isSubmitting || !tick}
-            className="w-full py-3 rounded-lg font-medium transition-all flex items-center justify-center space-x-2 bg-red-600 hover:bg-red-700 text-white disabled:bg-gray-700 disabled:cursor-not-allowed"
-          >
-            <TrendingDown size={18} />
-            <span>SELL</span>
-          </button>
-        </div>
-      </div>
-      
-      {/* Last Order Status */}
-      {lastOrder && (
-        <div className={`mt-4 p-3 rounded-lg text-sm ${
-          lastOrder.success ? 'bg-green-900/50 text-green-300' : 'bg-red-900/50 text-red-300'
-        }`}>
-          <p><strong>{lastOrder.success ? 'Success' : 'Failed'}:</strong> {lastOrder.message}</p>
-          {lastOrder.order_id && <p>Order ID: {lastOrder.order_id}</p>}
-        </div>
-      )}
-      
-      {/* Error Message */}
-      {error && (
-        <div className="mt-4 p-3 bg-yellow-900/20 border border-yellow-800/50 rounded-lg">
-          <div className="flex items-start space-x-2">
-            <AlertCircle className="text-yellow-500 mt-0.5" size={16} />
-            <p className="text-xs text-yellow-400">{error}</p>
+    <Card>
+      <CardHeader>
+        <CardTitle>Quick Trade</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="grid gap-4">
+          <div className="grid grid-cols-3 gap-4">
+            <div className="col-span-2">
+              <Label htmlFor="symbol">Symbol</Label>
+              <Select value={selectedSymbol} onValueChange={setSelectedSymbol}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Symbol" />
+                </SelectTrigger>
+                <SelectContent>
+                  {displaySymbols.map((symbol) => (
+                    <SelectItem key={symbol} value={symbol}>{symbol}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="volume">Volume</Label>
+              <Input id="volume" type="number" value={volume} onChange={(e) => setVolume(e.target.value)} step="0.01" />
+            </div>
           </div>
+          <div className="grid grid-cols-2 gap-4">
+            <Button variant="outline" className={action === 'BUY' ? 'ring-2 ring-green-500' : ''} onClick={() => setAction('BUY')}>BUY</Button>
+            <Button variant="outline" className={action === 'SELL' ? 'ring-2 ring-red-500' : ''} onClick={() => setAction('SELL')}>SELL</Button>
+          </div>
+          <Button onClick={handleTrade} disabled={isSubmitting}>
+            {isSubmitting ? 'Executing...' : `Execute ${action} ${selectedSymbol}`}
+          </Button>
+          {responseMsg && <p className="text-sm text-center text-muted-foreground">{responseMsg}</p>}
         </div>
-      )}
-    </div>
+      </CardContent>
+    </Card>
   );
 };
 

@@ -57,6 +57,12 @@ const Header: React.FC = () => {
       description: t('dashboard.subtitle')
     },
     {
+      name: 'QDashboard',
+      href: '/quantum',
+      icon: Brain,
+      description: 'Quantum AI Trading Intelligence Hub'
+    },
+    {
       name: t('navigation.trading'),
       href: '/trading',
       icon: TrendingUp,
@@ -75,46 +81,10 @@ const Header: React.FC = () => {
       description: 'Analytics and performance metrics'
     },
     {
-      name: t('navigation.quantum'),
-      href: '/quantum',
-      icon: Brain,
-      description: 'Advanced AI trading dashboard'
-    },
-    {
       name: t('contact.title'),
       href: '/contact',
       icon: Mail,
       description: 'Get in touch with our team'
-    },
-    {
-      name: t('navigation.ai_patterns'),
-      href: '/quantum',
-      icon: Brain,
-      description: 'AI Patterns'
-    },
-    {
-      name: t('navigation.edge_computing'),
-      href: '/edge',
-      icon: BarChart3,
-      description: 'Edge Computing'
-    },
-    {
-      name: t('navigation.social_trading'),
-      href: '/social',
-      icon: User,
-      description: 'Social Trading'
-    },
-    {
-      name: t('navigation.institutional'),
-      href: '/institutional',
-      icon: Shield,
-      description: 'Institutional'
-    },
-    {
-      name: t('navigation.quantum_tech'),
-      href: '/quantum-tech',
-      icon: Brain,
-      description: 'Quantum Tech'
     }
   ];
 

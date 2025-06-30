@@ -8,11 +8,11 @@ from typing import Dict, List, Optional
 from datetime import datetime
 import MetaTrader5 as mt5
 
-from backend.core.logger import get_logger
+from backend.core.logger import setup_logger
 from backend.modules.mt5_integration.service import MT5Service
 from .models import ManagedPosition
 
-logger = get_logger(__name__)
+logger = setup_logger(__name__)
 
 class PositionMonitor:
     def __init__(self, mt5_service: MT5Service):

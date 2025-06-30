@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import QuantumLayout from "@/components/layout/QuantumLayout";
 import EquityCurveChart from "@/components/performance/EquityCurveChart";
@@ -50,30 +50,16 @@ export default function QuantumPerformancePage() {
   const [loading, setLoading] = useState(true);
   const [selectedPeriod, setSelectedPeriod] = useState("30D");
 
-  useEffect(() => {
-    fetchPerformanceData();
-    const interval = setInterval(fetchPerformanceData, 30000); // Update every 30 seconds
-    return () => clearInterval(interval);
-  }, []);
-
-  const fetchPerformanceData = async () => {
+  const fetchPerformanceData = useCallback(async () => {
+    setLoading(true);
     try {
-      const [summaryResponse, equityResponse] = await Promise.all([
-        fetch("http://localhost:8000/api/v1/performance/summary"),
-        fetch("http://localhost:8000/api/v1/performance/equity_curve")
-      ]);
+      const response = await fetch("http://localhost:8002/api/live-performance"); // CANLI API'YE GÜNCELLENDİ
 
-      if (summaryResponse.ok) {
-        const summaryData = await summaryResponse.json();
-        if (summaryData.success) {
-          setPerformanceData(summaryData.summary);
-        }
-      }
-
-      if (equityResponse.ok) {
-        const equityResponseData = await equityResponse.json();
-        if (equityResponseData.success) {
-          setEquityData(equityResponseData.equity_curve);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          setPerformanceData(data.summary);
+          setEquityData(data.equity_curve);
         }
       }
     } catch (error) {
@@ -81,7 +67,13 @@ export default function QuantumPerformancePage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchPerformanceData();
+    const interval = setInterval(fetchPerformanceData, 60000); // Update every 60 seconds
+    return () => clearInterval(interval);
+  }, [fetchPerformanceData]);
 
   const containerVariants = {
     hidden: { opacity: 0 },

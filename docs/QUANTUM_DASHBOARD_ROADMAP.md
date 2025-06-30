@@ -8,7 +8,7 @@ Pinterest'teki [Handshake Influence Dashboard](https://www.pinterest.com/pin/140
 - **Dark Theme First**: Göz yorgunluğunu azaltan karanlık tema
 - **3D Visualizations**: Three.js ile interaktif 3D grafikler
 - **Micro-interactions**: Her etkileşimde smooth animasyonlar
-- **Data-driven UI**: Veriye göre dinamik olarak değişen arayüz
+- **data-driven UI**: Veriye göre dinamik olarak değişen arayüz
 
 ---
 

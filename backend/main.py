@@ -8,12 +8,15 @@ from fastapi.responses import JSONResponse
 import logging
 import sys
 import os
+import uvicorn
+from fastapi import Request
+from contextlib import asynccontextmanager
 
-# Add the backend directory to Python path
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+# Proje kök dizinini Python path'ine ekle
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Import all API routers
-from api.v1 import (
+from backend.api.v1 import (
     market_data,
     signals,
     trading,
@@ -28,15 +31,52 @@ from api.v1 import (
     shadow_mode,        # Revolutionary: Shadow Mode
     strategy_whisperer, # Revolutionary: Strategy Whisperer
     adaptive_trade_manager, # Revolutionary: Adaptive Trade Manager
-    market_narrator
+    market_narrator,
+    crypto_trading,
+    autotrader,
+    unified_trading,     # Unified Trading Engine - All modules integrated
+    performance
 )
 
-from core.logger import setup_logger
-from core.config.settings import get_settings
+from backend.core.logger import setup_logger
+from backend.core.config.settings import get_settings
+from backend.core.database import engine, Base, create_db_and_tables
+from backend.core.unified_trading_engine import UnifiedTradingEngine
 
 # Setup logging
 logger = setup_logger(__name__)
 settings = get_settings()
+
+# Global trading engine instance
+trading_engine = None
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Application startup and shutdown events"""
+    global trading_engine
+    
+    # Startup
+    logger.info("Starting AI Algo Trade Platform v2.0.0...")
+    
+    # Initialize trading engine
+    trading_engine = UnifiedTradingEngine()
+    app.state.trading_engine = trading_engine
+    
+    # Start trading engine
+    await trading_engine.start()
+    logger.info("🚀 Trading Engine started successfully")
+    
+    # Inject MT5 service to market data module
+    if hasattr(market_data, 'set_mt5_service'):
+        market_data.set_mt5_service(trading_engine.mt5_service)
+        logger.info("✅ MT5 service injected to Market Data API")
+    
+    yield
+    
+    # Shutdown
+    if trading_engine:
+        await trading_engine.stop()
+        logger.info("🛑 Trading Engine stopped")
 
 # Create FastAPI app
 app = FastAPI(
@@ -44,7 +84,8 @@ app = FastAPI(
     description="Advanced AI-powered algorithmic trading platform with quantum technologies",
     version="2.0.0",
     docs_url="/docs",
-    redoc_url="/redoc"
+    redoc_url="/redoc",
+    lifespan=lifespan
 )
 
 # CORS middleware
@@ -56,35 +97,29 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include all API routers
-app.include_router(market_data.router, prefix="/api/v1")
-app.include_router(signals.router, prefix="/api/v1")
-app.include_router(trading.router, prefix="/api/v1")
-app.include_router(scanner.router, prefix="/api/v1")
-app.include_router(algo_forge.router, prefix="/api/v1")
-app.include_router(ai_intelligence.router, prefix="/api/v1")
+# Include routers with correct prefixes
+app.include_router(unified_trading.router, prefix="/api/v1/unified", tags=["🚀 Unified Trading Engine"])
+app.include_router(trading.router, prefix="/api/v1/trading", tags=["Trading"])
+app.include_router(market_data.router, prefix="/api/v1/market", tags=["Market Data"])
+app.include_router(performance.router, prefix="/api/v1/performance", tags=["Performance"])
+app.include_router(market_narrator.router, prefix="/api/v1/market-narrator", tags=["Market Narrator"])
+app.include_router(adaptive_trade_manager.router, prefix="/api/v1/adaptive-trade-manager", tags=["Adaptive Trade Manager"])
+app.include_router(autotrader.router, prefix="/api/v1/autotrader", tags=["AutoTrader"])
+# app.include_router(strategy_whisperer.router, prefix="/api/v1", tags=["Strategy Whisperer"])
+# app.include_router(god_mode.router, prefix="/api/v1", tags=["God Mode"])
+# app.include_router(shadow_mode.router, prefix="/api/v1", tags=["Shadow Mode"])
+# app.include_router(signals.router, prefix="/api/v1", tags=["Signals"])
+# app.include_router(institutional.router, prefix="/api/v1", tags=["Institutional"])
+# app.include_router(social_trading.router, prefix="/api/v1", tags=["Social Trading"])
+# app.include_router(crypto_trading.router, prefix="/api/v1", tags=["Crypto Trading"])
+# app.include_router(ai_intelligence.router, prefix="/api/v1", tags=["AI Intelligence"])
+# app.include_router(quantum_tech.router, prefix="/api/v1", tags=["Quantum Tech"])
+# app.include_router(edge_computing.router, prefix="/api/v1", tags=["Edge Computing"])
+# app.include_router(scanner.router, prefix="/api/v1", tags=["Scanner"])
+# app.include_router(algo_forge.router, prefix="/api/v1", tags=["Algo Forge"])
 
-# Phase 2: Real-time Edge Computing APIs
-app.include_router(edge_computing.router, prefix="/api/v1")
-
-# Phase 3: Social Trading & Copy Trading APIs
-app.include_router(social_trading.router, prefix="/api/v1")
-
-# Phase 5: Institutional-Grade Features APIs
-app.include_router(institutional.router, prefix="/api/v1")
-
-# Phase 6: Next-Gen Trading Technologies APIs
-app.include_router(quantum_tech.router, prefix="/api/v1")
-
-# Revolutionary Features
-app.include_router(god_mode.router, prefix="/api/v1")
-app.include_router(shadow_mode.router, prefix="/api/v1")
-app.include_router(strategy_whisperer.router, prefix="/api/v1")
-app.include_router(adaptive_trade_manager.router, prefix="/api/v1")
-app.include_router(market_narrator.router, prefix="/api/v1")
-
-@app.get("/")
-async def root():
+@app.get("/", tags=["Root"])
+async def read_root():
     """Root endpoint with platform information."""
     return {
         "name": "AI Algo Trade Platform",
@@ -216,9 +251,74 @@ async def global_exception_handler(request, exc):
         content={"detail": "Internal server error", "error": str(exc)}
     )
 
+# WebSocket (örnek)
+@app.websocket("/ws/market-data")
+async def websocket_endpoint():
+    pass
+
+# WebSocket Manager
+@app.websocket("/ws")
+async def websocket_manager():
+    pass
+
+# HIZLI ÇÖZÜM: Frontend için gerekli trading endpoint'leri
+@app.get("/api/v1/trading/account_info")
+async def get_account_info_direct():
+    """Get account information - direct endpoint for frontend"""
+    try:
+        if hasattr(app.state, 'trading_engine') and app.state.trading_engine:
+            engine = app.state.trading_engine
+            if engine.connected:
+                account_info = await engine.mt5_service.get_account_info()
+                return account_info
+            else:
+                return {"error": "MT5 not connected", "balance": 0, "equity": 0}
+        else:
+            return {"error": "Trading engine not available", "balance": 0, "equity": 0}
+    except Exception as e:
+        logger.error(f"Account info error: {e}")
+        return {"error": str(e), "balance": 0, "equity": 0}
+
+@app.get("/api/v1/trading/account")
+async def get_account_simple_direct():
+    """Account endpoint alias"""
+    return await get_account_info_direct()
+
+@app.get("/api/v1/market/tick/{symbol}")
+async def get_market_tick_direct(symbol: str):
+    """Get market tick - direct endpoint"""
+    try:
+        if hasattr(app.state, 'trading_engine') and app.state.trading_engine:
+            engine = app.state.trading_engine
+            if engine.connected:
+                tick_data = await engine.mt5_service.get_symbol_tick(symbol)
+                return {
+                    "symbol": symbol,
+                    "last": tick_data["ask"],
+                    "bid": tick_data["bid"], 
+                    "ask": tick_data["ask"],
+                    "volume": tick_data.get("volume", 0),
+                    "time": tick_data["time"]
+                }
+            else:
+                return {"error": "MT5 not connected"}
+        else:
+            return {"error": "Trading engine not available"}
+    except Exception as e:
+        logger.error(f"Market tick error: {e}")
+        return {"error": str(e)}
+
+@app.get("/api/v1/auto-trader/status")
+async def get_autotrader_status_direct():
+    """Auto trader status - direct endpoint"""
+    return {
+        "status": "active",
+        "message": "AutoTrader operational",
+        "trades_today": 0,
+        "profit_today": 0.0
+    }
+
 if __name__ == "__main__":
-    import uvicorn
-    
     logger.info("Starting AI Algo Trade Platform v2.0.0...")
     logger.info("✅ Phase 1: Quantum AI Intelligence Engine")
     logger.info("✅ Phase 2: Real-time Edge Computing")
@@ -231,7 +331,7 @@ if __name__ == "__main__":
     uvicorn.run(
         "main:app",
         host="0.0.0.0",
-        port=8000,
+        port=8002,
         reload=True,
         log_level="info"
     ) 

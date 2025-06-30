@@ -175,3 +175,6 @@ build/
 
 # Rendered diagrams (source is already tracked)
 docs/diagrams/rendered/ 
+node_modules
+node_modules
+node_modules
