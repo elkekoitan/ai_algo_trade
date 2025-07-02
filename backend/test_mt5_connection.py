@@ -93,4 +93,4 @@ if __name__ == "__main__":
             print("   2. Manual olarak demo hesaba login yapın")
             print("   3. Tekrar test edin")
     except Exception as e:
-        print(f"\n�� FATAL ERROR: {e}") 
+        print(f"\n💥 FATAL ERROR: {e}")

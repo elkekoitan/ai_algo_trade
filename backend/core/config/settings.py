@@ -79,6 +79,11 @@ class Settings(BaseSettings):
     USE_OPENBLAS: bool = True
     OPENBLAS_THREADS: int = 4
     
+    # Supabase Configuration
+    SUPABASE_URL: str = os.getenv("SUPABASE_URL", "https://jregdcopqylriziucooi.supabase.co")
+    SUPABASE_ANON_KEY: str = os.getenv("SUPABASE_ANON_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyZWdkY29wcXlscml6aXVjb29pIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTEzMzQwOTMsImV4cCI6MjA2NjkxMDA5M30.placeholder")
+    SUPABASE_SERVICE_ROLE_KEY: str = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "service_role_key_placeholder")
+    
     @field_validator("BACKEND_CORS_ORIGINS", mode='before')
     @classmethod
     def assemble_cors_origins(cls, v: Any) -> List[str]:

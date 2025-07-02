@@ -1,34 +1,29 @@
-"""
-MT5 Configuration for Real Trading
-SADECE gerçek demo hesap bilgileri
-"""
-
-# TICKMILL DEMO HESAP BİLGİLERİ
+# MT5 Configuration for Multi-Account Copy Trading
 MT5_LOGIN = 25201110
 MT5_PASSWORD = "e|([rXU1IsiM"
 MT5_SERVER = "Tickmill-Demo"
 
-# Hesap Bilgileri
-ACCOUNT_TYPE = "Classic"
-ACCOUNT_CURRENCY = "USD"
-
-# Connection Settings
-CONNECTION_TIMEOUT = 60000  # 60 seconds
-RETRY_COUNT = 3
-RETRY_DELAY = 5  # seconds
-
-# Trading Settings
-DEFAULT_SYMBOLS = [
-    "EURUSD", "GBPUSD", "USDJPY", "USDCHF", "AUDUSD", 
-    "USDCAD", "NZDUSD", "EURJPY", "GBPJPY", "EURGBP",
-    "XAUUSD", "USOIL", "USTEC", "US30", "GER40"
+# COPY TRADING DEMO ACCOUNTS - Yeni hesaplar
+COPY_TRADING_ACCOUNTS = [
+    {
+        "login": 25216036,
+        "password": "oB9UY1&,B=^9",
+        "server": "Tickmill-Demo",
+        "name": "Copy Account 1",
+        "type": "follower"
+    },
+    {
+        "login": 25216037,
+        "password": "L[.Sdo4QRxx2", 
+        "server": "Tickmill-Demo",
+        "name": "Copy Account 2",
+        "type": "follower"
+    }
 ]
 
-# ICT Settings
+ACCOUNT_TYPE = "Classic"
+ACCOUNT_CURRENCY = "USD"
+DEFAULT_SYMBOLS = ["EURUSD", "GBPUSD", "USDJPY", "XAUUSD"]
 ICT_ENABLED = True
 SIGNAL_GENERATION = True
-AUTO_TRADING = False  # Güvenlik için başlangıçta kapalı
-
-# Logging
-LOG_LEVEL = "INFO"
-LOG_MT5_OPERATIONS = True 
+AUTO_TRADING = False

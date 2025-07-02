@@ -7,16 +7,31 @@ import re
 import json
 from typing import Dict, List, Optional, Tuple, Any
 from datetime import datetime
+from enum import Enum
 import google.generativeai as genai
 
 from backend.core.logger import setup_logger
 from .models import (
-    StrategyIntent, Language, StrategyType, 
-    IndicatorType, TimeFrame, TradingCondition
+    StrategyIntent, Language, IndicatorType
 )
 
 logger = setup_logger(__name__)
 
+# Missing enums that need to be defined
+class StrategyType(str, Enum):
+    TREND_FOLLOWING = "trend_following"
+    MEAN_REVERSION = "mean_reversion"
+    BREAKOUT = "breakout"
+    SCALPING = "scalping"
+
+class TimeFrame(str, Enum):
+    M1 = "M1"
+    M5 = "M5"
+    M15 = "M15"
+    M30 = "M30"
+    H1 = "H1"
+    H4 = "H4"
+    D1 = "D1"
 
 class NLPEngine:
     """Natural language processing for strategy creation"""

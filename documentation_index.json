@@ -1,0 +1,1974 @@
+[
+  {
+    "path": "docs\\ADAPTIVE_TRADE_MANAGER_ROADMAP.md",
+    "absolute_path": "docs\\ADAPTIVE_TRADE_MANAGER_ROADMAP.md",
+    "filename": "ADAPTIVE_TRADE_MANAGER_ROADMAP.md",
+    "title": "🛡️ ADAPTIVE TRADE MANAGER - Detaylı Yol Haritası",
+    "type": "status",
+    "last_modified": "2025-06-30T16:32:07.472003",
+    "size_bytes": 19805,
+    "word_count": 2361,
+    "line_count": 671,
+    "internal_links": [],
+    "external_links": [
+      {
+        "url": "http://localhost:8002/api/v1/adaptive-trade-manager/status\"",
+        "text": ""
+      },
+      {
+        "url": "http://localhost:8002/api/v1/adaptive-trade-manager/optimization-suggestions\"",
+        "text": ""
+      },
+      {
+        "url": "http://localhost:8002/api/v1/adaptive-trade-manager/risk-assessment\"",
+        "text": ""
+      },
+      {
+        "url": "http://localhost:8002/api/v1/adaptive-trade-manager/calculate-optimal-size\"",
+        "text": ""
+      }
+    ],
+    "file_references": [
+      "backend/modules/adaptive_trade_manager/models.py",
+      "backend/modules/adaptive_trade_manager/optimization_engine.py",
+      "backend/modules/adaptive_trade_manager/risk_calculator.py",
+      "backend/api/v1/adaptive_trade_manager.py"
+    ],
+    "broken_links": [],
+    "total_links": 4
+  },
+  {
+    "path": "docs\\ADVANCED_SECURITY_ARCHITECTURE.md",
+    "absolute_path": "docs\\ADVANCED_SECURITY_ARCHITECTURE.md",
+    "filename": "ADVANCED_SECURITY_ARCHITECTURE.md",
+    "title": "Advanced Security Architecture for AI Algorithmic Trading Platform",
+    "type": "api",
+    "last_modified": "2025-07-01T08:03:20.597306",
+    "size_bytes": 18507,
+    "word_count": 1718,
+    "line_count": 536,
+    "internal_links": [],
+    "external_links": [],
+    "file_references": [],
+    "broken_links": [],
+    "total_links": 0
+  },
+  {
+    "path": "docs\\AI_ALGO_TRADE_COMPETITOR_ANALYSIS_2025.md",
+    "absolute_path": "docs\\AI_ALGO_TRADE_COMPETITOR_ANALYSIS_2025.md",
+    "filename": "AI_ALGO_TRADE_COMPETITOR_ANALYSIS_2025.md",
+    "title": "🏆 AI ALGO TRADE - COMPETITOR ANALYSIS 2025",
+    "type": "api",
+    "last_modified": "2025-06-30T22:00:12.376747",
+    "size_bytes": 10376,
+    "word_count": 1463,
+    "line_count": 387,
+    "internal_links": [],
+    "external_links": [],
+    "file_references": [],
+    "broken_links": [],
+    "total_links": 0
+  },
+  {
+    "path": "docs\\AI_ALGO_TRADE_COMPREHENSIVE_ANALYSIS_2025.md",
+    "absolute_path": "docs\\AI_ALGO_TRADE_COMPREHENSIVE_ANALYSIS_2025.md",
+    "filename": "AI_ALGO_TRADE_COMPREHENSIVE_ANALYSIS_2025.md",
+    "title": "📊 AI ALGO TRADE - COMPREHENSIVE DOCUMENTATION ANALYSIS REPORT",
+    "type": "status",
+    "last_modified": "2025-06-30T21:46:55.302176",
+    "size_bytes": 11875,
+    "word_count": 1581,
+    "line_count": 341,
+    "internal_links": [],
+    "external_links": [],
+    "file_references": [],
+    "broken_links": [],
+    "total_links": 0
+  },
+  {
+    "path": "docs\\AI_ALGO_TRADE_NEXT_GEN_ROADMAP_2025.md",
+    "absolute_path": "docs\\AI_ALGO_TRADE_NEXT_GEN_ROADMAP_2025.md",
+    "filename": "AI_ALGO_TRADE_NEXT_GEN_ROADMAP_2025.md",
+    "title": "🚀 AI ALGO TRADE - NEXT GENERATION ROADMAP 2025",
+    "type": "tech-spec",
+    "last_modified": "2025-06-30T21:38:46.692574",
+    "size_bytes": 12308,
+    "word_count": 1551,
+    "line_count": 495,
+    "internal_links": [],
+    "external_links": [],
+    "file_references": [],
+    "broken_links": [],
+    "total_links": 0
+  },
+  {
+    "path": "docs\\AI_ALGO_TRADE_ULTIMATE_PERFECTION_ROADMAP_2025.md",
+    "absolute_path": "docs\\AI_ALGO_TRADE_ULTIMATE_PERFECTION_ROADMAP_2025.md",
+    "filename": "AI_ALGO_TRADE_ULTIMATE_PERFECTION_ROADMAP_2025.md",
+    "title": "🚀 AI ALGO TRADE - ULTIMATE PERFECTION ROADMAP 2025",
+    "type": "tech-spec",
+    "last_modified": "2025-06-30T21:46:55.302176",
+    "size_bytes": 15329,
+    "word_count": 1756,
+    "line_count": 538,
+    "internal_links": [],
+    "external_links": [],
+    "file_references": [],
+    "broken_links": [],
+    "total_links": 0
+  },
+  {
+    "path": "docs\\architecture\\MODULAR_INTEGRATION_ROADMAP.md",
+    "absolute_path": "docs\\architecture\\MODULAR_INTEGRATION_ROADMAP.md",
+    "filename": "MODULAR_INTEGRATION_ROADMAP.md",
+    "title": "🚀 AI Algo Trade - Modüler Entegrasyon Roadmap'i",
+    "type": "tech-spec",
+    "last_modified": "2025-06-27T21:38:35.945536",
+    "size_bytes": 11115,
+    "word_count": 1229,
+    "line_count": 286,
+    "internal_links": [],
+    "external_links": [],
+    "file_references": [],
+    "broken_links": [],
+    "total_links": 0
+  },
+  {
+    "path": "docs\\architecture\\SYSTEM_ARCHITECTURE_UPDATED.md",
+    "absolute_path": "docs\\architecture\\SYSTEM_ARCHITECTURE_UPDATED.md",
+    "filename": "SYSTEM_ARCHITECTURE_UPDATED.md",
+    "title": "🏗️ **AI ALGO TRADE - SYSTEM ARCHITECTURE UPDATE**",
+    "type": "tech-spec",
+    "last_modified": "2025-06-30T16:34:33.121347",
+    "size_bytes": 10468,
+    "word_count": 1114,
+    "line_count": 359,
+    "internal_links": [],
+    "external_links": [],
+    "file_references": [],
+    "broken_links": [],
+    "total_links": 0
+  },
+  {
+    "path": "docs\\architecture\\UNIFIED_TRADING_ARCHITECTURE_ROADMAP.md",
+    "absolute_path": "docs\\architecture\\UNIFIED_TRADING_ARCHITECTURE_ROADMAP.md",
+    "filename": "UNIFIED_TRADING_ARCHITECTURE_ROADMAP.md",
+    "title": "🏗️ **UNIFIED TRADING ARCHITECTURE - ENHANCED ROADMAP**",
+    "type": "tech-spec",
+    "last_modified": "2025-06-30T16:33:34.535448",
+    "size_bytes": 14750,
+    "word_count": 1605,
+    "line_count": 490,
+    "internal_links": [],
+    "external_links": [],
+    "file_references": [
+      "backend/core/enhanced_event_bus.py",
+      "backend/core/unified_trading_engine.py",
+      "backend/core/shared_data_service.py"
+    ],
+    "broken_links": [],
+    "total_links": 0
+  },
+  {
+    "path": "docs\\dashboard-screenshots.md",
+    "absolute_path": "docs\\dashboard-screenshots.md",
+    "filename": "dashboard-screenshots.md",
+    "title": "📊 Quantum Dashboard Visual Documentation",
+    "type": "user-guide",
+    "last_modified": "2025-06-26T13:50:02.606315",
+    "size_bytes": 11970,
+    "word_count": 981,
+    "line_count": 285,
+    "internal_links": [],
+    "external_links": [
+      {
+        "url": "http://localhost:3000/quantum",
+        "text": ""
+      },
+      {
+        "url": "http://localhost:3000/quantum`",
+        "text": ""
+      }
+    ],
+    "file_references": [],
+    "broken_links": [
+      {
+        "url": "./screenshots/quantum-dashboard-overview.png",
+        "text": "Quantum Dashboard Overview",
+        "resolved_path": "C:\\Users\\elkek\\Desktop\\ai_algo_trade\\docs\\screenshots\\quantum-dashboard-overview.png"
+      },
+      {
+        "url": "./screenshots/influence-analytics.png",
+        "text": "Influence Analytics",
+        "resolved_path": "C:\\Users\\elkek\\Desktop\\ai_algo_trade\\docs\\screenshots\\influence-analytics.png"
+      },
+      {
+        "url": "./screenshots/network-visualization.png",
+        "text": "3D Network Graph",
+        "resolved_path": "C:\\Users\\elkek\\Desktop\\ai_algo_trade\\docs\\screenshots\\network-visualization.png"
+      },
+      {
+        "url": "./screenshots/ai-insights.png",
+        "text": "AI Insights",
+        "resolved_path": "C:\\Users\\elkek\\Desktop\\ai_algo_trade\\docs\\screenshots\\ai-insights.png"
+      }
+    ],
+    "total_links": 6
+  },
+  {
+    "path": "docs\\diagrams\\adaptive-trade-manager-architecture.md",
+    "absolute_path": "docs\\diagrams\\adaptive-trade-manager-architecture.md",
+    "filename": "adaptive-trade-manager-architecture.md",
+    "title": "Adaptive Trade Manager Architecture",
+    "type": "tech-spec",
+    "last_modified": "2025-06-27T12:18:44.151211",
+    "size_bytes": 1147,
+    "word_count": 132,
+    "line_count": 45,
+    "internal_links": [],
+    "external_links": [],
+    "file_references": [],
+    "broken_links": [],
+    "total_links": 0
+  },
+  {
+    "path": "docs\\diagrams\\adaptive-trade-manager-flow.md",
+    "absolute_path": "docs\\diagrams\\adaptive-trade-manager-flow.md",
+    "filename": "adaptive-trade-manager-flow.md",
+    "title": "Adaptive Trade Manager Flow",
+    "type": "diagram",
+    "last_modified": "2025-06-27T12:18:55.088771",
+    "size_bytes": 1375,
+    "word_count": 156,
+    "line_count": 40,
+    "internal_links": [],
+    "external_links": [],
+    "file_references": [],
+    "broken_links": [],
+    "total_links": 0
+  },
+  {
+    "path": "docs\\diagrams\\data-flow-diagram.md",
+    "absolute_path": "docs\\diagrams\\data-flow-diagram.md",
+    "filename": "data-flow-diagram.md",
+    "title": "🔄 Veri Akış Diyagramı",
+    "type": "api",
+    "last_modified": "2025-06-27T10:29:52.873640",
+    "size_bytes": 2783,
+    "word_count": 310,
+    "line_count": 62,
+    "internal_links": [],
+    "external_links": [],
+    "file_references": [],
+    "broken_links": [],
+    "total_links": 0
+  },
+  {
+    "path": "docs\\diagrams\\database-schema.md",
+    "absolute_path": "docs\\diagrams\\database-schema.md",
+    "filename": "database-schema.md",
+    "title": "🗄️ Veritabanı Şeması",
+    "type": "tech-spec",
+    "last_modified": "2025-06-27T10:36:12.835908",
+    "size_bytes": 2898,
+    "word_count": 272,
+    "line_count": 74,
+    "internal_links": [],
+    "external_links": [],
+    "file_references": [],
+    "broken_links": [],
+    "total_links": 0
+  },
+  {
+    "path": "docs\\diagrams\\frontend-component-diagram.md",
+    "absolute_path": "docs\\diagrams\\frontend-component-diagram.md",
+    "filename": "frontend-component-diagram.md",
+    "title": "⚛️ Frontend Component Architecture",
+    "type": "tech-spec",
+    "last_modified": "2025-06-27T10:48:25.985780",
+    "size_bytes": 2150,
+    "word_count": 183,
+    "line_count": 65,
+    "internal_links": [],
+    "external_links": [],
+    "file_references": [],
+    "broken_links": [],
+    "total_links": 0
+  },
+  {
+    "path": "docs\\diagrams\\god-mode-architecture.md",
+    "absolute_path": "docs\\diagrams\\god-mode-architecture.md",
+    "filename": "god-mode-architecture.md",
+    "title": "🔱 God Mode - System Architecture",
+    "type": "api",
+    "last_modified": "2025-06-27T10:30:18.019778",
+    "size_bytes": 3012,
+    "word_count": 294,
+    "line_count": 82,
+    "internal_links": [],
+    "external_links": [],
+    "file_references": [],
+    "broken_links": [],
+    "total_links": 0
+  },
+  {
+    "path": "docs\\diagrams\\god-mode-completion-summary.md",
+    "absolute_path": "docs\\diagrams\\god-mode-completion-summary.md",
+    "filename": "god-mode-completion-summary.md",
+    "title": "🏆 God Mode - Tamamlanma Özeti",
+    "type": "api",
+    "last_modified": "2025-06-27T11:05:30.658499",
+    "size_bytes": 3077,
+    "word_count": 239,
+    "line_count": 63,
+    "internal_links": [],
+    "external_links": [],
+    "file_references": [],
+    "broken_links": [],
+    "total_links": 0
+  },
+  {
+    "path": "docs\\diagrams\\god-mode-integration-plan.md",
+    "absolute_path": "docs\\diagrams\\god-mode-integration-plan.md",
+    "filename": "god-mode-integration-plan.md",
+    "title": "⚡ God Mode - Entegrasyon Planı",
+    "type": "api",
+    "last_modified": "2025-06-27T11:05:30.658499",
+    "size_bytes": 2364,
+    "word_count": 233,
+    "line_count": 72,
+    "internal_links": [],
+    "external_links": [],
+    "file_references": [],
+    "broken_links": [],
+    "total_links": 0
+  },
+  {
+    "path": "docs\\diagrams\\market-narrator-architecture.md",
+    "absolute_path": "docs\\diagrams\\market-narrator-architecture.md",
+    "filename": "market-narrator-architecture.md",
+    "title": "market-narrator-architecture",
+    "type": "tech-spec",
+    "last_modified": "2025-06-27T13:11:34.386232",
+    "size_bytes": 1,
+    "word_count": 0,
+    "line_count": 1,
+    "internal_links": [],
+    "external_links": [],
+    "file_references": [],
+    "broken_links": [],
+    "total_links": 0
+  },
+  {
+    "path": "docs\\diagrams\\market-narrator-flow.md",
+    "absolute_path": "docs\\diagrams\\market-narrator-flow.md",
+    "filename": "market-narrator-flow.md",
+    "title": "Market Narrator Flow",
+    "type": "api",
+    "last_modified": "2025-06-27T13:11:47.653582",
+    "size_bytes": 1236,
+    "word_count": 114,
+    "line_count": 33,
+    "internal_links": [],
+    "external_links": [],
+    "file_references": [],
+    "broken_links": [],
+    "total_links": 0
+  },
+  {
+    "path": "docs\\diagrams\\README.md",
+    "absolute_path": "docs\\diagrams\\README.md",
+    "filename": "README.md",
+    "title": "📊 AI Algo Trade - Diagrams & Visuals",
+    "type": "tech-spec",
+    "last_modified": "2025-06-27T11:05:30.658499",
+    "size_bytes": 4325,
+    "word_count": 471,
+    "line_count": 101,
+    "internal_links": [
+      {
+        "url": "./revolutionary-features-overview.md",
+        "text": "Devrimsel Özellikler - Genel Bakış",
+        "resolved_path": "C:\\Users\\elkek\\Desktop\\ai_algo_trade\\docs\\diagrams\\revolutionary-features-overview.md"
+      },
+      {
+        "url": "./ultimate-feature-matrix.md",
+        "text": "Proje Özellik Matrisi",
+        "resolved_path": "C:\\Users\\elkek\\Desktop\\ai_algo_trade\\docs\\diagrams\\ultimate-feature-matrix.md"
+      },
+      {
+        "url": "./system-architecture.md",
+        "text": "Genel Sistem Mimarisi",
+        "resolved_path": "C:\\Users\\elkek\\Desktop\\ai_algo_trade\\docs\\diagrams\\system-architecture.md"
+      },
+      {
+        "url": "./god-mode-architecture.md",
+        "text": "God Mode Mimarisi",
+        "resolved_path": "C:\\Users\\elkek\\Desktop\\ai_algo_trade\\docs\\diagrams\\god-mode-architecture.md"
+      },
+      {
+        "url": "./shadow-mode-architecture.md",
+        "text": "Shadow Mode Mimarisi",
+        "resolved_path": "C:\\Users\\elkek\\Desktop\\ai_algo_trade\\docs\\diagrams\\shadow-mode-architecture.md"
+      },
+      {
+        "url": "./frontend-component-diagram.md",
+        "text": "Frontend Bileşen Mimarisi",
+        "resolved_path": "C:\\Users\\elkek\\Desktop\\ai_algo_trade\\docs\\diagrams\\frontend-component-diagram.md"
+      },
+      {
+        "url": "./database-schema.md",
+        "text": "Veritabanı Şeması",
+        "resolved_path": "C:\\Users\\elkek\\Desktop\\ai_algo_trade\\docs\\diagrams\\database-schema.md"
+      },
+      {
+        "url": "./data-flow-diagram.md",
+        "text": "Veri Akış Diyagramı",
+        "resolved_path": "C:\\Users\\elkek\\Desktop\\ai_algo_trade\\docs\\diagrams\\data-flow-diagram.md"
+      },
+      {
+        "url": "./whale-detection-process.md",
+        "text": "Whale Tespit Süreci",
+        "resolved_path": "C:\\Users\\elkek\\Desktop\\ai_algo_trade\\docs\\diagrams\\whale-detection-process.md"
+      },
+      {
+        "url": "./god-mode-integration-plan.md",
+        "text": "God Mode Entegrasyon Planı",
+        "resolved_path": "C:\\Users\\elkek\\Desktop\\ai_algo_trade\\docs\\diagrams\\god-mode-integration-plan.md"
+      },
+      {
+        "url": "./shadow-mode-integration-plan.md",
+        "text": "Shadow Mode Entegrasyon Planı",
+        "resolved_path": "C:\\Users\\elkek\\Desktop\\ai_algo_trade\\docs\\diagrams\\shadow-mode-integration-plan.md"
+      },
+      {
+        "url": "./god-mode-completion-summary.md",
+        "text": "God Mode Tamamlanma Özeti",
+        "resolved_path": "C:\\Users\\elkek\\Desktop\\ai_algo_trade\\docs\\diagrams\\god-mode-completion-summary.md"
+      },
+      {
+        "url": "./system-architecture.md",
+        "text": "Genel Sistem Mimarisi",
+        "resolved_path": "C:\\Users\\elkek\\Desktop\\ai_algo_trade\\docs\\diagrams\\system-architecture.md"
+      },
+      {
+        "url": "./god-mode-architecture.md",
+        "text": "God Mode Mimarisi",
+        "resolved_path": "C:\\Users\\elkek\\Desktop\\ai_algo_trade\\docs\\diagrams\\god-mode-architecture.md"
+      },
+      {
+        "url": "./shadow-mode-architecture.md",
+        "text": "Shadow Mode Mimarisi",
+        "resolved_path": "C:\\Users\\elkek\\Desktop\\ai_algo_trade\\docs\\diagrams\\shadow-mode-architecture.md"
+      },
+      {
+        "url": "./data-flow-diagram.md",
+        "text": "Veri Akış Diyagramı",
+        "resolved_path": "C:\\Users\\elkek\\Desktop\\ai_algo_trade\\docs\\diagrams\\data-flow-diagram.md"
+      },
+      {
+        "url": "./whale-detection-process.md",
+        "text": "Whale Tespit Süreci",
+        "resolved_path": "C:\\Users\\elkek\\Desktop\\ai_algo_trade\\docs\\diagrams\\whale-detection-process.md"
+      }
+    ],
+    "external_links": [],
+    "file_references": [
+      ".md",
+      "system-architecture.md",
+      "shadow-mode-architecture.md",
+      "god-mode-architecture.md",
+      "data-flow-diagram.md",
+      "shadow-mode-workflow.md",
+      "whale-detection-process.md",
+      "stealth-execution-flow.md",
+      "institutional-tracking-flow.md",
+      "shadow-mode-ui-mockup.md",
+      "quantum-dashboard-mockup.md",
+      "mobile-responsive-design.md",
+      "trading-strategy-diagram.md",
+      "risk-management-flow.md",
+      "performance-metrics-chart.md",
+      "api-endpoint-structure.md",
+      "database-schema.md",
+      "component-relationship.md"
+    ],
+    "broken_links": [],
+    "total_links": 17
+  },
+  {
+    "path": "docs\\diagrams\\revolutionary-features-overview.md",
+    "absolute_path": "docs\\diagrams\\revolutionary-features-overview.md",
+    "filename": "revolutionary-features-overview.md",
+    "title": "✨ Devrimsel Özellikler - Genel Bakış",
+    "type": "diagram",
+    "last_modified": "2025-06-27T11:05:30.658499",
+    "size_bytes": 3444,
+    "word_count": 347,
+    "line_count": 89,
+    "internal_links": [],
+    "external_links": [],
+    "file_references": [],
+    "broken_links": [],
+    "total_links": 0
+  },
+  {
+    "path": "docs\\diagrams\\shadow-mode-architecture.md",
+    "absolute_path": "docs\\diagrams\\shadow-mode-architecture.md",
+    "filename": "shadow-mode-architecture.md",
+    "title": "🥷 Shadow Mode - System Architecture",
+    "type": "api",
+    "last_modified": "2025-06-27T10:48:25.985780",
+    "size_bytes": 3382,
+    "word_count": 364,
+    "line_count": 125,
+    "internal_links": [],
+    "external_links": [],
+    "file_references": [],
+    "broken_links": [],
+    "total_links": 0
+  },
+  {
+    "path": "docs\\diagrams\\shadow-mode-integration-plan.md",
+    "absolute_path": "docs\\diagrams\\shadow-mode-integration-plan.md",
+    "filename": "shadow-mode-integration-plan.md",
+    "title": "🥷 Shadow Mode - Entegrasyon Planı",
+    "type": "tech-spec",
+    "last_modified": "2025-06-27T10:59:04.867846",
+    "size_bytes": 2380,
+    "word_count": 226,
+    "line_count": 71,
+    "internal_links": [],
+    "external_links": [],
+    "file_references": [],
+    "broken_links": [],
+    "total_links": 0
+  },
+  {
+    "path": "docs\\diagrams\\strategy-whisperer-architecture.md",
+    "absolute_path": "docs\\diagrams\\strategy-whisperer-architecture.md",
+    "filename": "strategy-whisperer-architecture.md",
+    "title": "Strategy Whisperer Architecture",
+    "type": "tech-spec",
+    "last_modified": "2025-06-27T11:36:08.854255",
+    "size_bytes": 1104,
+    "word_count": 117,
+    "line_count": 47,
+    "internal_links": [],
+    "external_links": [],
+    "file_references": [],
+    "broken_links": [],
+    "total_links": 0
+  },
+  {
+    "path": "docs\\diagrams\\strategy-whisperer-flow.md",
+    "absolute_path": "docs\\diagrams\\strategy-whisperer-flow.md",
+    "filename": "strategy-whisperer-flow.md",
+    "title": "strategy-whisperer-flow",
+    "type": "diagram",
+    "last_modified": "2025-06-27T11:36:23.642944",
+    "size_bytes": 1,
+    "word_count": 0,
+    "line_count": 1,
+    "internal_links": [],
+    "external_links": [],
+    "file_references": [],
+    "broken_links": [],
+    "total_links": 0
+  },
+  {
+    "path": "docs\\diagrams\\system-architecture.md",
+    "absolute_path": "docs\\diagrams\\system-architecture.md",
+    "filename": "system-architecture.md",
+    "title": "🏗️ Genel Sistem Mimarisi",
+    "type": "api",
+    "last_modified": "2025-06-27T10:29:26.562845",
+    "size_bytes": 1877,
+    "word_count": 198,
+    "line_count": 42,
+    "internal_links": [],
+    "external_links": [],
+    "file_references": [],
+    "broken_links": [],
+    "total_links": 0
+  },
+  {
+    "path": "docs\\diagrams\\ultimate-feature-matrix.md",
+    "absolute_path": "docs\\diagrams\\ultimate-feature-matrix.md",
+    "filename": "ultimate-feature-matrix.md",
+    "title": "MATRIX: Proje Özellik Matrisi",
+    "type": "tech-spec",
+    "last_modified": "2025-06-27T10:58:10.094330",
+    "size_bytes": 2616,
+    "word_count": 250,
+    "line_count": 75,
+    "internal_links": [],
+    "external_links": [],
+    "file_references": [],
+    "broken_links": [],
+    "total_links": 0
+  },
+  {
+    "path": "docs\\diagrams\\whale-detection-process.md",
+    "absolute_path": "docs\\diagrams\\whale-detection-process.md",
+    "filename": "whale-detection-process.md",
+    "title": "🐋 Whale Detection Process",
+    "type": "diagram",
+    "last_modified": "2025-06-27T08:39:38.548512",
+    "size_bytes": 2207,
+    "word_count": 232,
+    "line_count": 75,
+    "internal_links": [],
+    "external_links": [],
+    "file_references": [],
+    "broken_links": [],
+    "total_links": 0
+  },
+  {
+    "path": "docs\\frontend\\DASHBOARD_MODERNIZATION_SUMMARY.md",
+    "absolute_path": "docs\\frontend\\DASHBOARD_MODERNIZATION_SUMMARY.md",
+    "filename": "DASHBOARD_MODERNIZATION_SUMMARY.md",
+    "title": "🚀 **AI Algo Trade - Dashboard Modernizasyonu Tamamlandı**",
+    "type": "status",
+    "last_modified": "2025-06-29T03:50:20.690898",
+    "size_bytes": 5813,
+    "word_count": 731,
+    "line_count": 198,
+    "internal_links": [],
+    "external_links": [
+      {
+        "url": "http://localhost:3006**",
+        "text": ""
+      },
+      {
+        "url": "http://localhost:8000**",
+        "text": ""
+      }
+    ],
+    "file_references": [],
+    "broken_links": [],
+    "total_links": 2
+  },
+  {
+    "path": "docs\\frontend\\QUANTUM_DASHBOARD_MODERNIZATION_ROADMAP.md",
+    "absolute_path": "docs\\frontend\\QUANTUM_DASHBOARD_MODERNIZATION_ROADMAP.md",
+    "filename": "QUANTUM_DASHBOARD_MODERNIZATION_ROADMAP.md",
+    "title": "🚀 QUANTUM DASHBOARD MODERNIZATION ROADMAP 2025",
+    "type": "tech-spec",
+    "last_modified": "2025-06-27T05:06:09.956860",
+    "size_bytes": 14666,
+    "word_count": 1786,
+    "line_count": 511,
+    "internal_links": [],
+    "external_links": [],
+    "file_references": [],
+    "broken_links": [],
+    "total_links": 0
+  },
+  {
+    "path": "docs\\GOD_MODE_ULTIMATE_ROADMAP.md",
+    "absolute_path": "docs\\GOD_MODE_ULTIMATE_ROADMAP.md",
+    "filename": "GOD_MODE_ULTIMATE_ROADMAP.md",
+    "title": "⚡ GOD MODE - Ultimate Trading Tanrısı Yol Haritası",
+    "type": "status",
+    "last_modified": "2025-06-27T07:59:30.483924",
+    "size_bytes": 7747,
+    "word_count": 1041,
+    "line_count": 281,
+    "internal_links": [],
+    "external_links": [],
+    "file_references": [],
+    "broken_links": [],
+    "total_links": 0
+  },
+  {
+    "path": "docs\\MARKET_NARRATOR_ROADMAP.md",
+    "absolute_path": "docs\\MARKET_NARRATOR_ROADMAP.md",
+    "filename": "MARKET_NARRATOR_ROADMAP.md",
+    "title": "📖 THE MARKET NARRATOR - Detaylı Yol Haritası",
+    "type": "status",
+    "last_modified": "2025-06-27T07:55:59.193224",
+    "size_bytes": 6916,
+    "word_count": 929,
+    "line_count": 226,
+    "internal_links": [],
+    "external_links": [],
+    "file_references": [],
+    "broken_links": [],
+    "total_links": 0
+  },
+  {
+    "path": "docs\\MODULAR_INTEGRATION_ROADMAP.md",
+    "absolute_path": "docs\\MODULAR_INTEGRATION_ROADMAP.md",
+    "filename": "MODULAR_INTEGRATION_ROADMAP.md",
+    "title": "🚀 AI Algo Trade - Modüler Entegrasyon Roadmap'i",
+    "type": "tech-spec",
+    "last_modified": "2025-06-28T06:27:40.911610",
+    "size_bytes": 22086,
+    "word_count": 2178,
+    "line_count": 596,
+    "internal_links": [],
+    "external_links": [
+      {
+        "url": "https://forge.mql5.io/ai-algo-trade.git",
+        "text": ""
+      }
+    ],
+    "file_references": [],
+    "broken_links": [],
+    "total_links": 1
+  },
+  {
+    "path": "docs\\modules\\MARKET_NARRATOR_PHASE3_ROADMAP.md",
+    "absolute_path": "docs\\modules\\MARKET_NARRATOR_PHASE3_ROADMAP.md",
+    "filename": "MARKET_NARRATOR_PHASE3_ROADMAP.md",
+    "title": "📰 **MARKET NARRATOR - PHASE 3 ROADMAP** ",
+    "type": "status",
+    "last_modified": "2025-06-30T16:45:00.647205",
+    "size_bytes": 12978,
+    "word_count": 1520,
+    "line_count": 354,
+    "internal_links": [],
+    "external_links": [],
+    "file_references": [
+      "backend/modules/market_narrator/models.py",
+      "backend/modules/market_narrator/data_aggregator.py",
+      "backend/modules/market_narrator/correlation_engine.py",
+      "backend/modules/market_narrator/story_generator.py",
+      "backend/api/v1/market_narrator.py"
+    ],
+    "broken_links": [],
+    "total_links": 0
+  },
+  {
+    "path": "docs\\PROJECT_CLEANUP_ROADMAP.md",
+    "absolute_path": "docs\\PROJECT_CLEANUP_ROADMAP.md",
+    "filename": "PROJECT_CLEANUP_ROADMAP.md",
+    "title": "🧹 AI Algo Trade - Project Cleanup Roadmap",
+    "type": "tech-spec",
+    "last_modified": "2025-06-30T21:19:14.543340",
+    "size_bytes": 6952,
+    "word_count": 804,
+    "line_count": 221,
+    "internal_links": [],
+    "external_links": [],
+    "file_references": [
+      "trader_status.md",
+      "advanced_crypto_trader.py",
+      "ai-algo-trade-ci.yml",
+      "SYSTEM_ARCHITECTURE_UPDATED.md",
+      "UNIFIED_TRADING_ARCHITECTURE_ROADMAP.md",
+      "MODULAR_INTEGRATION_ROADMAP.md",
+      "ADAPTIVE_TRADE_MANAGER_ROADMAP.md",
+      "SHADOW_MODE_ROADMAP.md",
+      "MARKET_NARRATOR_ROADMAP.md",
+      "STRATEGY_WHISPERER_ROADMAP.md",
+      "GOD_MODE_ULTIMATE_ROADMAP.md",
+      "MARKET_NARRATOR_PHASE3_ROADMAP.md",
+      "QUANTUM_DASHBOARD_ROADMAP.md",
+      "DASHBOARD_MODERNIZATION_SUMMARY.md",
+      "QUANTUM_DASHBOARD_MODERNIZATION_ROADMAP.md",
+      "dashboard-screenshots.md",
+      "PHASE_DEVELOPMENT_STATUS.md",
+      "MODULAR_INTEGRATION_SUMMARY.md",
+      "*IMPLEMENTATION_TASKS.md",
+      "ADVANCED_ROADMAP_2025.md",
+      "AI_ALGO_TRADE_ENHANCED_ROADMAP_2025.md",
+      "MODULAR_DEVELOPMENT_ROADMAP_2025.md",
+      "COMPLETE_SYSTEM_GUIDE.md",
+      "PROJE_KULLANIM_KILAVUZU.md",
+      "QUICK_START_GUIDE.md",
+      "UNIFIED_TRADING_ENGINE_STARTUP_GUIDE.md",
+      "ARCHITECTURE.md",
+      "AI_ENHANCEMENTS_SUMMARY.md",
+      "IMPORT_SORUNLARI_COZULDU.md",
+      "UNIFIED_TRADING_ENGINE_SUMMARY.md",
+      "SYSTEM_STATUS_CHECK.md"
+    ],
+    "broken_links": [],
+    "total_links": 0
+  },
+  {
+    "path": "docs\\QUANTUM_DASHBOARD_COMPLETE.md",
+    "absolute_path": "docs\\QUANTUM_DASHBOARD_COMPLETE.md",
+    "filename": "QUANTUM_DASHBOARD_COMPLETE.md",
+    "title": "QUANTUM_DASHBOARD_COMPLETE",
+    "type": "general",
+    "last_modified": "2025-06-26T13:53:27.696489",
+    "size_bytes": 1,
+    "word_count": 0,
+    "line_count": 1,
+    "internal_links": [],
+    "external_links": [],
+    "file_references": [],
+    "broken_links": [],
+    "total_links": 0
+  },
+  {
+    "path": "docs\\QUANTUM_DASHBOARD_ROADMAP.md",
+    "absolute_path": "docs\\QUANTUM_DASHBOARD_ROADMAP.md",
+    "filename": "QUANTUM_DASHBOARD_ROADMAP.md",
+    "title": "🚀 QUANTUM TRADING DASHBOARD - Ultimate Roadmap 2025",
+    "type": "api",
+    "last_modified": "2025-06-30T07:42:01.723559",
+    "size_bytes": 23101,
+    "word_count": 2554,
+    "line_count": 690,
+    "internal_links": [],
+    "external_links": [
+      {
+        "url": "https://www.pinterest.com/pin/1407443628128587",
+        "text": "Handshake Influence Dashboard"
+      },
+      {
+        "url": "https://www.pinterest.com/pin/1407443628128587",
+        "text": ""
+      },
+      {
+        "url": "http://localhost:3000/quantum",
+        "text": ""
+      },
+      {
+        "url": "http://localhost:3000`",
+        "text": ""
+      },
+      {
+        "url": "http://localhost:3000/quantum`",
+        "text": ""
+      }
+    ],
+    "file_references": [],
+    "broken_links": [],
+    "total_links": 5
+  },
+  {
+    "path": "docs\\QUANTUM_DASHBOARD_ULTIMATE_VISION.md",
+    "absolute_path": "docs\\QUANTUM_DASHBOARD_ULTIMATE_VISION.md",
+    "filename": "QUANTUM_DASHBOARD_ULTIMATE_VISION.md",
+    "title": "🌌 QUANTUM DASHBOARD - ULTIMATE VISION 2025",
+    "type": "status",
+    "last_modified": "2025-06-26T15:20:59.580345",
+    "size_bytes": 10614,
+    "word_count": 1041,
+    "line_count": 236,
+    "internal_links": [],
+    "external_links": [],
+    "file_references": [],
+    "broken_links": [],
+    "total_links": 0
+  },
+  {
+    "path": "docs\\README.md",
+    "absolute_path": "docs\\README.md",
+    "filename": "README.md",
+    "title": "📚 AI Algo Trade - Documentation Hub",
+    "type": "user-guide",
+    "last_modified": "2025-06-30T21:09:35.297836",
+    "size_bytes": 2289,
+    "word_count": 163,
+    "line_count": 54,
+    "internal_links": [
+      {
+        "url": "./user-guides/QUICK_START_GUIDE.md",
+        "text": "Quick Start Guide",
+        "resolved_path": "C:\\Users\\elkek\\Desktop\\ai_algo_trade\\docs\\user-guides\\QUICK_START_GUIDE.md"
+      },
+      {
+        "url": "./system/SYSTEM_STATUS_CHECK.md",
+        "text": "System Status Check",
+        "resolved_path": "C:\\Users\\elkek\\Desktop\\ai_algo_trade\\docs\\system\\SYSTEM_STATUS_CHECK.md"
+      },
+      {
+        "url": "./architecture/SYSTEM_ARCHITECTURE_UPDATED.md",
+        "text": "System Architecture",
+        "resolved_path": "C:\\Users\\elkek\\Desktop\\ai_algo_trade\\docs\\architecture\\SYSTEM_ARCHITECTURE_UPDATED.md"
+      },
+      {
+        "url": "./architecture/UNIFIED_TRADING_ARCHITECTURE_ROADMAP.md",
+        "text": "Unified Trading Architecture",
+        "resolved_path": "C:\\Users\\elkek\\Desktop\\ai_algo_trade\\docs\\architecture\\UNIFIED_TRADING_ARCHITECTURE_ROADMAP.md"
+      },
+      {
+        "url": "./architecture/MODULAR_INTEGRATION_ROADMAP.md",
+        "text": "Event-Driven Integration",
+        "resolved_path": "C:\\Users\\elkek\\Desktop\\ai_algo_trade\\docs\\architecture\\MODULAR_INTEGRATION_ROADMAP.md"
+      },
+      {
+        "url": "./frontend/DASHBOARD_MODERNIZATION_SUMMARY.md",
+        "text": "Dashboard Modernization",
+        "resolved_path": "C:\\Users\\elkek\\Desktop\\ai_algo_trade\\docs\\frontend\\DASHBOARD_MODERNIZATION_SUMMARY.md"
+      },
+      {
+        "url": "./status/PHASE_DEVELOPMENT_STATUS.md",
+        "text": "Phase Development Status",
+        "resolved_path": "C:\\Users\\elkek\\Desktop\\ai_algo_trade\\docs\\status\\PHASE_DEVELOPMENT_STATUS.md"
+      },
+      {
+        "url": "./status/MODULAR_INTEGRATION_SUMMARY.md",
+        "text": "Module Integration Summary",
+        "resolved_path": "C:\\Users\\elkek\\Desktop\\ai_algo_trade\\docs\\status\\MODULAR_INTEGRATION_SUMMARY.md"
+      },
+      {
+        "url": "./roadmaps/ADVANCED_ROADMAP_2025.md",
+        "text": "Advanced Roadmap 2025",
+        "resolved_path": "C:\\Users\\elkek\\Desktop\\ai_algo_trade\\docs\\roadmaps\\ADVANCED_ROADMAP_2025.md"
+      },
+      {
+        "url": "./roadmaps/AI_ALGO_TRADE_ENHANCED_ROADMAP_2025.md",
+        "text": "Enhanced Roadmap 2025",
+        "resolved_path": "C:\\Users\\elkek\\Desktop\\ai_algo_trade\\docs\\roadmaps\\AI_ALGO_TRADE_ENHANCED_ROADMAP_2025.md"
+      },
+      {
+        "url": "./user-guides/PROJE_KULLANIM_KILAVUZU.md",
+        "text": "Project Usage Guide (Turkish)",
+        "resolved_path": "C:\\Users\\elkek\\Desktop\\ai_algo_trade\\docs\\user-guides\\PROJE_KULLANIM_KILAVUZU.md"
+      },
+      {
+        "url": "./user-guides/COMPLETE_SYSTEM_GUIDE.md",
+        "text": "Complete System Guide",
+        "resolved_path": "C:\\Users\\elkek\\Desktop\\ai_algo_trade\\docs\\user-guides\\COMPLETE_SYSTEM_GUIDE.md"
+      },
+      {
+        "url": "./technical/ARCHITECTURE.md",
+        "text": "Core Architecture",
+        "resolved_path": "C:\\Users\\elkek\\Desktop\\ai_algo_trade\\docs\\technical\\ARCHITECTURE.md"
+      },
+      {
+        "url": "./technical/AI_ENHANCEMENTS_SUMMARY.md",
+        "text": "AI Enhancements Summary",
+        "resolved_path": "C:\\Users\\elkek\\Desktop\\ai_algo_trade\\docs\\technical\\AI_ENHANCEMENTS_SUMMARY.md"
+      },
+      {
+        "url": "./technical/IMPORT_SORUNLARI_COZULDU.md",
+        "text": "Import Issues Resolved",
+        "resolved_path": "C:\\Users\\elkek\\Desktop\\ai_algo_trade\\docs\\technical\\IMPORT_SORUNLARI_COZULDU.md"
+      },
+      {
+        "url": "./archive/",
+        "text": "Legacy Documentation",
+        "resolved_path": "C:\\Users\\elkek\\Desktop\\ai_algo_trade\\docs\\archive"
+      }
+    ],
+    "external_links": [],
+    "file_references": [],
+    "broken_links": [
+      {
+        "url": "./user-guides/PROJECT_SETUP.md",
+        "text": "Project Setup Guide",
+        "resolved_path": "C:\\Users\\elkek\\Desktop\\ai_algo_trade\\docs\\user-guides\\PROJECT_SETUP.md"
+      },
+      {
+        "url": "./modules/SHADOW_MODE_ROADMAP.md",
+        "text": "Shadow Mode Roadmap",
+        "resolved_path": "C:\\Users\\elkek\\Desktop\\ai_algo_trade\\docs\\modules\\SHADOW_MODE_ROADMAP.md"
+      },
+      {
+        "url": "./modules/ADAPTIVE_TRADE_MANAGER_ROADMAP.md",
+        "text": "Adaptive Trade Manager",
+        "resolved_path": "C:\\Users\\elkek\\Desktop\\ai_algo_trade\\docs\\modules\\ADAPTIVE_TRADE_MANAGER_ROADMAP.md"
+      },
+      {
+        "url": "./modules/MARKET_NARRATOR_ROADMAP.md",
+        "text": "Market Narrator",
+        "resolved_path": "C:\\Users\\elkek\\Desktop\\ai_algo_trade\\docs\\modules\\MARKET_NARRATOR_ROADMAP.md"
+      },
+      {
+        "url": "./modules/STRATEGY_WHISPERER_ROADMAP.md",
+        "text": "Strategy Whisperer",
+        "resolved_path": "C:\\Users\\elkek\\Desktop\\ai_algo_trade\\docs\\modules\\STRATEGY_WHISPERER_ROADMAP.md"
+      },
+      {
+        "url": "./modules/GOD_MODE_ULTIMATE_ROADMAP.md",
+        "text": "God Mode Ultimate",
+        "resolved_path": "C:\\Users\\elkek\\Desktop\\ai_algo_trade\\docs\\modules\\GOD_MODE_ULTIMATE_ROADMAP.md"
+      },
+      {
+        "url": "./frontend/QUANTUM_DASHBOARD_ROADMAP.md",
+        "text": "Quantum Dashboard Roadmap",
+        "resolved_path": "C:\\Users\\elkek\\Desktop\\ai_algo_trade\\docs\\frontend\\QUANTUM_DASHBOARD_ROADMAP.md"
+      },
+      {
+        "url": "./frontend/dashboard-screenshots.md",
+        "text": "Dashboard Screenshots",
+        "resolved_path": "C:\\Users\\elkek\\Desktop\\ai_algo_trade\\docs\\frontend\\dashboard-screenshots.md"
+      },
+      {
+        "url": "./status/IMPLEMENTATION_TASKS.md",
+        "text": "Implementation Tasks",
+        "resolved_path": "C:\\Users\\elkek\\Desktop\\ai_algo_trade\\docs\\status\\IMPLEMENTATION_TASKS.md"
+      },
+      {
+        "url": "./features/REVOLUTIONARY_FEATURES_SUMMARY.md",
+        "text": "Revolutionary Features",
+        "resolved_path": "C:\\Users\\elkek\\Desktop\\ai_algo_trade\\docs\\features\\REVOLUTIONARY_FEATURES_SUMMARY.md"
+      },
+      {
+        "url": "./user-guides/UNIFIED_TRADING_ENGINE_GUIDE.md",
+        "text": "Unified Trading Engine Guide",
+        "resolved_path": "C:\\Users\\elkek\\Desktop\\ai_algo_trade\\docs\\user-guides\\UNIFIED_TRADING_ENGINE_GUIDE.md"
+      },
+      {
+        "url": "./archive/roadmaps/",
+        "text": "Old Roadmaps",
+        "resolved_path": "C:\\Users\\elkek\\Desktop\\ai_algo_trade\\docs\\archive\\roadmaps"
+      },
+      {
+        "url": "./archive/history/",
+        "text": "Development History",
+        "resolved_path": "C:\\Users\\elkek\\Desktop\\ai_algo_trade\\docs\\archive\\history"
+      }
+    ],
+    "total_links": 29
+  },
+  {
+    "path": "docs\\REVOLUTIONARY_FEATURES_SUMMARY.md",
+    "absolute_path": "docs\\REVOLUTIONARY_FEATURES_SUMMARY.md",
+    "filename": "REVOLUTIONARY_FEATURES_SUMMARY.md",
+    "title": "🚀 AI ALGO TRADE - 5 DEVRİM NİTELİĞİNDE ÖZELLİK",
+    "type": "status",
+    "last_modified": "2025-06-27T08:00:56.660621",
+    "size_bytes": 5294,
+    "word_count": 705,
+    "line_count": 198,
+    "internal_links": [],
+    "external_links": [],
+    "file_references": [],
+    "broken_links": [],
+    "total_links": 0
+  },
+  {
+    "path": "docs\\roadmaps\\ADVANCED_ROADMAP_2025.md",
+    "absolute_path": "docs\\roadmaps\\ADVANCED_ROADMAP_2025.md",
+    "filename": "ADVANCED_ROADMAP_2025.md",
+    "title": "🚀 ICT ULTRA V2: ADVANCED ROADMAP 2025",
+    "type": "api",
+    "last_modified": "2025-06-27T02:20:51.704591",
+    "size_bytes": 13633,
+    "word_count": 1799,
+    "line_count": 460,
+    "internal_links": [],
+    "external_links": [
+      {
+        "url": "http://localhost:3000/quantum",
+        "text": ""
+      },
+      {
+        "url": "http://localhost:8001/api/v1/ai/pattern-analysis",
+        "text": ""
+      }
+    ],
+    "file_references": [],
+    "broken_links": [],
+    "total_links": 2
+  },
+  {
+    "path": "docs\\roadmaps\\AI_ALGO_TRADE_ENHANCED_ROADMAP_2025.md",
+    "absolute_path": "docs\\roadmaps\\AI_ALGO_TRADE_ENHANCED_ROADMAP_2025.md",
+    "filename": "AI_ALGO_TRADE_ENHANCED_ROADMAP_2025.md",
+    "title": "🚀 AI ALGO TRADE - ENHANCED ROADMAP 2025",
+    "type": "status",
+    "last_modified": "2025-06-27T01:58:11.027852",
+    "size_bytes": 11566,
+    "word_count": 1431,
+    "line_count": 342,
+    "internal_links": [],
+    "external_links": [],
+    "file_references": [],
+    "broken_links": [],
+    "total_links": 0
+  },
+  {
+    "path": "docs\\roadmaps\\MODULAR_DEVELOPMENT_ROADMAP_2025.md",
+    "absolute_path": "docs\\roadmaps\\MODULAR_DEVELOPMENT_ROADMAP_2025.md",
+    "filename": "MODULAR_DEVELOPMENT_ROADMAP_2025.md",
+    "title": "🚀 AI Algo Trade - Modular Development Roadmap 2025",
+    "type": "tech-spec",
+    "last_modified": "2025-06-30T12:56:53.958364",
+    "size_bytes": 9296,
+    "word_count": 1196,
+    "line_count": 365,
+    "internal_links": [],
+    "external_links": [],
+    "file_references": [],
+    "broken_links": [],
+    "total_links": 0
+  },
+  {
+    "path": "docs\\SECURITY_ARCHITECTURE_COMPARISON.md",
+    "absolute_path": "docs\\SECURITY_ARCHITECTURE_COMPARISON.md",
+    "filename": "SECURITY_ARCHITECTURE_COMPARISON.md",
+    "title": "Security Architecture Comparison: Traditional vs Advanced Approach",
+    "type": "api",
+    "last_modified": "2025-07-01T08:04:24.111186",
+    "size_bytes": 14036,
+    "word_count": 1632,
+    "line_count": 321,
+    "internal_links": [],
+    "external_links": [],
+    "file_references": [],
+    "broken_links": [],
+    "total_links": 0
+  },
+  {
+    "path": "docs\\SHADOW_MODE_ROADMAP.md",
+    "absolute_path": "docs\\SHADOW_MODE_ROADMAP.md",
+    "filename": "SHADOW_MODE_ROADMAP.md",
+    "title": "🥷 SHADOW MODE - Detaylı Yol Haritası",
+    "type": "status",
+    "last_modified": "2025-06-30T16:30:56.584918",
+    "size_bytes": 17769,
+    "word_count": 2177,
+    "line_count": 589,
+    "internal_links": [],
+    "external_links": [
+      {
+        "url": "http://localhost:8002/api/v1/shadow-mode/whales?symbol=BTCUSD&limit=10\"",
+        "text": ""
+      },
+      {
+        "url": "http://localhost:8002/api/v1/shadow-mode/market-impact?symbol=EURUSD&timeframe=1h\"",
+        "text": ""
+      },
+      {
+        "url": "http://localhost:8002/api/v1/shadow-mode/institutional-flows?symbol=XAUUSD\"",
+        "text": ""
+      }
+    ],
+    "file_references": [
+      "backend/modules/shadow_mode/models.py",
+      "backend/modules/shadow_mode/shadow_service.py",
+      "backend/api/v1/shadow_mode.py"
+    ],
+    "broken_links": [],
+    "total_links": 3
+  },
+  {
+    "path": "docs\\SQL_INJECTION_PROTECTION_SUMMARY.md",
+    "absolute_path": "docs\\SQL_INJECTION_PROTECTION_SUMMARY.md",
+    "filename": "SQL_INJECTION_PROTECTION_SUMMARY.md",
+    "title": "🔒 SQL Injection Protection Summary",
+    "type": "api",
+    "last_modified": "2025-07-01T08:48:51.759192",
+    "size_bytes": 4494,
+    "word_count": 592,
+    "line_count": 155,
+    "internal_links": [],
+    "external_links": [
+      {
+        "url": "https://owasp.org/www-community/attacks/SQL_Injection",
+        "text": "OWASP SQL Injection Prevention"
+      },
+      {
+        "url": "https://supabase.com/docs/guides/auth/security",
+        "text": "Supabase Security Best Practices"
+      },
+      {
+        "url": "https://www.postgresql.org/docs/current/sql-createpolicy.html",
+        "text": "PostgreSQL Security"
+      },
+      {
+        "url": "https://owasp.org/www-community/attacks/SQL_Injection",
+        "text": ""
+      },
+      {
+        "url": "https://supabase.com/docs/guides/auth/security",
+        "text": ""
+      },
+      {
+        "url": "https://www.postgresql.org/docs/current/sql-createpolicy.html",
+        "text": ""
+      }
+    ],
+    "file_references": [],
+    "broken_links": [],
+    "total_links": 6
+  },
+  {
+    "path": "docs\\status\\ADAPTIVE_TRADE_MANAGER_IMPLEMENTATION_TASKS.md",
+    "absolute_path": "docs\\status\\ADAPTIVE_TRADE_MANAGER_IMPLEMENTATION_TASKS.md",
+    "filename": "ADAPTIVE_TRADE_MANAGER_IMPLEMENTATION_TASKS.md",
+    "title": "🛡️ ADAPTIVE TRADE MANAGER - Implementation Tasks",
+    "type": "tech-spec",
+    "last_modified": "2025-06-27T12:11:49.479067",
+    "size_bytes": 5928,
+    "word_count": 876,
+    "line_count": 122,
+    "internal_links": [],
+    "external_links": [],
+    "file_references": [
+      "__init__.py",
+      "models.py",
+      "position_monitor.py",
+      "risk_calculator.py",
+      "market_analyzer.py",
+      "optimization_engine.py",
+      "alert_manager.py",
+      "models.py",
+      "position_monitor.py",
+      "market_analyzer.py",
+      "risk_calculator.py",
+      "optimization_engine.py",
+      "alert_manager.py",
+      "backend/api/v1/adaptive_trade_manager.py",
+      "main.py"
+    ],
+    "broken_links": [],
+    "total_links": 0
+  },
+  {
+    "path": "docs\\status\\GOD_MODE_IMPLEMENTATION_TASKS.md",
+    "absolute_path": "docs\\status\\GOD_MODE_IMPLEMENTATION_TASKS.md",
+    "filename": "GOD_MODE_IMPLEMENTATION_TASKS.md",
+    "title": "⚡ GOD MODE IMPLEMENTATION TASKS",
+    "type": "status",
+    "last_modified": "2025-06-27T08:17:49.748334",
+    "size_bytes": 6420,
+    "word_count": 786,
+    "line_count": 209,
+    "internal_links": [],
+    "external_links": [],
+    "file_references": [
+      "backend/modules/god_mode/__init__.py",
+      "backend/modules/god_mode/models.py",
+      "backend/modules/god_mode/core_service.py",
+      "backend/modules/god_mode/quantum_engine.py",
+      "backend/modules/god_mode/prediction_models.py",
+      "backend/modules/god_mode/risk_calculator.py",
+      "backend/api/v1/god_mode.py",
+      "backend/simple_main.py"
+    ],
+    "broken_links": [],
+    "total_links": 0
+  },
+  {
+    "path": "docs\\status\\MARKET_NARRATOR_IMPLEMENTATION_TASKS.md",
+    "absolute_path": "docs\\status\\MARKET_NARRATOR_IMPLEMENTATION_TASKS.md",
+    "filename": "MARKET_NARRATOR_IMPLEMENTATION_TASKS.md",
+    "title": "📖 MARKET NARRATOR - Implementation Tasks",
+    "type": "tech-spec",
+    "last_modified": "2025-06-27T13:05:39.348164",
+    "size_bytes": 4639,
+    "word_count": 686,
+    "line_count": 87,
+    "internal_links": [],
+    "external_links": [],
+    "file_references": [
+      "__init__.py",
+      "models.py",
+      "data_aggregator.py",
+      "sentiment_analyzer.py",
+      "correlation_engine.py",
+      "story_generator.py",
+      "models.py",
+      "data_aggregator.py",
+      "sentiment_analyzer.py",
+      "correlation_engine.py",
+      "story_generator.py",
+      "backend/api/v1/market_narrator.py",
+      "main.py",
+      "adaptive-trade-manager-architecture.md",
+      "adaptive-trade-manager-flow.md"
+    ],
+    "broken_links": [],
+    "total_links": 0
+  },
+  {
+    "path": "docs\\status\\MODULAR_INTEGRATION_SUMMARY.md",
+    "absolute_path": "docs\\status\\MODULAR_INTEGRATION_SUMMARY.md",
+    "filename": "MODULAR_INTEGRATION_SUMMARY.md",
+    "title": "🚀 AI Algo Trade - Modüler Entegrasyon Özeti",
+    "type": "tech-spec",
+    "last_modified": "2025-06-27T20:32:24.745947",
+    "size_bytes": 5935,
+    "word_count": 727,
+    "line_count": 192,
+    "internal_links": [],
+    "external_links": [],
+    "file_references": [],
+    "broken_links": [],
+    "total_links": 0
+  },
+  {
+    "path": "docs\\status\\PHASE_DEVELOPMENT_STATUS.md",
+    "absolute_path": "docs\\status\\PHASE_DEVELOPMENT_STATUS.md",
+    "filename": "PHASE_DEVELOPMENT_STATUS.md",
+    "title": "AI Algo Trade Platform - Phase Development Status",
+    "type": "api",
+    "last_modified": "2025-06-27T05:23:24.468304",
+    "size_bytes": 11038,
+    "word_count": 1323,
+    "line_count": 273,
+    "internal_links": [],
+    "external_links": [
+      {
+        "url": "http://localhost:3001",
+        "text": ""
+      }
+    ],
+    "file_references": [
+      "high_frequency_processor.py",
+      "copy_trading.py",
+      "compliance_engine.py",
+      "autonomous_agents.py"
+    ],
+    "broken_links": [],
+    "total_links": 1
+  },
+  {
+    "path": "docs\\status\\SHADOW_MODE_IMPLEMENTATION_TASKS.md",
+    "absolute_path": "docs\\status\\SHADOW_MODE_IMPLEMENTATION_TASKS.md",
+    "filename": "SHADOW_MODE_IMPLEMENTATION_TASKS.md",
+    "title": "🥷 SHADOW MODE - Implementation Tasks",
+    "type": "api",
+    "last_modified": "2025-06-27T08:38:03.858778",
+    "size_bytes": 11853,
+    "word_count": 1456,
+    "line_count": 322,
+    "internal_links": [],
+    "external_links": [],
+    "file_references": [
+      "backend/modules/shadow_mode/__init__.py",
+      "backend/modules/shadow_mode/models.py",
+      "backend/modules/shadow_mode/shadow_service.py",
+      "institutional_tracker.py",
+      "whale_detector.py",
+      "dark_pool_monitor.py",
+      "stealth_executor.py",
+      "pattern_analyzer.py",
+      "backend/api/v1/shadow_mode.py",
+      "simple_main.py"
+    ],
+    "broken_links": [],
+    "total_links": 0
+  },
+  {
+    "path": "docs\\status\\STRATEGY_WHISPERER_IMPLEMENTATION_TASKS.md",
+    "absolute_path": "docs\\status\\STRATEGY_WHISPERER_IMPLEMENTATION_TASKS.md",
+    "filename": "STRATEGY_WHISPERER_IMPLEMENTATION_TASKS.md",
+    "title": "🧠 STRATEGY WHISPERER IMPLEMENTATION TASKS",
+    "type": "tech-spec",
+    "last_modified": "2025-06-27T11:43:15.966234",
+    "size_bytes": 6901,
+    "word_count": 1101,
+    "line_count": 247,
+    "internal_links": [],
+    "external_links": [],
+    "file_references": [
+      "__init__.py",
+      "models.py",
+      "nlp_engine.py",
+      "strategy_parser.py",
+      "mql5_generator.py",
+      "backtest_engine.py",
+      "deployment_service.py",
+      "backend/api/v1/strategy_whisperer.py"
+    ],
+    "broken_links": [],
+    "total_links": 0
+  },
+  {
+    "path": "docs\\STRATEGY_WHISPERER_ROADMAP.md",
+    "absolute_path": "docs\\STRATEGY_WHISPERER_ROADMAP.md",
+    "filename": "STRATEGY_WHISPERER_ROADMAP.md",
+    "title": "modules/strategy_whisperer/",
+    "type": "status",
+    "last_modified": "2025-06-27T12:03:19.178513",
+    "size_bytes": 5785,
+    "word_count": 788,
+    "line_count": 201,
+    "internal_links": [],
+    "external_links": [],
+    "file_references": [],
+    "broken_links": [],
+    "total_links": 0
+  },
+  {
+    "path": "docs\\system\\SYSTEM_STATUS_CHECK.md",
+    "absolute_path": "docs\\system\\SYSTEM_STATUS_CHECK.md",
+    "filename": "SYSTEM_STATUS_CHECK.md",
+    "title": "AI Algo Trade - System Status Check",
+    "type": "api",
+    "last_modified": "2025-06-29T14:10:11.138641",
+    "size_bytes": 4177,
+    "word_count": 520,
+    "line_count": 146,
+    "internal_links": [],
+    "external_links": [
+      {
+        "url": "http://localhost:3000",
+        "text": ""
+      },
+      {
+        "url": "http://localhost:3000",
+        "text": ""
+      },
+      {
+        "url": "http://localhost:8002/health",
+        "text": ""
+      },
+      {
+        "url": "http://localhost:8002/performance",
+        "text": ""
+      },
+      {
+        "url": "http://localhost:8002/docs",
+        "text": ""
+      },
+      {
+        "url": "http://localhost:8002/health",
+        "text": ""
+      },
+      {
+        "url": "http://localhost:8002/performance",
+        "text": ""
+      }
+    ],
+    "file_references": [
+      "scripts/system_monitor.py"
+    ],
+    "broken_links": [],
+    "total_links": 7
+  },
+  {
+    "path": "docs\\technical\\AI_ENHANCEMENTS_SUMMARY.md",
+    "absolute_path": "docs\\technical\\AI_ENHANCEMENTS_SUMMARY.md",
+    "filename": "AI_ENHANCEMENTS_SUMMARY.md",
+    "title": "🚀 AI ALGO TRADE - QUANTUM AI ENHANCEMENTS IMPLEMENTED",
+    "type": "tech-spec",
+    "last_modified": "2025-06-27T02:07:11.557725",
+    "size_bytes": 9833,
+    "word_count": 1182,
+    "line_count": 363,
+    "internal_links": [],
+    "external_links": [
+      {
+        "url": "http://localhost:3000/quantum`",
+        "text": ""
+      },
+      {
+        "url": "http://localhost:8001/api/v1/ai/pattern-analysis?symbol=EURUSD",
+        "text": ""
+      },
+      {
+        "url": "http://localhost:8001/api/v1/ai/models/status",
+        "text": ""
+      },
+      {
+        "url": "http://localhost:8001/api/v1/ai/neural-activity",
+        "text": ""
+      },
+      {
+        "url": "http://localhost:8001/api/v1/ai/predictions?symbol=EURUSD&horizon=1h",
+        "text": ""
+      },
+      {
+        "url": "http://localhost:3000/quantum",
+        "text": ""
+      }
+    ],
+    "file_references": [],
+    "broken_links": [],
+    "total_links": 6
+  },
+  {
+    "path": "docs\\technical\\ARCHITECTURE.md",
+    "absolute_path": "docs\\technical\\ARCHITECTURE.md",
+    "filename": "ARCHITECTURE.md",
+    "title": "ICT Ultra v2: Mimari Dokümantasyon",
+    "type": "tech-spec",
+    "last_modified": "2025-06-25T16:23:11.312456",
+    "size_bytes": 6535,
+    "word_count": 754,
+    "line_count": 140,
+    "internal_links": [],
+    "external_links": [],
+    "file_references": [],
+    "broken_links": [],
+    "total_links": 0
+  },
+  {
+    "path": "docs\\technical\\IMPORT_SORUNLARI_COZULDU.md",
+    "absolute_path": "docs\\technical\\IMPORT_SORUNLARI_COZULDU.md",
+    "filename": "IMPORT_SORUNLARI_COZULDU.md",
+    "title": "🎉 AI ALGO TRADE - TÜM IMPORT SORUNLARI ÇÖZÜLDÜ!",
+    "type": "tech-spec",
+    "last_modified": "2025-06-28T19:54:29.750990",
+    "size_bytes": 3776,
+    "word_count": 468,
+    "line_count": 129,
+    "internal_links": [],
+    "external_links": [
+      {
+        "url": "http://localhost:3000",
+        "text": ""
+      },
+      {
+        "url": "http://localhost:8004",
+        "text": ""
+      },
+      {
+        "url": "http://localhost:8004/health",
+        "text": ""
+      },
+      {
+        "url": "http://localhost:3000",
+        "text": ""
+      },
+      {
+        "url": "http://localhost:8004/health",
+        "text": ""
+      }
+    ],
+    "file_references": [
+      "backend/core/config/settings.py",
+      "real_crypto_trading_fixed.py",
+      "test_mt5_fixed.py",
+      "fix_backend_imports.py"
+    ],
+    "broken_links": [],
+    "total_links": 5
+  },
+  {
+    "path": "docs\\technical\\UNIFIED_TRADING_ENGINE_SUMMARY.md",
+    "absolute_path": "docs\\technical\\UNIFIED_TRADING_ENGINE_SUMMARY.md",
+    "filename": "UNIFIED_TRADING_ENGINE_SUMMARY.md",
+    "title": "🚀 UNIFIED TRADING ENGINE - IMPLEMENTATION SUMMARY",
+    "type": "tech-spec",
+    "last_modified": "2025-06-28T14:51:09.848370",
+    "size_bytes": 6947,
+    "word_count": 815,
+    "line_count": 243,
+    "internal_links": [],
+    "external_links": [
+      {
+        "url": "http://localhost:8000/api/v1/unified/status\"",
+        "text": ""
+      },
+      {
+        "url": "http://localhost:8000/api/v1/unified/test/signal\",",
+        "text": ""
+      },
+      {
+        "url": "http://localhost:8000/api/v1/unified/status",
+        "text": ""
+      }
+    ],
+    "file_references": [
+      "backend/core/enhanced_event_bus.py",
+      "backend/core/unified_trading_engine.py",
+      "backend/api/v1/unified_trading.py",
+      "test_unified_trading_engine.py",
+      "test_unified_api.py",
+      "start_unified_backend.py"
+    ],
+    "broken_links": [],
+    "total_links": 3
+  },
+  {
+    "path": "docs\\TICKMILL_LOGIN_GUIDE.md",
+    "absolute_path": "docs\\TICKMILL_LOGIN_GUIDE.md",
+    "filename": "TICKMILL_LOGIN_GUIDE.md",
+    "title": "🚀 AI Algo Trade - Tickmill MT5 Login Guide",
+    "type": "user-guide",
+    "last_modified": "2025-07-01T10:02:28.158436",
+    "size_bytes": 3778,
+    "word_count": 532,
+    "line_count": 157,
+    "internal_links": [],
+    "external_links": [
+      {
+        "url": "http://localhost:3000",
+        "text": ""
+      }
+    ],
+    "file_references": [
+      "python test_mt5_connection.py"
+    ],
+    "broken_links": [],
+    "total_links": 1
+  },
+  {
+    "path": "docs\\UPDATED_MODULE_STATUS_2025.md",
+    "absolute_path": "docs\\UPDATED_MODULE_STATUS_2025.md",
+    "filename": "UPDATED_MODULE_STATUS_2025.md",
+    "title": "📊 AI ALGO TRADE - UPDATED MODULE STATUS REPORT",
+    "type": "api",
+    "last_modified": "2025-06-30T21:42:37.567161",
+    "size_bytes": 7556,
+    "word_count": 1088,
+    "line_count": 311,
+    "internal_links": [],
+    "external_links": [],
+    "file_references": [],
+    "broken_links": [],
+    "total_links": 0
+  },
+  {
+    "path": "docs\\user-guides\\COMPLETE_SYSTEM_GUIDE.md",
+    "absolute_path": "docs\\user-guides\\COMPLETE_SYSTEM_GUIDE.md",
+    "filename": "COMPLETE_SYSTEM_GUIDE.md",
+    "title": "🚀 AI Algo Trade - Güncel Sistem Kılavuzu",
+    "type": "user-guide",
+    "last_modified": "2025-06-29T16:33:37.723687",
+    "size_bytes": 4792,
+    "word_count": 550,
+    "line_count": 136,
+    "internal_links": [],
+    "external_links": [
+      {
+        "url": "http://localhost:8002/health",
+        "text": ""
+      },
+      {
+        "url": "http://localhost:8002/performance",
+        "text": ""
+      },
+      {
+        "url": "http://localhost:8002/api/v1/market_data/symbols/active",
+        "text": ""
+      },
+      {
+        "url": "http://localhost:8002/docs",
+        "text": ""
+      },
+      {
+        "url": "http://localhost:3000/strategy-whisperer",
+        "text": ""
+      },
+      {
+        "url": "http://localhost:3000/adaptive-trade-manager",
+        "text": ""
+      },
+      {
+        "url": "http://localhost:3000/god-mode",
+        "text": ""
+      },
+      {
+        "url": "http://localhost:3000/shadow",
+        "text": ""
+      },
+      {
+        "url": "http://localhost:3000/market-narrator",
+        "text": ""
+      }
+    ],
+    "file_references": [
+      "master_startup.py",
+      "master_startup.py",
+      "master_startup.py"
+    ],
+    "broken_links": [],
+    "total_links": 9
+  },
+  {
+    "path": "docs\\user-guides\\PROJE_KULLANIM_KILAVUZU.md",
+    "absolute_path": "docs\\user-guides\\PROJE_KULLANIM_KILAVUZU.md",
+    "filename": "PROJE_KULLANIM_KILAVUZU.md",
+    "title": "AI ALGO TRADE - PROJE KULLANIM KILAVUZU",
+    "type": "user-guide",
+    "last_modified": "2025-06-29T17:11:09.841309",
+    "size_bytes": 2789,
+    "word_count": 363,
+    "line_count": 112,
+    "internal_links": [],
+    "external_links": [
+      {
+        "url": "http://localhost:3000",
+        "text": ""
+      }
+    ],
+    "file_references": [],
+    "broken_links": [],
+    "total_links": 1
+  },
+  {
+    "path": "docs\\user-guides\\QUICK_START_GUIDE.md",
+    "absolute_path": "docs\\user-guides\\QUICK_START_GUIDE.md",
+    "filename": "QUICK_START_GUIDE.md",
+    "title": "AI Algo Trade - Hızlı Başlangıç Kılavuzu",
+    "type": "user-guide",
+    "last_modified": "2025-06-28T19:26:43.130177",
+    "size_bytes": 5348,
+    "word_count": 628,
+    "line_count": 189,
+    "internal_links": [],
+    "external_links": [
+      {
+        "url": "http://localhost:8000",
+        "text": ""
+      },
+      {
+        "url": "http://localhost:8004",
+        "text": ""
+      },
+      {
+        "url": "http://localhost:8000/docs",
+        "text": ""
+      },
+      {
+        "url": "http://localhost:3000",
+        "text": ""
+      },
+      {
+        "url": "http://localhost:3000/strategy-whisperer",
+        "text": ""
+      },
+      {
+        "url": "http://localhost:3000/adaptive-trade-manager",
+        "text": ""
+      },
+      {
+        "url": "http://localhost:3000/god-mode",
+        "text": ""
+      },
+      {
+        "url": "http://localhost:3000/shadow",
+        "text": ""
+      },
+      {
+        "url": "http://localhost:3000/market-narrator",
+        "text": ""
+      },
+      {
+        "url": "http://localhost:8000/api/v1/events/history",
+        "text": ""
+      },
+      {
+        "url": "http://localhost:8000/api/v1/events/emit",
+        "text": ""
+      },
+      {
+        "url": "http://localhost:8004/api/v1/crypto/prices",
+        "text": ""
+      },
+      {
+        "url": "http://localhost:8004/api/v1/crypto/trade",
+        "text": ""
+      },
+      {
+        "url": "http://localhost:3000",
+        "text": ""
+      }
+    ],
+    "file_references": [],
+    "broken_links": [],
+    "total_links": 14
+  },
+  {
+    "path": "mql5_forge_repos\\README.md",
+    "absolute_path": "mql5_forge_repos\\README.md",
+    "filename": "README.md",
+    "title": "MQL5 Algo Forge Git Entegrasyonu",
+    "type": "readme",
+    "last_modified": "2025-06-25T16:45:55.950981",
+    "size_bytes": 3567,
+    "word_count": 429,
+    "line_count": 65,
+    "internal_links": [],
+    "external_links": [],
+    "file_references": [],
+    "broken_links": [],
+    "total_links": 0
+  },
+  {
+    "path": "mql5_forge_repos\\strategies\\ict_ob_strategy\\README.md",
+    "absolute_path": "mql5_forge_repos\\strategies\\ict_ob_strategy\\README.md",
+    "filename": "README.md",
+    "title": "ICT Order Block Expert Advisor",
+    "type": "diagram",
+    "last_modified": "2025-06-25T16:43:15.600346",
+    "size_bytes": 3201,
+    "word_count": 490,
+    "line_count": 86,
+    "internal_links": [],
+    "external_links": [],
+    "file_references": [],
+    "broken_links": [],
+    "total_links": 0
+  },
+  {
+    "path": "PROJECT_OVERVIEW.md",
+    "absolute_path": "PROJECT_OVERVIEW.md",
+    "filename": "PROJECT_OVERVIEW.md",
+    "title": "AI Algorithmic Trading Platform - Complete Project Overview",
+    "type": "api",
+    "last_modified": "2025-07-01T06:51:46.480150",
+    "size_bytes": 9408,
+    "word_count": 1208,
+    "line_count": 292,
+    "internal_links": [],
+    "external_links": [
+      {
+        "url": "http://localhost:3000/quantum",
+        "text": ""
+      }
+    ],
+    "file_references": [],
+    "broken_links": [],
+    "total_links": 1
+  },
+  {
+    "path": "README.md",
+    "absolute_path": "README.md",
+    "filename": "README.md",
+    "title": "🚀 AI Algo Trade - Advanced Trading Platform",
+    "type": "tech-spec",
+    "last_modified": "2025-06-30T22:16:26.363226",
+    "size_bytes": 5853,
+    "word_count": 553,
+    "line_count": 157,
+    "internal_links": [
+      {
+        "url": "./docs/README.md",
+        "text": "Complete Documentation",
+        "resolved_path": "C:\\Users\\elkek\\Desktop\\ai_algo_trade\\docs\\README.md"
+      },
+      {
+        "url": "./docs/user-guides/QUICK_START_GUIDE.md",
+        "text": "Quick Start Guide",
+        "resolved_path": "C:\\Users\\elkek\\Desktop\\ai_algo_trade\\docs\\user-guides\\QUICK_START_GUIDE.md"
+      },
+      {
+        "url": "./docs/architecture/",
+        "text": "Architecture Guide",
+        "resolved_path": "C:\\Users\\elkek\\Desktop\\ai_algo_trade\\docs\\architecture"
+      },
+      {
+        "url": "./docs/modules/",
+        "text": "Module Roadmaps",
+        "resolved_path": "C:\\Users\\elkek\\Desktop\\ai_algo_trade\\docs\\modules"
+      },
+      {
+        "url": "./docs/status/",
+        "text": "Development Status",
+        "resolved_path": "C:\\Users\\elkek\\Desktop\\ai_algo_trade\\docs\\status"
+      },
+      {
+        "url": "LICENSE",
+        "text": "LICENSE",
+        "resolved_path": "C:\\Users\\elkek\\Desktop\\ai_algo_trade\\LICENSE"
+      },
+      {
+        "url": "./docs/README.md",
+        "text": "docs/README.md",
+        "resolved_path": "C:\\Users\\elkek\\Desktop\\ai_algo_trade\\docs\\README.md"
+      }
+    ],
+    "external_links": [
+      {
+        "url": "https://github.com/your-username/ai-algo-trade/workflows/CI-CD/badge.svg",
+        "text": "![Build Status"
+      },
+      {
+        "url": "https://img.shields.io/badge/version-2.0.0-blue.svg",
+        "text": "![Version"
+      },
+      {
+        "url": "https://img.shields.io/badge/license-MIT-green.svg",
+        "text": "![License"
+      },
+      {
+        "url": "https://github.com/your-username/ai-algo-trade/issues",
+        "text": "GitHub Issues"
+      },
+      {
+        "url": "https://github.com/your-username/ai-algo-trade/discussions",
+        "text": "GitHub Discussions"
+      },
+      {
+        "url": "https://github.com/your-username/ai-algo-trade/workflows/CI-CD/badge.svg",
+        "text": ""
+      },
+      {
+        "url": "https://github.com/your-username/ai-algo-trade/actions",
+        "text": ""
+      },
+      {
+        "url": "https://img.shields.io/badge/version-2.0.0-blue.svg",
+        "text": ""
+      },
+      {
+        "url": "https://github.com/your-username/ai-algo-trade",
+        "text": ""
+      },
+      {
+        "url": "https://img.shields.io/badge/license-MIT-green.svg",
+        "text": ""
+      },
+      {
+        "url": "https://github.com/your-username/ai-algo-trade.git",
+        "text": ""
+      },
+      {
+        "url": "http://localhost:3000`",
+        "text": ""
+      },
+      {
+        "url": "http://localhost:3000/quantum`",
+        "text": ""
+      },
+      {
+        "url": "http://localhost:8002/docs`",
+        "text": ""
+      },
+      {
+        "url": "https://github.com/your-username/ai-algo-trade/issues",
+        "text": ""
+      },
+      {
+        "url": "https://github.com/your-username/ai-algo-trade/discussions",
+        "text": ""
+      }
+    ],
+    "file_references": [],
+    "broken_links": [],
+    "total_links": 23
+  },
+  {
+    "path": "SUPABASE_GRAPHQL_SECURITY_IMPLEMENTATION.md",
+    "absolute_path": "SUPABASE_GRAPHQL_SECURITY_IMPLEMENTATION.md",
+    "filename": "SUPABASE_GRAPHQL_SECURITY_IMPLEMENTATION.md",
+    "title": "Supabase Authentication, GraphQL & Enhanced Security Implementation Plan",
+    "type": "api",
+    "last_modified": "2025-07-01T07:46:18.294771",
+    "size_bytes": 30855,
+    "word_count": 2930,
+    "line_count": 1085,
+    "internal_links": [],
+    "external_links": [
+      {
+        "url": "https://your-domain.com\",",
+        "text": ""
+      },
+      {
+        "url": "https://www.your-domain.com\"",
+        "text": ""
+      },
+      {
+        "url": "http://localhost:3000\",",
+        "text": ""
+      },
+      {
+        "url": "http://127.0.0.1:3000\"",
+        "text": ""
+      },
+      {
+        "url": "https://your-project.supabase.co",
+        "text": ""
+      },
+      {
+        "url": "http://localhost:3000,http://127.0.0.1:3000",
+        "text": ""
+      },
+      {
+        "url": "http://localhost:3000\"]",
+        "text": ""
+      }
+    ],
+    "file_references": [
+      "backend/core/config/settings.py"
+    ],
+    "broken_links": [],
+    "total_links": 7
+  }
+]

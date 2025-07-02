@@ -19,7 +19,8 @@ import {
   RefreshCw,
   Eye,
   CheckCircle,
-  XCircle
+  XCircle,
+  Gauge
 } from 'lucide-react'
 import QuantumLayout from '@/components/layout/QuantumLayout'
 import AdaptiveControls from '@/components/adaptive-trade-manager/AdaptiveControls'
@@ -65,6 +66,9 @@ interface RiskMetrics {
   exposure_by_symbol: { [key: string]: number };
   correlation_risk: number;
   market_stress_level: number;
+  overall_risk_level: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+  risk_percentage: number;
+  recommendation: string;
 }
 
 interface AdaptiveAlert {
@@ -141,7 +145,7 @@ interface ManagerStatus {
 }
 
 export default function AdaptiveTradeManagerPage() {
-  const [positions, setPositions] = useState<DynamicPosition[]>([])
+  const [positions, setPositions] = useState<ManagedPosition[]>([])
   const [riskMetrics, setRiskMetrics] = useState<RiskMetrics | null>(null)
   const [portfolioAnalysis, setPortfolioAnalysis] = useState<PortfolioAnalysis | null>(null)
   const [managerStatus, setManagerStatus] = useState<ManagerStatus | null>(null)
@@ -212,27 +216,7 @@ export default function AdaptiveTradeManagerPage() {
             last_update: new Date().toISOString()
           }
         ];
-        setPositions(mockPositions.map(pos => ({
-          position_id: pos.id,
-          symbol: pos.symbol,
-          entry_price: pos.entry_price,
-          current_price: pos.current_price,
-          position_size: pos.volume,
-          original_size: pos.volume,
-          status: 'active',
-          stop_loss: pos.stop_loss,
-          take_profit: pos.take_profit,
-          unrealized_pnl: pos.profit_loss,
-          risk_amount: pos.risk_score,
-          risk_percentage: pos.profit_loss_percent,
-          confidence_score: pos.confidence,
-          market_sentiment: pos.profit_loss > 0 ? 1 : -1,
-          volatility_forecast: 0,
-          trend_strength: 0,
-          entry_time: pos.time_in_trade,
-          last_update: pos.last_update,
-          adjustments: []
-        })));
+        setPositions(mockPositions);
       }
 
       // Fetch risk metrics
@@ -257,7 +241,10 @@ export default function AdaptiveTradeManagerPage() {
             'USDJPY': 5
           },
           correlation_risk: 0.35,
-          market_stress_level: 0.25
+          market_stress_level: 0.25,
+          overall_risk_level: 'MEDIUM',
+          risk_percentage: 15.5,
+          recommendation: 'Consider reducing position sizes in correlated assets'
         });
       }
 
@@ -304,6 +291,18 @@ export default function AdaptiveTradeManagerPage() {
       console.error("Failed to fetch ATM data:", error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const fetchAlerts = async () => {
+    try {
+      const response = await fetch('/api/v1/atm/alerts');
+      if (response.ok) {
+        const data = await response.json();
+        setAlerts(data.alerts || []);
+      }
+    } catch (error) {
+      console.error('Failed to fetch alerts:', error);
     }
   };
 
@@ -702,35 +701,189 @@ export default function AdaptiveTradeManagerPage() {
 
           {/* Positions Tab */}
           <TabsContent value="positions">
-            <TradeMonitor 
-              positions={positions} 
-              onSymbolFilter={setSelectedSymbol}
-              selectedSymbol={selectedSymbol}
-            />
+            <div className="space-y-6">
+              <Card className="bg-black/40 border-gray-700">
+                <CardHeader>
+                  <CardTitle className="text-white">Active Positions</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {positions.length === 0 ? (
+                    <div className="text-center py-8">
+                      <p className="text-gray-400">No active positions</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {positions.map((position) => (
+                        <div key={position.id} className="p-4 bg-gray-800/50 rounded-lg border border-gray-700">
+                          <div className="flex justify-between items-start mb-2">
+                            <div>
+                              <h3 className="text-white font-semibold">{position.symbol}</h3>
+                              <p className="text-gray-400 text-sm">{position.direction}</p>
+                            </div>
+                            <Badge className={getRecommendationColor(position.ai_recommendation)}>
+                              {position.ai_recommendation}
+                            </Badge>
+                          </div>
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                            <div>
+                              <p className="text-gray-400">Entry Price</p>
+                              <p className="text-white font-semibold">{position.entry_price}</p>
+                            </div>
+                            <div>
+                              <p className="text-gray-400">Current Price</p>
+                              <p className="text-white font-semibold">{position.current_price}</p>
+                            </div>
+                            <div>
+                              <p className="text-gray-400">P&L</p>
+                              <p className={`font-semibold ${position.profit_loss >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                                ${position.profit_loss} ({position.profit_loss_percent.toFixed(2)}%)
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-gray-400">Risk Score</p>
+                              <p className="text-white font-semibold">{position.risk_score}%</p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
 
           {/* Risk Tab */}
           <TabsContent value="risk">
-            <RiskDashboard 
-              riskMetrics={riskMetrics}
-              positions={positions}
-            />
+            <div className="space-y-6">
+              <Card className="bg-black/40 border-gray-700">
+                <CardHeader>
+                  <CardTitle className="text-white">Risk Analysis</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {riskMetrics ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      <div>
+                        <p className="text-gray-400 text-sm">Portfolio Risk</p>
+                        <p className="text-2xl font-bold text-white">{riskMetrics.portfolio_risk.toFixed(1)}%</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-400 text-sm">VaR (1D)</p>
+                        <p className="text-2xl font-bold text-white">{riskMetrics.var_1d.toFixed(1)}%</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-400 text-sm">Sharpe Ratio</p>
+                        <p className="text-2xl font-bold text-white">{riskMetrics.sharpe_ratio.toFixed(2)}</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-400 text-sm">Win Rate</p>
+                        <p className="text-2xl font-bold text-white">{riskMetrics.win_rate.toFixed(1)}%</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-400 text-sm">Profit Factor</p>
+                        <p className="text-2xl font-bold text-white">{riskMetrics.profit_factor.toFixed(2)}</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-400 text-sm">Correlation Risk</p>
+                        <p className="text-2xl font-bold text-white">{(riskMetrics.correlation_risk * 100).toFixed(1)}%</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-gray-400">Risk metrics not available</p>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
 
           {/* Portfolio Tab */}
           <TabsContent value="portfolio">
-            <AdaptiveControls 
-              portfolioAnalysis={portfolioAnalysis}
-              managerStatus={managerStatus}
-            />
+            <div className="space-y-6">
+              <Card className="bg-black/40 border-gray-700">
+                <CardHeader>
+                  <CardTitle className="text-white">Portfolio Analysis</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {portfolioAnalysis ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      <div>
+                        <p className="text-gray-400 text-sm">Total Value</p>
+                        <p className="text-2xl font-bold text-white">${portfolioAnalysis.total_value.toLocaleString()}</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-400 text-sm">Daily P&L</p>
+                        <p className={`text-2xl font-bold ${portfolioAnalysis.daily_pnl >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                          ${portfolioAnalysis.daily_pnl.toLocaleString()}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-gray-400 text-sm">Portfolio Beta</p>
+                        <p className="text-2xl font-bold text-white">{portfolioAnalysis.portfolio_beta.toFixed(2)}</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-400 text-sm">Sortino Ratio</p>
+                        <p className="text-2xl font-bold text-white">{portfolioAnalysis.sortino_ratio.toFixed(2)}</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-400 text-sm">Market Regime</p>
+                        <p className="text-2xl font-bold text-white">{portfolioAnalysis.market_regime}</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-400 text-sm">Portfolio Score</p>
+                        <p className="text-2xl font-bold text-blue-400">{portfolioAnalysis.portfolio_score.toFixed(0)}/100</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-gray-400">Portfolio analysis not available</p>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
 
           {/* Alerts Tab */}
           <TabsContent value="alerts">
-            <AlertCenter 
-              alerts={alerts}
-              onRefresh={fetchAlerts}
-            />
+            <div className="space-y-6">
+              <Card className="bg-black/40 border-gray-700">
+                <CardHeader>
+                  <CardTitle className="text-white">System Alerts</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {alerts.length === 0 ? (
+                    <div className="text-center py-8">
+                      <p className="text-gray-400">No active alerts</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {alerts.map((alert) => (
+                        <div key={alert.id} className="p-4 bg-gray-800/50 rounded-lg border border-gray-700">
+                          <div className="flex justify-between items-start mb-2">
+                            <div>
+                              <Badge className={getRiskLevelColor(alert.severity)}>
+                                {alert.severity}
+                              </Badge>
+                              <h3 className="text-white font-semibold mt-2">{alert.type.replace('_', ' ')}</h3>
+                            </div>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => dismissAlert(alert.id)}
+                              className="text-gray-400 hover:text-white"
+                            >
+                              <XCircle className="h-4 w-4" />
+                            </Button>
+                          </div>
+                          <p className="text-gray-300 text-sm mb-2">{alert.message}</p>
+                          <p className="text-gray-500 text-xs">
+                            {new Date(alert.timestamp).toLocaleString()}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
         </Tabs>
 

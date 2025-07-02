@@ -288,4 +288,7 @@ class EnhancedEventBus:
         combined = {}
         for etype, subs in {**self.subscribers, **self.async_subscribers}.items():
             combined.setdefault(etype, []).extend(subs)
-        return combined 
+        return combined
+
+# Global instance for backward compatibility
+enhanced_event_bus = EnhancedEventBus()

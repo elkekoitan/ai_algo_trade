@@ -1,0 +1,55 @@
+AI ALGO TRADE PLATFORM - SMOKE TEST REPORT
+================================================================================
+
+Import Errors: 20
+Endpoint Errors: 22
+Discrepancies: 0
+Passed Tests: 1
+Failed Tests: 35
+
+IMPORT ERRORS:
+- Backend main import failed: No module named 'backend'
+- Strategy Whisperer import failed: No module named 'backend'
+- market_data: No module named 'backend'
+- signals: No module named 'backend'
+- trading: No module named 'backend'
+- scanner: No module named 'backend'
+- algo_forge: No module named 'backend'
+- ai_intelligence: No module named 'backend'
+- edge_computing: No module named 'backend'
+- social_trading: No module named 'backend'
+- institutional: No module named 'backend'
+- quantum_tech: No module named 'backend'
+- god_mode: No module named 'backend'
+- shadow_mode: No module named 'backend'
+- adaptive_trade_manager: No module named 'backend'
+- market_narrator: No module named 'backend'
+- crypto_trading: No module named 'backend'
+- autotrader: No module named 'backend'
+- unified_trading: No module named 'backend'
+- performance: No module named 'backend'
+
+ENDPOINT ERRORS:
+- Backend not responding at http://localhost:8002
+- Cannot connect to backend at /
+- Cannot connect to backend at /health
+- Cannot connect to backend at /api/v1/system/status
+- Cannot connect to backend at /docs
+- Cannot connect to backend at /redoc
+- Cannot connect to backend at /api/v1/trading/account_info
+- Cannot connect to backend at /api/v1/trading/account
+- Cannot connect to backend at /api/v1/auto-trader/status
+- Cannot connect to backend at /api/v1/market/tick/EURUSD
+- Cannot connect to backend at /api/v1/unified
+- Cannot connect to backend at /api/v1/market
+- Cannot connect to backend at /api/v1/performance
+- Cannot connect to backend at /api/v1/market-narrator
+- Cannot connect to backend at /api/v1/autotrader
+- Error testing wrong verb POST on /: All connection attempts failed
+- Error testing wrong verb POST on /health: All connection attempts failed
+- Error testing wrong verb POST on /api/v1/system/status: All connection attempts failed
+- Error testing wrong verb PUT on /: All connection attempts failed
+- Error testing wrong verb PUT on /health: All connection attempts failed
+- Error testing wrong verb DELETE on /: All connection attempts failed
+- Error testing wrong verb DELETE on /health: All connection attempts failed
+

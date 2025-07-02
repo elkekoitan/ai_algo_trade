@@ -273,4 +273,4 @@ class CorrelationEngine:
             "cached_correlations": len(self.correlation_cache),
             "cached_influences": len(self.influence_cache),
             "supported_symbols": len(self.symbol_relationships)
-        } 
+        }

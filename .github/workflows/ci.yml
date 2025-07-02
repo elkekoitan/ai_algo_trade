@@ -1,0 +1,328 @@
+name: AI Algo Trade CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop, feature/* ]
+  pull_request:
+    branches: [ main, develop ]
+
+env:
+  PYTHON_VERSION: '3.11'
+  NODE_VERSION: '18'
+
+jobs:
+  # Backend Testing & Linting
+  backend-test:
+    name: Backend Tests
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:13
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: ai_algo_trade_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        
+    - name: Cache Python dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+          
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pytest pytest-cov pytest-asyncio black isort flake8
+        
+    - name: Lint with flake8
+      run: |
+        flake8 backend --count --select=E9,F63,F7,F82 --show-source --statistics
+        flake8 backend --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+        
+    - name: Format check with black
+      run: black --check backend/
+      
+    - name: Import sorting check
+      run: isort --check-only backend/
+      
+    - name: Run backend tests
+      env:
+        DATABASE_URL: postgresql://postgres:postgres@localhost/ai_algo_trade_test
+        SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+        SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+      run: |
+        cd backend
+        pytest tests/ -v --cov=. --cov-report=xml --cov-report=html
+        
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./backend/coverage.xml
+
+  # Frontend Testing & Building
+  frontend-test:
+    name: Frontend Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: frontend/package-lock.json
+        
+    - name: Install dependencies
+      working-directory: frontend
+      run: npm ci
+      
+    - name: Lint TypeScript
+      working-directory: frontend
+      run: npm run lint
+      
+    - name: Type check
+      working-directory: frontend
+      run: npm run type-check
+      
+    - name: Run tests
+      working-directory: frontend
+      run: npm run test:ci
+      
+    - name: Build application
+      working-directory: frontend
+      run: npm run build
+      
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: frontend-build
+        path: frontend/.next/
+
+  # Security Scanning
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'fs'
+        scan-ref: '.'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+        
+    - name: Upload Trivy scan results
+      uses: github/codeql-action/upload-sarif@v2
+      if: always()
+      with:
+        sarif_file: 'trivy-results.sarif'
+        
+    - name: Python Security Scan
+      run: |
+        pip install bandit safety
+        bandit -r backend/ -f json -o bandit-report.json || true
+        safety check --json --output safety-report.json || true
+        
+    - name: Upload security reports
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: security-reports
+        path: |
+          bandit-report.json
+          safety-report.json
+
+  # Docker Build & Test
+  docker-build:
+    name: Docker Build
+    runs-on: ubuntu-latest
+    needs: [backend-test, frontend-test]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+      
+    - name: Build backend image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: backend/Dockerfile.backend
+        tags: ai-algo-trade-backend:${{ github.sha }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        
+    - name: Build frontend image  
+      uses: docker/build-push-action@v5
+      with:
+        context: frontend
+        file: frontend/Dockerfile
+        tags: ai-algo-trade-frontend:${{ github.sha }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+  # Performance Testing
+  performance-test:
+    name: Performance Tests
+    runs-on: ubuntu-latest
+    needs: docker-build
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        
+    - name: Install performance testing tools
+      run: |
+        pip install locust pytest-benchmark
+        
+    - name: Run performance tests
+      run: |
+        python scripts/performance_tests.py
+        
+    - name: Upload performance results
+      uses: actions/upload-artifact@v3
+      with:
+        name: performance-results
+        path: performance-results/
+
+  # Deploy to Staging
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: [backend-test, frontend-test, docker-build, security-scan]
+    if: github.ref == 'refs/heads/develop'
+    environment: staging
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-east-1
+        
+    - name: Login to Amazon ECR
+      uses: aws-actions/amazon-ecr-login@v2
+      
+    - name: Build and push images
+      run: |
+        docker build -t $ECR_REGISTRY/ai-algo-trade-backend:$GITHUB_SHA backend/
+        docker build -t $ECR_REGISTRY/ai-algo-trade-frontend:$GITHUB_SHA frontend/
+        docker push $ECR_REGISTRY/ai-algo-trade-backend:$GITHUB_SHA
+        docker push $ECR_REGISTRY/ai-algo-trade-frontend:$GITHUB_SHA
+      env:
+        ECR_REGISTRY: ${{ secrets.ECR_REGISTRY }}
+        
+    - name: Deploy to ECS Staging
+      run: |
+        aws ecs update-service \
+          --cluster ai-algo-trade-staging \
+          --service backend-service \
+          --force-new-deployment
+        aws ecs update-service \
+          --cluster ai-algo-trade-staging \
+          --service frontend-service \
+          --force-new-deployment
+
+  # Deploy to Production
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [backend-test, frontend-test, docker-build, security-scan, performance-test]
+    if: github.ref == 'refs/heads/main'
+    environment: production
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.PROD_AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.PROD_AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-east-1
+        
+    - name: Login to Amazon ECR
+      uses: aws-actions/amazon-ecr-login@v2
+      
+    - name: Build and push production images
+      run: |
+        docker build -t $ECR_REGISTRY/ai-algo-trade-backend:$GITHUB_SHA -t $ECR_REGISTRY/ai-algo-trade-backend:latest backend/
+        docker build -t $ECR_REGISTRY/ai-algo-trade-frontend:$GITHUB_SHA -t $ECR_REGISTRY/ai-algo-trade-frontend:latest frontend/
+        docker push $ECR_REGISTRY/ai-algo-trade-backend:$GITHUB_SHA
+        docker push $ECR_REGISTRY/ai-algo-trade-backend:latest
+        docker push $ECR_REGISTRY/ai-algo-trade-frontend:$GITHUB_SHA
+        docker push $ECR_REGISTRY/ai-algo-trade-frontend:latest
+      env:
+        ECR_REGISTRY: ${{ secrets.PROD_ECR_REGISTRY }}
+        
+    - name: Deploy to ECS Production
+      run: |
+        aws ecs update-service \
+          --cluster ai-algo-trade-prod \
+          --service backend-service \
+          --force-new-deployment
+        aws ecs update-service \
+          --cluster ai-algo-trade-prod \
+          --service frontend-service \
+          --force-new-deployment
+          
+    - name: Run smoke tests
+      run: |
+        python scripts/smoke_tests.py --environment production
+        
+    - name: Notify deployment
+      uses: 8398a7/action-slack@v3
+      with:
+        status: ${{ job.status }}
+        channel: '#deployments'
+        webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+
+  # Cleanup
+  cleanup:
+    name: Cleanup
+    runs-on: ubuntu-latest
+    needs: [deploy-staging, deploy-production]
+    if: always()
+    
+    steps:
+    - name: Clean up old images
+      run: |
+        # Cleanup logic for old container images
+        echo "Cleaning up old images..."

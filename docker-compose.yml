@@ -1,32 +1,146 @@
 version: '3.8'
 
 services:
+  # Backend API Service
   backend:
     build:
       context: .
-      dockerfile: Dockerfile.backend
+      dockerfile: backend/Dockerfile.backend
+    container_name: ai-algo-trade-backend
     ports:
-      - "8001:8000"
+      - "8002:8002"
+    environment:
+      - PYTHONPATH=/app
+      - MT5_LOGIN=${MT5_LOGIN}
+      - MT5_PASSWORD=${MT5_PASSWORD}
+      - MT5_SERVER=${MT5_SERVER}
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_KEY=${SUPABASE_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ENVIRONMENT=production
     volumes:
-      - ./backend:/app/backend
-      - ./mql5_forge_repos:/app/mql5_forge_repos
-    command: python backend/main.py
-    restart: always
+      - ./logs:/app/logs
+      - ./data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - ai-algo-trade
 
+  # Frontend Service
   frontend:
     build:
-      context: .
-      dockerfile: Dockerfile.frontend
+      context: frontend
+      dockerfile: Dockerfile
+    container_name: ai-algo-trade-frontend
     ports:
       - "3000:3000"
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
     environment:
-      - NEXT_PUBLIC_API_URL=http://host.docker.internal:8001
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=http://backend:8002
     depends_on:
       - backend
-    restart: always
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - ai-algo-trade
+
+  # Redis for caching
+  redis:
+    image: redis:7-alpine
+    container_name: ai-algo-trade-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    networks:
+      - ai-algo-trade
+
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: ai-algo-trade-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/ssl:/etc/nginx/ssl
+    depends_on:
+      - frontend
+      - backend
+    restart: unless-stopped
+    networks:
+      - ai-algo-trade
+
+  # Monitoring with Prometheus
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: ai-algo-trade-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    restart: unless-stopped
+    networks:
+      - ai-algo-trade
+
+  # Grafana for visualization
+  grafana:
+    image: grafana/grafana:latest
+    container_name: ai-algo-trade-grafana
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+    networks:
+      - ai-algo-trade
+
+  # Log aggregation
+  fluentd:
+    build:
+      context: ./monitoring/fluentd
+    container_name: ai-algo-trade-fluentd
+    volumes:
+      - ./logs:/fluentd/log
+      - ./monitoring/fluentd/conf:/fluentd/etc
+    ports:
+      - "24224:24224"
+      - "24224:24224/udp"
+    restart: unless-stopped
+    networks:
+      - ai-algo-trade
 
 volumes:
-  node_modules: 
+  redis_data:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  ai-algo-trade:
+    driver: bridge 

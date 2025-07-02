@@ -126,7 +126,7 @@ class StoryGenerator:
             7. Structure with clear sections (Analysis, Data, Recommendations)
             
             Make the story engaging and informative for traders and investors.
-            """
+        """
             
             response = self.model.generate_content(prompt)
             return response.text.strip()

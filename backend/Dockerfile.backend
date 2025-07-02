@@ -1,50 +1,46 @@
 # Stage 1: Backend
 FROM python:3.11-slim
 
-# Set working directory
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONPATH=/app
+
+# Set work directory
 WORKDIR /app
 
-# Set environment variables
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
-ENV WINEARCH=win64
-ENV WINEDEBUG=-all
-
-# Install system dependencies for TA-Lib and general build purposes
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    wget \
-    unzip \
-    git \
-    wine \
-    wine64 \
-    winetricks \
+# Install system dependencies
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        gcc \
+        g++ \
+        git \
+        curl \
+        build-essential \
+    && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Setup Wine environment for Python
-RUN winetricks -q corefonts python311
+# Copy requirements and install Python dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir --upgrade pip \
+    && pip install --no-cache-dir -r requirements.txt
 
-# Download and install TA-Lib from source
-RUN wget http://prdownloads.sourceforge.net/ta-lib/ta-lib-0.4.0-src.tar.gz && \
-    tar -xzf ta-lib-0.4.0-src.tar.gz && \
-    cd ta-lib/ && \
-    ./configure --prefix=/usr && \
-    make && \
-    make install && \
-    cd .. && \
-    rm -rf ta-lib-0.4.0-src.tar.gz ta-lib/
+# Copy backend code
+COPY backend/ ./backend/
+COPY start_complete_system.py .
+COPY launch_copy_trading.py .
 
-# Now that TA-Lib C library is installed, Python wrapper can be installed
-# We will remove TA-Lib from requirements.txt to avoid pip trying to build it before this
-COPY ./backend/requirements.txt /app/requirements.txt
-RUN sed -i '/ta-lib/d' /app/requirements.txt && \
-    pip install --no-cache-dir -r /app/requirements.txt && \
-    pip install --no-cache-dir TA-Lib
+# Create non-root user
+RUN adduser --disabled-password --gecos '' appuser \
+    && chown -R appuser:appuser /app
+USER appuser
 
-# Manually install MetaTrader5 via Wine
-RUN wget https://download.mql5.com/cdn/web/metaquotes.software.corp/mt5/mt5setup.exe \
-    && wine mt5setup.exe /auto \
-    && pip install --no-cache-dir MetaTrader5
+# Health check
+HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8002/health || exit 1
 
-# Copy the rest of the application
-COPY . /app
+# Expose port
+EXPOSE 8002
+
+# Run the application
+CMD ["python", "backend/simple_mt5_backend.py"]

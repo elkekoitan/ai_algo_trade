@@ -98,19 +98,19 @@ export default function ShadowModePage() {
 
   return (
     <div className="min-h-screen bg-black text-white">
-      {/* Header */}
+        {/* Header */}
       <div className="bg-gradient-to-r from-gray-900 via-purple-900 to-gray-900 p-6 border-b border-purple-500/30">
         <div className="max-w-7xl mx-auto">
-          <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between">
             <div>
               <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
                 🌑 Shadow Mode
-              </h1>
+          </h1>
               <p className="text-gray-300 mt-2">
                 Institutional tracking • Whale detection • Dark pool monitoring
               </p>
-            </div>
-            
+        </div>
+
             {/* Symbol Selector */}
             <div className="flex items-center space-x-4">
               <select
@@ -153,15 +153,15 @@ export default function ShadowModePage() {
               <div className="bg-gray-800/50 rounded-lg p-4 border border-green-500/20">
                 <div className="text-2xl font-bold text-green-400">{status.stealth_orders_active}</div>
                 <div className="text-sm text-gray-400">Stealth Orders</div>
-              </div>
+            </div>
               <div className="bg-gray-800/50 rounded-lg p-4 border border-yellow-500/20">
                 <div className="text-2xl font-bold text-yellow-400">{status.system_health.toFixed(1)}%</div>
                 <div className="text-sm text-gray-400">System Health</div>
               </div>
             </div>
           )}
-        </div>
-      </div>
+              </div>
+            </div>
 
       {/* Error Display */}
       {error && (
@@ -183,7 +183,7 @@ export default function ShadowModePage() {
         </div>
       )}
 
-      {/* Main Content */}
+        {/* Main Content */}
       <div className="max-w-7xl mx-auto p-6 space-y-6">
         {/* Shadow Control Panel */}
         <ShadowControlPanel analytics={analytics} selectedSymbol={selectedSymbol} />
@@ -199,10 +199,10 @@ export default function ShadowModePage() {
                   {analytics?.whale_activity_score.toFixed(1) || 0}% Active
                 </span>
               </h3>
-            </div>
+                    </div>
             <WhaleTracker symbol={selectedSymbol} />
-          </div>
-
+                  </div>
+                  
           {/* Dark Pool Monitor */}
           <div className="bg-gray-900/50 rounded-xl border border-blue-500/30 overflow-hidden">
             <div className="bg-gradient-to-r from-blue-900/50 to-blue-800/50 p-4 border-b border-blue-500/30">
@@ -212,11 +212,11 @@ export default function ShadowModePage() {
                   {analytics?.dark_pool_intensity.toFixed(1) || 0}% Intensity
                 </span>
               </h3>
-            </div>
+                    </div>
             <DarkPoolMonitor symbol={selectedSymbol} />
-          </div>
-        </div>
-
+                    </div>
+                  </div>
+                  
         {/* Institutional Radar - Full Width */}
         <div className="bg-gray-900/50 rounded-xl border border-orange-500/30 overflow-hidden">
           <div className="bg-gradient-to-r from-orange-900/50 to-orange-800/50 p-4 border-b border-orange-500/30">
@@ -228,7 +228,7 @@ export default function ShadowModePage() {
             </h3>
           </div>
           <InstitutionalRadar symbol={selectedSymbol} />
-        </div>
+                  </div>
 
         {/* Analytics Summary */}
         {analytics && (
@@ -245,14 +245,14 @@ export default function ShadowModePage() {
                   <span className={`font-semibold ${analytics.whale_sentiment > 0 ? 'text-green-400' : 'text-red-400'}`}>
                     {analytics.whale_sentiment > 0 ? '+' : ''}{analytics.whale_sentiment.toFixed(1)}
                   </span>
-                </div>
+            </div>
                 <div className="flex justify-between">
                   <span className="text-gray-400">24h Volume</span>
                   <span className="text-purple-400 font-semibold">{analytics.whale_volume_24h.toFixed(2)}</span>
-                </div>
-              </div>
-            </div>
-
+                    </div>
+                    </div>
+                  </div>
+                  
             <div className="bg-gray-900/50 rounded-xl p-6 border border-blue-500/30">
               <h4 className="text-lg font-semibold text-blue-300 mb-4">Dark Pool Metrics</h4>
               <div className="space-y-3">
@@ -263,7 +263,7 @@ export default function ShadowModePage() {
                 <div className="flex justify-between">
                   <span className="text-gray-400">Hidden Liquidity</span>
                   <span className="text-blue-400 font-semibold">{analytics.hidden_liquidity.toFixed(0)}</span>
-                </div>
+                  </div>
                 <div className="flex justify-between">
                   <span className="text-gray-400">Fragmentation</span>
                   <span className="text-blue-400 font-semibold">{analytics.market_fragmentation.toFixed(1)}%</span>
@@ -274,15 +274,15 @@ export default function ShadowModePage() {
             <div className="bg-gray-900/50 rounded-xl p-6 border border-orange-500/30">
               <h4 className="text-lg font-semibold text-orange-300 mb-4">Market Impact</h4>
               <div className="space-y-3">
-                <div className="flex justify-between">
+                    <div className="flex justify-between">
                   <span className="text-gray-400">Predicted Impact</span>
                   <span className="text-orange-400 font-semibold">{analytics.predicted_impact.toFixed(1)}%</span>
-                </div>
-                <div className="flex justify-between">
+                    </div>
+                    <div className="flex justify-between">
                   <span className="text-gray-400">Volatility Forecast</span>
                   <span className="text-orange-400 font-semibold">{analytics.volatility_forecast.toFixed(1)}%</span>
-                </div>
-                <div className="flex justify-between">
+                    </div>
+                    <div className="flex justify-between">
                   <span className="text-gray-400">Trend Strength</span>
                   <span className="text-orange-400 font-semibold">{analytics.trend_strength.toFixed(1)}%</span>
                 </div>

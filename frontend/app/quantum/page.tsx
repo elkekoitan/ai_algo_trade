@@ -190,23 +190,23 @@ export default function QDashboard() {
   };
 
   const fetchMarketData = async () => {
-    const symbols = ["EURUSD", "GBPUSD", "USDJPY", "XAUUSD", "BTCUSD"];
+        const symbols = ["EURUSD", "GBPUSD", "USDJPY", "XAUUSD", "BTCUSD"];
     const updatedData: MarketData[] = [];
 
     for (const symbol of symbols) {
-      try {
+            try {
         const response = await fetch(`http://localhost:8002/api/v1/market/tick/${symbol}`);
-        if (response.ok) {
-          const tickData = await response.json();
+              if (response.ok) {
+                const tickData = await response.json();
           updatedData.push({
-            symbol: tickData.symbol,
-            price: tickData.last,
+                  symbol: tickData.symbol,
+                  price: tickData.last,
             change: (Math.random() - 0.5) * 0.01, // We'll calculate real change later
             volume: tickData.volume || Math.floor(Math.random() * 200000),
-            signal: Math.random() > 0.6 ? "BUY" : Math.random() > 0.3 ? "SELL" : "HOLD",
-            confidence: 75 + Math.random() * 25,
-            prediction: tickData.last * (1 + (Math.random() - 0.5) * 0.01),
-            timeframe: "15m"
+                  signal: Math.random() > 0.6 ? "BUY" : Math.random() > 0.3 ? "SELL" : "HOLD",
+                  confidence: 75 + Math.random() * 25,
+                  prediction: tickData.last * (1 + (Math.random() - 0.5) * 0.01),
+                  timeframe: "15m"
           });
         }
       } catch (error) {
@@ -247,30 +247,30 @@ export default function QDashboard() {
 
       // Generate AI signals occasionally
       if (Math.random() > 0.95) {
-        const symbols = ["EURUSD", "BTCUSD", "GBPUSD", "XAUUSD"];
-        const actions = ["BUY", "SELL"] as const;
-        const symbol = symbols[Math.floor(Math.random() * symbols.length)];
-        const action = actions[Math.floor(Math.random() * actions.length)];
-        
-        const newSignal: AISignal = {
-          id: Date.now().toString(),
+          const symbols = ["EURUSD", "BTCUSD", "GBPUSD", "XAUUSD"];
+          const actions = ["BUY", "SELL"] as const;
+          const symbol = symbols[Math.floor(Math.random() * symbols.length)];
+          const action = actions[Math.floor(Math.random() * actions.length)];
+          
+          const newSignal: AISignal = {
+            id: Date.now().toString(),
           type: "QUANTUM_AI",
-          symbol,
-          action,
-          confidence: 75 + Math.random() * 25,
-          target: 1.1850,
-          stopLoss: 1.1750,
+            symbol,
+            action,
+            confidence: 75 + Math.random() * 25,
+            target: 1.1850,
+            stopLoss: 1.1750,
           reasoning: `Quantum neural network detected ${action.toLowerCase()} pattern with high probability`,
-          timestamp: new Date()
-        };
-        
-        setAiSignals(prev => [newSignal, ...prev.slice(0, 4)]);
-        
-        // Play sound if enabled
-        if (soundEnabled && audioRef.current) {
-          audioRef.current.play().catch(e => console.log("Audio play failed:", e));
+            timestamp: new Date()
+          };
+          
+          setAiSignals(prev => [newSignal, ...prev.slice(0, 4)]);
+          
+          // Play sound if enabled
+          if (soundEnabled && audioRef.current) {
+            audioRef.current.play().catch(e => console.log("Audio play failed:", e));
+          }
         }
-      }
     }, 3000); // Update every 3 seconds
 
     return () => clearInterval(interval);
@@ -648,39 +648,39 @@ export default function QDashboard() {
                     aiSignals.map((signal, index) => (
                       <motion.div
                         key={signal.id}
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ delay: index * 0.1 }}
-                        className="p-4 bg-gradient-to-r from-quantum-accent/10 to-quantum-primary/10 rounded-lg border border-quantum-accent/30"
-                      >
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="flex items-center gap-2">
-                            <Sparkles className="w-4 h-4 text-quantum-accent" />
-                            <span className="font-semibold text-white">{signal.symbol}</span>
-                            <span className={`px-2 py-1 rounded text-xs font-semibold ${
-                              signal.action === "BUY" ? "bg-green-400/20 text-green-400" : 
-                              signal.action === "SELL" ? "bg-red-400/20 text-red-400" : 
-                              "bg-yellow-400/20 text-yellow-400"
-                            }`}>
-                              {signal.action}
+                          initial={{ opacity: 0, scale: 0.9 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          transition={{ delay: index * 0.1 }}
+                          className="p-4 bg-gradient-to-r from-quantum-accent/10 to-quantum-primary/10 rounded-lg border border-quantum-accent/30"
+                        >
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-2">
+                              <Sparkles className="w-4 h-4 text-quantum-accent" />
+                              <span className="font-semibold text-white">{signal.symbol}</span>
+                              <span className={`px-2 py-1 rounded text-xs font-semibold ${
+                                signal.action === "BUY" ? "bg-green-400/20 text-green-400" : 
+                                signal.action === "SELL" ? "bg-red-400/20 text-red-400" : 
+                                "bg-yellow-400/20 text-yellow-400"
+                              }`}>
+                                {signal.action}
+                              </span>
+                            </div>
+                            <span className="text-xs text-gray-400">
+                              {new Date(signal.timestamp).toLocaleTimeString()}
                             </span>
                           </div>
-                          <span className="text-xs text-gray-400">
-                            {new Date(signal.timestamp).toLocaleTimeString()}
-                          </span>
-                        </div>
-                        <p className="text-sm text-gray-300 mb-2">{signal.reasoning}</p>
-                        <div className="flex items-center justify-between text-xs">
-                          <span className="text-gray-400">Target: {signal.target}</span>
-                          <span className="text-gray-400">SL: {signal.stopLoss}</span>
-                          <div className="flex items-center gap-1">
-                            <Shield className="w-3 h-3 text-quantum-accent" />
-                            <span className="text-quantum-accent">{signal.confidence.toFixed(0)}%</span>
+                          <p className="text-sm text-gray-300 mb-2">{signal.reasoning}</p>
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="text-gray-400">Target: {signal.target}</span>
+                            <span className="text-gray-400">SL: {signal.stopLoss}</span>
+                            <div className="flex items-center gap-1">
+                              <Shield className="w-3 h-3 text-quantum-accent" />
+                              <span className="text-quantum-accent">{signal.confidence.toFixed(0)}%</span>
+                            </div>
                           </div>
-                        </div>
-                      </motion.div>
-                    ))
-                  )}
+                        </motion.div>
+                      ))
+                    )}
                 </div>
               </motion.div>
             </motion.div>

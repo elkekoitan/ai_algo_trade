@@ -6,13 +6,35 @@ from typing import Dict, List, Optional, Any, Tuple
 from datetime import datetime
 import re
 
-from backend.core.logger import setup_logger
+try:
+    from ...core.logger import setup_logger
+except ImportError:
+    import logging
+    def setup_logger(name):
+        logger = logging.getLogger(name)
+        logger.setLevel(logging.INFO)
+        return logger
+
 from .models import (
-    StrategyIntent, StrategyParameters, TradingCondition,
-    IndicatorType, TimeFrame, OrderType, RiskType, StrategyType
+    StrategyIntent, StrategyParameters,
+    IndicatorType, OrderType, RiskType
+)
+from .nlp_engine_fixed import (
+    StrategyType, TimeFrame, TradingCondition as TradingConditionEnum
 )
 
 logger = setup_logger(__name__)
+
+
+# Create a new TradingCondition class for strategy conditions
+class TradingCondition:
+    """Trading condition with indicator and comparison"""
+    def __init__(self, indicator, parameters, comparison, value, timeframe):
+        self.indicator = indicator
+        self.parameters = parameters
+        self.comparison = comparison
+        self.value = value
+        self.timeframe = timeframe
 
 
 class StrategyParser:
@@ -114,7 +136,7 @@ class StrategyParser:
         # Default based on strategy type
         if intent.detected_type == StrategyType.SCALPING:
             return TimeFrame.M5
-        elif intent.detected_type == StrategyType.SWING:
+        elif intent.detected_type == StrategyType.TREND_FOLLOWING:
             return TimeFrame.H4
         else:
             return TimeFrame.H1

@@ -1,9 +1,22 @@
 {
+  "name": "ai-algo-trade",
+  "version": "1.0.0",
+  "description": "AI Algorithmic Trading Platform with Advanced Documentation",
+  "scripts": {
+    "doc:major": "node docs/automation/master-doc-sync.js major",
+    "doc:quick": "node docs/automation/master-doc-sync.js quick",
+    "doc:health": "node docs/automation/doc-health-scanner.js",
+    "doc:inventory": "python docs/automation/documentation_inventory.py",
+    "doc:sync": "node docs/automation/enhanced-doc-sync.js sync",
+    "doc:setup": "cd docs/automation && npm install",
+    "postinstall": "echo '📚 Documentation automation available: npm run doc:major'"
+  },
   "devDependencies": {
     "@mermaid-js/mermaid-cli": "^11.6.0"
   },
   "dependencies": {
     "react-force-graph-2d": "^1.27.1",
-    "swr": "^2.3.3"
+    "swr": "^2.3.3",
+    "chokidar": "^3.5.3"
   }
 }

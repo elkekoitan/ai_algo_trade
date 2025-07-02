@@ -1,0 +1,46 @@
+{
+  "name": "@ai-algo-trade/doc-automation",
+  "version": "1.0.0",
+  "description": "AI Algo Trade Documentation Automation System",
+  "main": "master-doc-sync.js",
+  "scripts": {
+    "major": "node master-doc-sync.js major",
+    "quick": "node master-doc-sync.js quick",
+    "health": "node doc-health-scanner.js",
+    "inventory": "python documentation_inventory.py",
+    "sync": "node enhanced-doc-sync.js sync",
+    "analysis": "node enhanced-doc-sync.js analysis",
+    "setup": "npm install && echo 'Doc automation system ready!'",
+    "test": "node master-doc-sync.js quick"
+  },
+  "keywords": [
+    "documentation",
+    "automation",
+    "ai-algo-trade",
+    "sync",
+    "analysis"
+  ],
+  "author": "AI Algo Trade Team",
+  "license": "MIT",
+  "dependencies": {
+    "chokidar": "^3.5.3"
+  },
+  "devDependencies": {},
+  "engines": {
+    "node": ">=14.0.0",
+    "python": ">=3.7.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "file:../../"
+  },
+  "bugs": {
+    "url": "file:../../issues"
+  },
+  "homepage": "file:../../docs",
+  "config": {
+    "projectRoot": "../..",
+    "reportsDir": "./reports",
+    "maxReportAge": 30
+  }
+} 

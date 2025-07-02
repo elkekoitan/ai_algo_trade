@@ -21,7 +21,7 @@ from backend.modules.mt5_integration.config import MT5_LOGIN, MT5_PASSWORD, MT5_
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/market-narrator", tags=["Market Narrator"])
+router = APIRouter(tags=["Market Narrator"])
 
 # Global service instances
 _story_generator = None
@@ -42,7 +42,7 @@ def get_services():
                 login=MT5_LOGIN,
                 password=MT5_PASSWORD,
                 server=MT5_SERVER
-            )
+    )
         except Exception as e:
             logger.warning(f"Failed to initialize MT5Service: {e}")
             _mt5_service = None

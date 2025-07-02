@@ -2,8 +2,9 @@
 Main FastAPI application for ai_algo_trade platform.
 """
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
 import logging
 import sys
@@ -11,6 +12,7 @@ import os
 import uvicorn
 from fastapi import Request
 from contextlib import asynccontextmanager
+from datetime import datetime
 
 # Proje kök dizinini Python path'ine ekle
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -43,6 +45,24 @@ from backend.core.config.settings import get_settings
 from backend.core.database import engine, Base, create_db_and_tables
 from backend.core.unified_trading_engine import UnifiedTradingEngine
 
+# Import routers
+from backend.api.v1.trading import router as trading_router
+from backend.api.v1.signals import router as signals_router
+from backend.api.v1.ai_intelligence import router as ai_router
+from backend.api.v1.god_mode import router as god_mode_router
+from backend.api.v1.shadow_mode import router as shadow_mode_router
+from backend.api.v1.adaptive_trade_manager import router as atm_router
+from backend.api.v1.strategy_whisperer import router as strategy_router
+from backend.api.v1.market_narrator import router as narrator_router
+from backend.api.v1.social_trading import router as social_trading_router
+from backend.api.v1.ai_mentor import router as ai_mentor_router
+from backend.api.v1.multi_broker import router as multi_broker_router
+from backend.api.v1.supabase_auth import router as supabase_auth_router
+
+# Import services
+from backend.modules.performance_monitor.monitor import get_performance_monitor
+from backend.modules.websocket_security.manager import get_websocket_security_manager
+
 # Setup logging
 logger = setup_logger(__name__)
 settings = get_settings()
@@ -71,6 +91,32 @@ async def lifespan(app: FastAPI):
         market_data.set_mt5_service(trading_engine.mt5_service)
         logger.info("✅ MT5 service injected to Market Data API")
     
+    try:
+        # Initialize performance monitoring
+        performance_monitor = await get_performance_monitor()
+        logger.info("✅ Performance monitoring initialized")
+        
+        # Initialize WebSocket security manager
+        websocket_manager = await get_websocket_security_manager()
+        logger.info("✅ WebSocket security manager initialized")
+        
+        # Test Supabase connection
+        from backend.core.config.supabase_config import get_supabase_admin
+        supabase_admin = get_supabase_admin()
+        
+        # Test connection with a simple query
+        try:
+            result = supabase_admin.table("user_profiles").select("count", count="exact").execute()
+            logger.info(f"✅ Supabase connected successfully - {result.count if hasattr(result, 'count') else 0} users")
+        except Exception as e:
+            logger.warning(f"⚠️ Supabase connection test failed: {e}")
+        
+        logger.info("🎯 All services initialized successfully")
+        
+    except Exception as e:
+        logger.error(f"❌ Startup failed: {e}")
+        raise
+    
     yield
     
     # Shutdown
@@ -91,28 +137,52 @@ app = FastAPI(
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "https://jregdcopqylriziucooi.supabase.co"
+    ],
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
+    expose_headers=["X-Total-Count", "X-Performance-Score"]
 )
+
+# Security headers middleware
+@app.middleware("http")
+async def add_security_headers(request, call_next):
+    response = await call_next(request)
+    
+    # Security headers
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["X-XSS-Protection"] = "1; mode=block"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()"
+    
+    # Performance headers
+    response.headers["X-Response-Time"] = str(datetime.utcnow().timestamp())
+    
+    return response
 
 # Include routers with correct prefixes
 app.include_router(unified_trading.router, prefix="/api/v1/unified", tags=["🚀 Unified Trading Engine"])
-app.include_router(trading.router, prefix="/api/v1/trading", tags=["Trading"])
+app.include_router(trading_router, prefix="/api/v1", tags=["Trading"])
 app.include_router(market_data.router, prefix="/api/v1/market", tags=["Market Data"])
 app.include_router(performance.router, prefix="/api/v1/performance", tags=["Performance"])
 app.include_router(market_narrator.router, prefix="/api/v1/market-narrator", tags=["Market Narrator"])
-app.include_router(adaptive_trade_manager.router, prefix="/api/v1/adaptive-trade-manager", tags=["Adaptive Trade Manager"])
+app.include_router(atm_router, prefix="/api/v1", tags=["Adaptive Trade Manager"])
 app.include_router(autotrader.router, prefix="/api/v1/autotrader", tags=["AutoTrader"])
+app.include_router(supabase_auth_router, prefix="/api/v1", tags=["Authentication"])
+app.include_router(signals_router, prefix="/api/v1", tags=["Signals"])
+app.include_router(ai_router, prefix="/api/v1", tags=["AI Intelligence"])
+app.include_router(god_mode_router, prefix="/api/v1", tags=["God Mode"])
+app.include_router(shadow_mode_router, prefix="/api/v1", tags=["Shadow Mode"])
+app.include_router(social_trading_router, prefix="/api/v1", tags=["Social Trading"])
+app.include_router(ai_mentor_router, prefix="/api/v1", tags=["AI Mentor"])
+app.include_router(multi_broker_router, prefix="/api/v1", tags=["Multi Broker"])
 # app.include_router(strategy_whisperer.router, prefix="/api/v1", tags=["Strategy Whisperer"])
-# app.include_router(god_mode.router, prefix="/api/v1", tags=["God Mode"])
-# app.include_router(shadow_mode.router, prefix="/api/v1", tags=["Shadow Mode"])
-# app.include_router(signals.router, prefix="/api/v1", tags=["Signals"])
-# app.include_router(institutional.router, prefix="/api/v1", tags=["Institutional"])
-# app.include_router(social_trading.router, prefix="/api/v1", tags=["Social Trading"])
 # app.include_router(crypto_trading.router, prefix="/api/v1", tags=["Crypto Trading"])
-# app.include_router(ai_intelligence.router, prefix="/api/v1", tags=["AI Intelligence"])
 # app.include_router(quantum_tech.router, prefix="/api/v1", tags=["Quantum Tech"])
 # app.include_router(edge_computing.router, prefix="/api/v1", tags=["Edge Computing"])
 # app.include_router(scanner.router, prefix="/api/v1", tags=["Scanner"])
@@ -318,6 +388,74 @@ async def get_autotrader_status_direct():
         "profit_today": 0.0
     }
 
+# WebSocket endpoint for real-time communication
+@app.websocket("/ws/{user_id}")
+async def websocket_endpoint(websocket, user_id: str):
+    """WebSocket endpoint for real-time communication"""
+    try:
+        # Get WebSocket security manager
+        websocket_manager = await get_websocket_security_manager()
+        
+        # Accept connection
+        await websocket.accept()
+        
+        # Get client info
+        client_ip = websocket.client.host if websocket.client else "unknown"
+        user_agent = websocket.headers.get("user-agent", "unknown")
+        
+        # Register connection (simplified for demo)
+        connection_id = await websocket_manager.register_connection(
+            websocket=websocket,
+            user_id=user_id,
+            ip_address=client_ip,
+            user_agent=user_agent
+        )
+        
+        logger.info(f"WebSocket connection established: {connection_id}")
+        
+        try:
+            while True:
+                # Receive message
+                data = await websocket.receive_text()
+                
+                # Handle message with security checks
+                success = await websocket_manager.handle_message(connection_id, data)
+                
+                if not success:
+                    await websocket.send_text('{"error": "Message handling failed"}')
+                    
+        except Exception as e:
+            logger.error(f"WebSocket error: {e}")
+        finally:
+            # Unregister connection
+            await websocket_manager.unregister_connection(connection_id)
+            
+    except Exception as e:
+        logger.error(f"WebSocket connection failed: {e}")
+        try:
+            await websocket.close()
+        except:
+            pass
+
+# Error handlers
+@app.exception_handler(404)
+async def not_found_handler(request, exc):
+    return {
+        "error": "Not Found",
+        "message": "The requested endpoint was not found",
+        "path": str(request.url.path),
+        "timestamp": datetime.utcnow().isoformat()
+    }
+
+@app.exception_handler(500)
+async def internal_error_handler(request, exc):
+    logger.error(f"Internal server error: {exc}")
+    return {
+        "error": "Internal Server Error",
+        "message": "An unexpected error occurred",
+        "timestamp": datetime.utcnow().isoformat()
+    }
+
 if __name__ == "__main__":
     logger.info("Starting AI Algo Trade Platform v2.0.0...")
     logger.info("✅ Phase 1: Quantum AI Intelligence Engine")
@@ -333,5 +471,7 @@ if __name__ == "__main__":
         host="0.0.0.0",
         port=8002,
         reload=True,
-        log_level="info"
+        log_level="info",
+        access_log=True,
+        reload_excludes=["*.log", "*.sqlite", "*.db"]
     ) 

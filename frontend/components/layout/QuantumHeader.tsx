@@ -20,7 +20,10 @@ import {
   BarChart3,
   Target,
   MessageSquare,
-  BookText
+  BookText,
+  Copy,
+  Mic,
+  Users
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import Link from 'next/link';
@@ -35,13 +38,15 @@ interface QuantumHeaderProps {
 const navigationItems = [
   { id: "dashboard", icon: BarChart3, label: "Dashboard", path: "/" },
   { id: "trading", icon: TrendingUp, label: "Trading", path: "/trading" },
+  { id: "copy_trading", icon: Copy, label: "Copy Trading", path: "/copy-trading" },
+  { id: "voice_ai", icon: Mic, label: "Voice AI", path: "/voice-trading" },
   { id: "signals", icon: Target, label: "Signals", path: "/signals" },
   { id: "performance", icon: Activity, label: "Performance", path: "/performance" },
   { id: "whisperer", icon: MessageSquare, label: "Whisperer", path: "/strategy-whisperer" },
   { id: "adaptive_manager", icon: Shield, label: "Adaptive Manager", path: "/adaptive-trade-manager" },
   { id: "market_narrator", icon: BookText, label: "Narrator", path: "/market-narrator" },
   { id: "god_mode", icon: Brain, label: "God Mode", path: "/god-mode" },
-  { id: "shadow_mode", icon: Shield, label: "Shadow Mode", path: "/shadow" },
+  { id: "shadow_mode", icon: Users, label: "Shadow Mode", path: "/shadow" },
   { id: "contact", icon: Mail, label: "Contact", path: "/contact" },
 ];
 

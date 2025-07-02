@@ -69,6 +69,24 @@ const Header: React.FC = () => {
       description: 'Execute trades and manage positions'
     },
     {
+      name: 'Social Trading',
+      href: '/social-trading',
+      icon: User,
+      description: 'Connect and trade with the community'
+    },
+    {
+      name: 'AI Mentor',
+      href: '/ai-mentor',
+      icon: Brain,
+      description: 'Personal AI trading coach'
+    },
+    {
+      name: 'Multi-Broker',
+      href: '/multi-broker',
+      icon: Globe,
+      description: 'Manage multiple broker accounts'
+    },
+    {
       name: t('navigation.signals'),
       href: '/signals',
       icon: Target,

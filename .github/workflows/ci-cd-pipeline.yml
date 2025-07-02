@@ -79,13 +79,16 @@ jobs:
       env:
         DATABASE_URL: postgresql://postgres:postgres@localhost:5432/ai_algo_trade_test
         REDIS_URL: redis://localhost:6379
-        MT5_DEMO_LOGIN: ${{ vars.MT5_DEMO_LOGIN || '25201110' }}
-        MT5_DEMO_PASSWORD: ${{ vars.MT5_DEMO_PASSWORD || 'default_password' }}
-        MT5_DEMO_SERVER: ${{ vars.MT5_DEMO_SERVER || 'Tickmill-Demo' }}
-        OPENAI_API_KEY: ${{ vars.OPENAI_API_KEY || 'sk-test-key' }}
+        MT5_DEMO_LOGIN: ${{ secrets.MT5_DEMO_LOGIN || '25201110' }}
+        MT5_DEMO_PASSWORD: ${{ secrets.MT5_DEMO_PASSWORD || 'e|([rXU1IsiM' }}
+        MT5_DEMO_SERVER: ${{ secrets.MT5_DEMO_SERVER || 'Tickmill-Demo' }}
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY || 'sk-test-key' }}
+        SUPABASE_URL: ${{ secrets.SUPABASE_URL || 'https://jregdcopqylriziucooi.supabase.co' }}
+        SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY || 'test-key' }}
+        SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY || 'test-service-key' }}
       run: |
         cd backend
-        echo "Running backend tests with fallback values..."
+        echo "Running backend tests with environment variables..."
         # pytest tests/ -v --cov=. --cov-report=xml --cov-report=term-missing
     
     - name: 📊 Upload Coverage Reports

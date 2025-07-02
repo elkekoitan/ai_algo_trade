@@ -1,20 +1,34 @@
 """
-Social Trading & Copy Trading Network Module
-Provides social trading platform, community features, and network effect analytics.
+Social Trading Module
+Advanced social trading platform with community features, leaderboards, and social signals
 """
 
-from .trader_profiles import TraderProfileService
-from .copy_trading import CopyTradingEngine
-from .signal_marketplace import SignalMarketplace
-from .social_sentiment import SocialSentimentAnalyzer
-from .community_platform import CommunityPlatform
-from .network_analytics import NetworkAnalytics
+from .social_service import SocialTradingService
+from .models import (
+    UserProfile,
+    SocialPost,
+    TradingSignal,
+    Community,
+    Leaderboard,
+    SocialTrade,
+    FollowRelation,
+    PostType,
+    SignalType,
+    UserTier,
+    CommunityType
+)
 
 __all__ = [
-    "TraderProfileService",
-    "CopyTradingEngine",
-    "SignalMarketplace", 
-    "SocialSentimentAnalyzer",
-    "CommunityPlatform",
-    "NetworkAnalytics"
-] 
+    'SocialTradingService',
+    'UserProfile',
+    'SocialPost',
+    'TradingSignal',
+    'Community',
+    'Leaderboard',
+    'SocialTrade',
+    'FollowRelation',
+    'PostType',
+    'SignalType',
+    'UserTier',
+    'CommunityType'
+]

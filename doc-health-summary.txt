@@ -1,0 +1,28 @@
+Documentation Health Report Summary
+========================================
+
+📊 Scan Statistics:
+- Total files scanned: 73
+- Files with issues: 70
+- Total issues found: 442
+
+🚨 Issue Breakdown:
+- Errors: 21
+- Warnings: 282  
+- Info: 139
+
+📈 Health Score: 4%
+
+Top Issues by Type:
+- Duplicate heading: 76
+- Heading level jumps from H1 to H3: 75
+- Trailing whitespace: 72
+- Heading level jumps from H1 to H4: 59
+- Dead local link: 17
+- Line too long (126 characters): 6
+- Line too long (125 characters): 6
+- Line too long (134 characters): 5
+- Line too long (139 characters): 5
+- Line too long (124 characters): 5
+
+Generated: 2025-07-01T11:04:01.719Z

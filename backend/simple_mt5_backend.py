@@ -21,10 +21,16 @@ from modules.mt5_integration.service import MT5Service
 from modules.mt5_integration.config import MT5_LOGIN, MT5_PASSWORD, MT5_SERVER
 
 # Module imports
-from api.v1.shadow_mode import router as shadow_mode_router
-from api.v1.market_narrator import router as market_narrator_router
+from api.v1.shadow_mode import router as shadow_router
 from api.v1.adaptive_trade_manager import router as atm_router
-from api.v1.strategy_whisperer import router as strategy_whisperer_router
+from api.v1.god_mode import router as god_mode_router
+from api.v1.market_narrator import router as market_narrator_router
+from api.v1.strategy_whisperer import router as strategy_router
+from api.v1.copy_trading import router as copy_trading_router
+from api.v1.copy_trading_advanced import router as copy_trading_advanced_router
+from api.v1.social_trading import router as social_trading_router
+from api.v1.ai_mentor import router as ai_mentor_router
+# from api.v1.multi_broker import router as multi_broker_router  # Temporarily disabled
 
 # Logging
 logging.basicConfig(level=logging.INFO)
@@ -61,10 +67,19 @@ app.add_middleware(
 )
 
 # Include routers
-app.include_router(shadow_mode_router, prefix="/api/v1")
-app.include_router(market_narrator_router, prefix="/api/v1")
-app.include_router(atm_router, prefix="/api/v1")
-app.include_router(strategy_whisperer_router, prefix="/api/v1")
+app.include_router(shadow_router, prefix="/api/v1/shadow-mode", tags=["Shadow Mode"])
+app.include_router(atm_router, prefix="/api/v1/adaptive-tm", tags=["Adaptive Trade Manager"])
+app.include_router(god_mode_router, prefix="/api/v1/god-mode", tags=["God Mode"])
+app.include_router(market_narrator_router, prefix="/api/v1/market-narrator", tags=["Market Narrator"])
+app.include_router(strategy_router, prefix="/api/v1/strategy-whisperer", tags=["Strategy Whisperer"])
+app.include_router(copy_trading_advanced_router, prefix="/api/v1/advanced", tags=["Advanced Copy Trading"])
+app.include_router(copy_trading_router, prefix="/api/v1")
+app.include_router(social_trading_router, prefix="/api/v1")
+app.include_router(ai_mentor_router, prefix="/api/v1")
+# app.include_router(multi_broker_router, prefix="/api/v1")  # Temporarily disabled
+app.include_router(social_trading_router, prefix="/api/v1")
+app.include_router(ai_mentor_router, prefix="/api/v1")
+# app.include_router(multi_broker_router, prefix="/api/v1")  # Temporarily disabled
 
 # Dependency
 def get_mt5_service() -> MT5Service:

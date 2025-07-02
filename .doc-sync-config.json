@@ -1,0 +1,92 @@
+{
+  "watchDirs": [
+    "src",
+    "components",
+    "modules",
+    "backend",
+    "frontend",
+    "api",
+    "services",
+    "utils",
+    "lib"
+  ],
+  "watchExtensions": [
+    ".js",
+    ".ts",
+    ".jsx",
+    ".tsx",
+    ".py",
+    ".php",
+    ".cs",
+    ".java",
+    ".go",
+    ".rs"
+  ],
+  "docPatterns": {
+    "README.md": {
+      "sections": [
+        "installation",
+        "usage",
+        "api",
+        "examples"
+      ],
+      "autoGenerate": true
+    },
+    "API.md": {
+      "sections": [
+        "endpoints",
+        "models",
+        "authentication"
+      ],
+      "autoGenerate": true
+    },
+    "CHANGELOG.md": {
+      "sections": [
+        "unreleased",
+        "versions"
+      ],
+      "autoGenerate": false
+    }
+  },
+  "autoGenRules": {
+    "api": {
+      "enabled": true,
+      "patterns": [
+        "**/api/**/*.js",
+        "**/routes/**/*.js",
+        "**/controllers/**/*.js"
+      ],
+      "output": "docs/API_REFERENCE.md"
+    },
+    "components": {
+      "enabled": true,
+      "patterns": [
+        "**/components/**/*.jsx",
+        "**/components/**/*.tsx"
+      ],
+      "output": "docs/COMPONENTS.md"
+    },
+    "modules": {
+      "enabled": true,
+      "patterns": [
+        "**/modules/**/*.js",
+        "**/modules/**/*.ts"
+      ],
+      "output": "docs/MODULES.md"
+    }
+  },
+  "gitIntegration": {
+    "enabled": true,
+    "autoCommit": true,
+    "commitMessage": "docs: auto-sync documentation with code changes"
+  },
+  "syncInterval": 30000,
+  "ignorePatterns": [
+    "node_modules/**",
+    ".git/**",
+    "dist/**",
+    "build/**",
+    "*.log",
+    ".env*"
+  ]
+}
