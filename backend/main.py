@@ -58,6 +58,10 @@ from backend.api.v1.social_trading import router as social_trading_router
 from backend.api.v1.ai_mentor import router as ai_mentor_router
 from backend.api.v1.multi_broker import router as multi_broker_router
 from backend.api.v1.supabase_auth import router as supabase_auth_router
+from backend.modules.strategy_deployment.router import router as strategy_deployment_router
+from backend.modules.strategy_manager.router import router as strategy_manager_router
+from backend.modules.mt5_integration.router import router as mt5_router
+from backend.modules.sanal_supurge.router import router as sanal_supurge_router
 
 # Import services
 from backend.modules.performance_monitor.monitor import get_performance_monitor
@@ -181,6 +185,10 @@ app.include_router(shadow_mode_router, prefix="/api/v1", tags=["Shadow Mode"])
 app.include_router(social_trading_router, prefix="/api/v1", tags=["Social Trading"])
 app.include_router(ai_mentor_router, prefix="/api/v1", tags=["AI Mentor"])
 app.include_router(multi_broker_router, prefix="/api/v1", tags=["Multi Broker"])
+app.include_router(strategy_deployment_router)
+app.include_router(strategy_manager_router)
+app.include_router(mt5_router)
+app.include_router(sanal_supurge_router, tags=["Sanal-Süpürge"])
 # app.include_router(strategy_whisperer.router, prefix="/api/v1", tags=["Strategy Whisperer"])
 # app.include_router(crypto_trading.router, prefix="/api/v1", tags=["Crypto Trading"])
 # app.include_router(quantum_tech.router, prefix="/api/v1", tags=["Quantum Tech"])

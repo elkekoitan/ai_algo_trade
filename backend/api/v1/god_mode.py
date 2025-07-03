@@ -2,18 +2,20 @@
 God Mode API
 Advanced predictive analytics and omniscient trading control
 """
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from typing import Dict, List, Optional
 import asyncio
 from datetime import datetime
 import sys
 import os
+import logging
 
 # Add backend to path for imports
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
 
 try:
     from modules.god_mode.core_service import GodModeService
+    from modules.god_mode.models import GodModeState
 except ImportError:
     # Fallback for development
     class GodModeService:
@@ -22,11 +24,60 @@ except ImportError:
         
         async def get_predictions(self):
             return {"predictions": [], "confidence": 87.5}
+        
+        async def activate_god_mode(self):
+            return {"status": "activated"}
+        
+        async def deactivate_god_mode(self):
+            return {"status": "deactivated"}
+        
+        async def get_god_mode_state(self):
+            from types import SimpleNamespace
+            return SimpleNamespace(
+                active_predictions=[],
+                active_signals=[],
+                recent_alerts=[],
+                risk_assessment=None,
+                metrics=SimpleNamespace(
+                    total_predictions=0,
+                    correct_predictions=0,
+                    accuracy_rate=0.0,
+                    total_trades=0,
+                    winning_trades=0,
+                    win_rate=0.0,
+                    total_profit=0.0,
+                    max_drawdown=0.0,
+                    sharpe_ratio=0.0,
+                    divinity_level=95.0,
+                    omnipotence_score=98.0
+                ),
+                config=SimpleNamespace(
+                    prediction_accuracy_target=90.0,
+                    max_risk_per_trade=2.0,
+                    quantum_analysis_enabled=True,
+                    prophetic_mode_enabled=True,
+                    divine_intervention_enabled=True,
+                    auto_trading_enabled=False,
+                    symbols_to_monitor=["EURUSD", "GBPUSD"],
+                    update_interval_seconds=60
+                ),
+                current_power_level=95.0
+            )
+    
+    class GodModeState:
+        pass
 
 router = APIRouter(prefix="/god-mode", tags=["God Mode"])
 
+# Initialize logging
+logger = logging.getLogger(__name__)
+
 # Initialize God Mode service
 god_mode_service = GodModeService()
+
+def get_god_mode_service() -> GodModeService:
+    """Dependency to get God Mode service instance"""
+    return god_mode_service
 
 @router.get("/status")
 async def get_god_mode_status():

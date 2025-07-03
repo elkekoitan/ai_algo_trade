@@ -1,207 +1,324 @@
 #!/usr/bin/env python3
 """
-AI Algo Trade - System Monitor Script
-Sürekli sistem performansını takip eder ve raporlar
+AI Algo Trade - System Monitor
+Comprehensive monitoring script for continuous operation
 """
 
-import asyncio
-import aiohttp
 import time
+import requests
+import subprocess
+import psutil
 import json
 from datetime import datetime
-from typing import Dict, Any
+import logging
+from pathlib import Path
+
+# Setup logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler('logs/system_monitor.log'),
+        logging.StreamHandler()
+    ]
+)
+logger = logging.getLogger(__name__)
 
 class SystemMonitor:
     def __init__(self):
         self.backend_url = "http://localhost:8002"
         self.frontend_url = "http://localhost:3000"
-        self.check_interval = 30  # seconds
-        self.running = True
+        self.monitoring_interval = 30  # seconds
+        self.performance_data = []
         
-    async def check_backend_health(self) -> Dict[str, Any]:
-        """Backend sağlık durumunu kontrol et"""
+    def check_backend_health(self):
+        """Check backend API health"""
         try:
-            async with aiohttp.ClientSession() as session:
-                async with session.get(f"{self.backend_url}/health", timeout=10) as response:
-                    if response.status == 200:
-                        data = await response.json()
-                        return {"status": "healthy", "data": data}
-                    else:
-                        return {"status": "unhealthy", "error": f"HTTP {response.status}"}
+            response = requests.get(f"{self.backend_url}/health", timeout=10)
+            if response.status_code == 200:
+                data = response.json()
+                logger.info(f"✅ Backend healthy: {data}")
+                return True, data
         except Exception as e:
-            return {"status": "error", "error": str(e)}
-    
-    async def check_performance_metrics(self) -> Dict[str, Any]:
-        """Performans metriklerini al"""
-        try:
-            async with aiohttp.ClientSession() as session:
-                async with session.get(f"{self.backend_url}/performance", timeout=10) as response:
-                    if response.status == 200:
-                        return await response.json()
-                    else:
-                        return {"error": f"HTTP {response.status}"}
-        except Exception as e:
-            return {"error": str(e)}
-    
-    async def check_frontend_health(self) -> Dict[str, Any]:
-        """Frontend sağlık durumunu kontrol et"""
-        try:
-            async with aiohttp.ClientSession() as session:
-                async with session.get(f"{self.frontend_url}", timeout=10) as response:
-                    if response.status == 200:
-                        return {"status": "healthy"}
-                    else:
-                        return {"status": "unhealthy", "error": f"HTTP {response.status}"}
-        except Exception as e:
-            return {"status": "error", "error": str(e)}
-    
-    def format_uptime(self, seconds: float) -> str:
-        """Uptime'ı formatla"""
-        hours = int(seconds // 3600)
-        minutes = int((seconds % 3600) // 60)
-        secs = int(seconds % 60)
-        return f"{hours}h {minutes}m {secs}s"
-    
-    def print_status_report(self, backend_health: Dict, performance: Dict, frontend_health: Dict):
-        """Durum raporunu yazdır"""
-        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        print(f"\n{'='*80}")
-        print(f"AI ALGO TRADE - SYSTEM STATUS REPORT")
-        print(f"Time: {timestamp}")
-        print(f"{'='*80}")
+            logger.error(f"❌ Backend health check failed: {e}")
+            return False, str(e)
         
-        # Backend Status
-        print(f"\n🔧 BACKEND STATUS:")
-        if backend_health["status"] == "healthy":
-            data = backend_health["data"]
-            print(f"  ✅ Status: {data.get('status', 'Unknown')}")
-            print(f"  🔗 MT5 Connected: {'✅ Yes' if data.get('mt5_connected') else '❌ No'}")
-            print(f"  ⏱️  Uptime: {data.get('uptime_seconds', 0):.0f}s")
-            print(f"  🌍 Weekend Mode: {'✅ Yes' if data.get('weekend_mode') else '❌ No'}")
+        return False, "Backend not responding"
+    
+    def check_frontend_health(self):
+        """Check frontend health"""
+        try:
+            response = requests.get(self.frontend_url, timeout=10)
+            if response.status_code == 200:
+                logger.info("✅ Frontend healthy")
+                return True, "Frontend responding"
+        except Exception as e:
+            logger.error(f"❌ Frontend health check failed: {e}")
+            return False, str(e)
+        
+        return False, "Frontend not responding"
+    
+    def check_mt5_connection(self):
+        """Check MT5 connection status"""
+        try:
+            response = requests.get(f"{self.backend_url}/api/v1/mt5/status", timeout=10)
+            if response.status_code == 200:
+                data = response.json()
+                logger.info(f"✅ MT5 Status: {data}")
+                return True, data
+        except Exception as e:
+            logger.error(f"❌ MT5 status check failed: {e}")
+            return False, str(e)
+        
+        return False, "MT5 status unavailable"
+    
+    def check_copy_trading_status(self):
+        """Check copy trading system status"""
+        try:
+            response = requests.get(f"{self.backend_url}/api/v1/copy-trading/status", timeout=10)
+            if response.status_code == 200:
+                data = response.json()
+                logger.info(f"✅ Copy Trading: {data}")
+                return True, data
+        except Exception as e:
+            logger.error(f"❌ Copy trading check failed: {e}")
+            return False, str(e)
+        
+        return False, "Copy trading status unavailable"
+    
+    def get_system_performance(self):
+        """Get system performance metrics"""
+        try:
+            cpu_percent = psutil.cpu_percent(interval=1)
+            memory = psutil.virtual_memory()
+            disk = psutil.disk_usage('/')
+            
+            performance = {
+                "timestamp": datetime.now().isoformat(),
+                "cpu_percent": cpu_percent,
+                "memory_percent": memory.percent,
+                "memory_available_gb": round(memory.available / (1024**3), 2),
+                "disk_percent": disk.percent,
+                "disk_free_gb": round(disk.free / (1024**3), 2)
+            }
+            
+            logger.info(f"📊 Performance: CPU {cpu_percent}%, RAM {memory.percent}%, Disk {disk.percent}%")
+            return performance
+            
+        except Exception as e:
+            logger.error(f"❌ Performance check failed: {e}")
+            return None
+    
+    def check_running_processes(self):
+        """Check if key processes are running"""
+        python_processes = []
+        node_processes = []
+        
+        for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
+            try:
+                if proc.info['name'] == 'python.exe':
+                    cmdline = ' '.join(proc.info['cmdline'])
+                    if 'simple_mt5_backend' in cmdline or 'launch_copy_trading' in cmdline:
+                        python_processes.append({
+                            "pid": proc.info['pid'],
+                            "command": cmdline
+                        })
+                elif proc.info['name'] == 'node.exe':
+                    cmdline = ' '.join(proc.info['cmdline'])
+                    if 'next' in cmdline:
+                        node_processes.append({
+                            "pid": proc.info['pid'],
+                            "command": cmdline
+                        })
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                continue
+        
+        logger.info(f"🔍 Running processes: {len(python_processes)} Python, {len(node_processes)} Node")
+        return python_processes, node_processes
+    
+    def check_all_modules(self):
+        """Check all trading modules status"""
+        modules_status = {}
+        
+        modules = [
+            "shadow-mode",
+            "god-mode", 
+            "market-narrator",
+            "strategy-whisperer",
+            "adaptive-trade-manager"
+        ]
+        
+        for module in modules:
+            try:
+                response = requests.get(f"{self.backend_url}/api/v1/{module}/status", timeout=5)
+                if response.status_code == 200:
+                    modules_status[module] = {"status": "active", "data": response.json()}
+                    logger.info(f"✅ {module}: Active")
+                else:
+                    modules_status[module] = {"status": "error", "code": response.status_code}
+                    logger.warning(f"⚠️ {module}: Error {response.status_code}")
+            except Exception as e:
+                modules_status[module] = {"status": "unavailable", "error": str(e)}
+                logger.error(f"❌ {module}: {e}")
+        
+        return modules_status
+    
+    def generate_status_report(self):
+        """Generate comprehensive status report"""
+        report = {
+            "timestamp": datetime.now().isoformat(),
+            "system_status": "checking"
+        }
+        
+        # Check all components
+        backend_healthy, backend_data = self.check_backend_health()
+        frontend_healthy, frontend_data = self.check_frontend_health()
+        mt5_healthy, mt5_data = self.check_mt5_connection()
+        copy_healthy, copy_data = self.check_copy_trading_status()
+        
+        # Get performance metrics
+        performance = self.get_system_performance()
+        python_procs, node_procs = self.check_running_processes()
+        modules_status = self.check_all_modules()
+        
+        # Compile report
+        report.update({
+            "backend": {"healthy": backend_healthy, "data": backend_data},
+            "frontend": {"healthy": frontend_healthy, "data": frontend_data},
+            "mt5": {"healthy": mt5_healthy, "data": mt5_data},
+            "copy_trading": {"healthy": copy_healthy, "data": copy_data},
+            "performance": performance,
+            "processes": {
+                "python": python_procs,
+                "node": node_procs
+            },
+            "modules": modules_status
+        })
+        
+        # Determine overall status
+        core_systems = [backend_healthy, frontend_healthy]
+        if all(core_systems):
+            report["system_status"] = "healthy"
+            logger.info("🟢 System Status: HEALTHY")
+        elif any(core_systems):
+            report["system_status"] = "degraded"
+            logger.warning("🟡 System Status: DEGRADED")
         else:
-            print(f"  ❌ Error: {backend_health.get('error', 'Unknown error')}")
+            report["system_status"] = "critical"
+            logger.error("🔴 System Status: CRITICAL")
+        
+        return report
+    
+    def save_report(self, report):
+        """Save report to file"""
+        try:
+            # Save to logs directory
+            logs_dir = Path("logs")
+            logs_dir.mkdir(exist_ok=True)
+            
+            # Save latest report
+            with open(logs_dir / "latest_status.json", 'w') as f:
+                json.dump(report, f, indent=2)
+            
+            # Append to history
+            with open(logs_dir / "status_history.jsonl", 'a') as f:
+                f.write(json.dumps(report) + '\n')
+                
+        except Exception as e:
+            logger.error(f"Failed to save report: {e}")
+    
+    def display_dashboard(self, report):
+        """Display real-time dashboard"""
+        print("\n" + "="*80)
+        print("🚀 AI ALGO TRADE - SYSTEM DASHBOARD")
+        print("="*80)
+        
+        # System Overview
+        status_icon = {"healthy": "🟢", "degraded": "🟡", "critical": "🔴"}
+        print(f"System Status: {status_icon.get(report['system_status'], '⚪')} {report['system_status'].upper()}")
+        print(f"Timestamp: {report['timestamp']}")
+        
+        # Core Services
+        print("\n📡 CORE SERVICES:")
+        services = ["backend", "frontend", "mt5", "copy_trading"]
+        for service in services:
+            if service in report:
+                status = "✅" if report[service]["healthy"] else "❌"
+                print(f"  {status} {service.replace('_', ' ').title()}")
         
         # Performance Metrics
-        print(f"\n📊 PERFORMANCE METRICS:")
-        if "error" not in performance:
-            system = performance.get("system", {})
-            trading = performance.get("trading_engine", {})
-            account = performance.get("account", {})
-            market = performance.get("market", {})
-            
-            print(f"  🖥️  CPU Usage: {system.get('cpu_usage', 0):.1f}%")
-            print(f"  💾 Memory: {system.get('memory_usage_mb', 0):.0f} MB")
-            print(f"  ⏰ Uptime: {self.format_uptime(system.get('uptime_seconds', 0))}")
-            print(f"  🧵 Threads: {system.get('threads', 0)}")
-            
-            print(f"\n  🚀 Trading Engine:")
-            print(f"    • Running: {'✅' if trading.get('running') else '❌'}")
-            print(f"    • MT5 Connected: {'✅' if trading.get('mt5_connected') else '❌'}")
-            print(f"    • Weekend Mode: {'✅' if trading.get('weekend_mode') else '❌'}")
-            
-            if account:
-                print(f"\n  💰 Account Info:")
-                print(f"    • Balance: ${account.get('balance', 0):,.2f}")
-                print(f"    • Equity: ${account.get('equity', 0):,.2f}")
-                print(f"    • Profit: ${account.get('profit', 0):,.2f}")
-                print(f"    • Margin Level: {account.get('margin_level', 0):.0f}%")
-            
-            if market:
-                print(f"\n  📈 Market Info:")
-                print(f"    • Active Symbols: {market.get('active_symbols', 0)}")
-                print(f"    • Weekend Mode: {'✅' if market.get('weekend_mode') else '❌'}")
-            
-            # Module Status
-            modules = trading.get('active_modules', {})
-            if modules:
-                print(f"\n  🎯 Active Modules:")
-                for module, active in modules.items():
-                    status_icon = "✅" if active else "❌"
-                    module_name = module.replace('_', ' ').title()
-                    print(f"    • {module_name}: {status_icon}")
-        else:
-            print(f"  ❌ Error: {performance.get('error', 'Unknown error')}")
+        if report.get("performance"):
+            perf = report["performance"]
+            print(f"\n📊 PERFORMANCE:")
+            print(f"  CPU: {perf['cpu_percent']}%")
+            print(f"  RAM: {perf['memory_percent']}% (Available: {perf['memory_available_gb']}GB)")
+            print(f"  Disk: {perf['disk_percent']}% (Free: {perf['disk_free_gb']}GB)")
         
-        # Frontend Status
-        print(f"\n🌐 FRONTEND STATUS:")
-        if frontend_health["status"] == "healthy":
-            print(f"  ✅ Status: Healthy")
-            print(f"  🔗 URL: {self.frontend_url}")
-        else:
-            print(f"  ❌ Error: {frontend_health.get('error', 'Unknown error')}")
+        # Trading Modules
+        if report.get("modules"):
+            print(f"\n🤖 TRADING MODULES:")
+            for module, status in report["modules"].items():
+                icon = "✅" if status["status"] == "active" else "❌"
+                print(f"  {icon} {module.replace('-', ' ').title()}")
         
-        print(f"\n{'='*80}")
+        # Running Processes
+        if report.get("processes"):
+            python_count = len(report["processes"]["python"])
+            node_count = len(report["processes"]["node"])
+            print(f"\n🔄 RUNNING PROCESSES:")
+            print(f"  Python: {python_count} processes")
+            print(f"  Node.js: {node_count} processes")
+        
+        print("="*80)
     
-    async def monitor_loop(self):
-        """Ana monitoring döngüsü"""
-        print(f"🚀 AI Algo Trade System Monitor Started")
-        print(f"📊 Monitoring interval: {self.check_interval}s")
-        print(f"🔧 Backend: {self.backend_url}")
-        print(f"🌐 Frontend: {self.frontend_url}")
+    def continuous_monitoring(self):
+        """Run continuous monitoring loop"""
+        logger.info("🚀 Starting AI Algo Trade System Monitor")
+        logger.info(f"Monitoring interval: {self.monitoring_interval} seconds")
         
-        while self.running:
-            try:
-                # Tüm kontrolleri paralel olarak yap
-                backend_task = self.check_backend_health()
-                performance_task = self.check_performance_metrics()
-                frontend_task = self.check_frontend_health()
+        try:
+            while True:
+                # Generate status report
+                report = self.generate_status_report()
                 
-                backend_health, performance, frontend_health = await asyncio.gather(
-                    backend_task, performance_task, frontend_task
-                )
+                # Save report
+                self.save_report(report)
                 
-                # Raporu yazdır
-                self.print_status_report(backend_health, performance, frontend_health)
+                # Display dashboard
+                self.display_dashboard(report)
                 
-                # Kritik durumları kontrol et
-                await self.check_critical_alerts(backend_health, performance)
+                # Check for critical issues
+                if report["system_status"] == "critical":
+                    logger.error("🚨 CRITICAL SYSTEM ISSUE DETECTED!")
+                    # Here you could add alerting logic
                 
-            except Exception as e:
-                print(f"❌ Monitor error: {e}")
-            
-            # Sonraki kontrolü bekle
-            await asyncio.sleep(self.check_interval)
-    
-    async def check_critical_alerts(self, backend_health: Dict, performance: Dict):
-        """Kritik durum uyarıları"""
-        alerts = []
-        
-        # Backend bağlantısı kopmuş
-        if backend_health["status"] != "healthy":
-            alerts.append("🚨 CRITICAL: Backend is not responding!")
-        
-        # MT5 bağlantısı kopmuş
-        elif not backend_health.get("data", {}).get("mt5_connected", False):
-            alerts.append("⚠️  WARNING: MT5 connection lost!")
-        
-        # Yüksek CPU kullanımı
-        if "error" not in performance:
-            cpu_usage = performance.get("system", {}).get("cpu_usage", 0)
-            memory_mb = performance.get("system", {}).get("memory_usage_mb", 0)
-            
-            if cpu_usage > 90:
-                alerts.append(f"🚨 CRITICAL: High CPU usage ({cpu_usage:.1f}%)!")
-            elif cpu_usage > 70:
-                alerts.append(f"⚠️  WARNING: Elevated CPU usage ({cpu_usage:.1f}%)")
-            
-            if memory_mb > 2000:
-                alerts.append(f"🚨 CRITICAL: High memory usage ({memory_mb:.0f} MB)!")
-            elif memory_mb > 1000:
-                alerts.append(f"⚠️  WARNING: Elevated memory usage ({memory_mb:.0f} MB)")
-        
-        # Uyarıları yazdır
-        if alerts:
-            print(f"\n🔔 ALERTS:")
-            for alert in alerts:
-                print(f"  {alert}")
+                # Wait for next check
+                time.sleep(self.monitoring_interval)
+                
+        except KeyboardInterrupt:
+            logger.info("👋 System monitoring stopped by user")
+        except Exception as e:
+            logger.error(f"❌ Monitor crashed: {e}")
 
-async def main():
+def main():
+    """Main function"""
     monitor = SystemMonitor()
+    
+    # Run one status check first
+    print("🔍 Running initial system check...")
+    report = monitor.generate_status_report()
+    monitor.display_dashboard(report)
+    monitor.save_report(report)
+    
+    # Ask if user wants continuous monitoring
     try:
-        await monitor.monitor_loop()
+        choice = input("\n🔄 Start continuous monitoring? (y/n): ").lower().strip()
+        if choice in ['y', 'yes']:
+            monitor.continuous_monitoring()
+        else:
+            print("✅ Single check completed. Reports saved to logs/")
     except KeyboardInterrupt:
-        print(f"\n\n🛑 System Monitor stopped by user")
-        monitor.running = False
+        print("\n👋 Monitoring stopped")
 
 if __name__ == "__main__":
-    asyncio.run(main()) 
+    main() 

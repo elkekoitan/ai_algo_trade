@@ -25,11 +25,13 @@ import {
   FileText,
   Cpu,
   Eye,
-  Send
+  Send,
+  Star
 } from 'lucide-react'
 import ParticleBackground from '@/components/quantum/ParticleBackground'
 import GlassCard from '@/components/quantum/GlassCard'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { systemEvents } from '@/lib/system-events'
 
@@ -89,11 +91,50 @@ interface SystemMetrics {
   processing_time_avg: number
 }
 
+const strategyTypes = [
+  { 
+    id: 'scalping', 
+    name: 'Scalping Strategy', 
+    icon: '⚡', 
+    description: 'Quick profit strategies for short-term trades',
+    complexity: 'Medium'
+  },
+  { 
+    id: 'swing', 
+    name: 'Swing Trading', 
+    icon: '📈', 
+    description: 'Medium-term position trading strategies',
+    complexity: 'Low'
+  },
+  { 
+    id: 'grid', 
+    name: 'Grid Trading', 
+    icon: '🔲', 
+    description: 'Automated grid-based trading systems',
+    complexity: 'High'
+  },
+  { 
+    id: 'sanal_supurge', 
+    name: 'Sanal Süpürge', 
+    icon: '🧹', 
+    description: 'Advanced grid trading with Fibonacci levels',
+    complexity: 'Expert'
+  },
+  { 
+    id: 'arbitrage', 
+    name: 'Arbitrage', 
+    icon: '⚖️', 
+    description: 'Price difference exploitation strategies',
+    complexity: 'Expert'
+  }
+];
+
 export default function StrategyWhispererPage() {
   const [strategies, setStrategies] = useState<TradingStrategy[]>([])
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([])
   const [currentInput, setCurrentInput] = useState('')
   const [selectedStrategy, setSelectedStrategy] = useState<TradingStrategy | null>(null)
+  const [selectedStrategyType, setSelectedStrategyType] = useState<string>('')
   const [whispererState, setWhispererState] = useState<WhispererState>({
     is_active: false,
     auto_optimization: true,
@@ -494,6 +535,28 @@ void OpenPosition(ENUM_ORDER_TYPE type)
     await systemEvents.broadcastEvent('whisperer:settings_updated', updatedState)
   }
 
+  const handleStrategyTypeSelect = (typeId: string) => {
+    setSelectedStrategyType(typeId)
+    
+    if (typeId === 'sanal_supurge') {
+      // Redirect to Sanal Süpürge page
+      window.location.href = '/sanal-supurge'
+      return
+    }
+    
+    // For other strategy types, pre-fill with relevant prompts
+    const strategyPrompts: { [key: string]: string } = {
+      scalping: "Create a scalping strategy for EURUSD that uses 1-minute timeframe with tight stop losses and quick profit targets",
+      swing: "Build a swing trading strategy that identifies trend reversals using RSI divergence and support/resistance levels",
+      grid: "Design a grid trading system that places buy and sell orders at regular intervals around current price",
+      arbitrage: "Create an arbitrage strategy that exploits price differences between correlated currency pairs"
+    }
+    
+    if (strategyPrompts[typeId]) {
+      setCurrentInput(strategyPrompts[typeId])
+    }
+  }
+
   useEffect(() => {
     fetchWhispererData()
     const interval = setInterval(fetchWhispererData, 30000)
@@ -598,6 +661,97 @@ void OpenPosition(ENUM_ORDER_TYPE type)
             </div>
           </GlassCard>
         </div>
+
+        {/* Strategy Types Selection */}
+        <GlassCard className="p-6">
+          <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+            <Star className="w-5 h-5 text-yellow-400" />
+            Strategy Templates
+          </h2>
+          <p className="text-gray-300 mb-6">
+            Choose a strategy template to get started quickly, or describe your own custom strategy below.
+          </p>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+            {strategyTypes.map((strategyType) => (
+              <motion.div
+                key={strategyType.id}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className={`cursor-pointer p-4 rounded-lg border-2 transition-all ${
+                  selectedStrategyType === strategyType.id
+                    ? 'border-cyan-400 bg-cyan-400/10'
+                    : 'border-gray-700 bg-gray-800/50 hover:border-gray-500'
+                }`}
+                onClick={() => handleStrategyTypeSelect(strategyType.id)}
+              >
+                <div className="text-center">
+                  <div className="text-3xl mb-2">{strategyType.icon}</div>
+                  <h3 className="font-semibold text-white mb-1">{strategyType.name}</h3>
+                  <p className="text-xs text-gray-400 mb-2">{strategyType.description}</p>
+                  <Badge className={`text-xs ${
+                    strategyType.complexity === 'Expert' ? 'bg-red-500/20 text-red-400' :
+                    strategyType.complexity === 'High' ? 'bg-orange-500/20 text-orange-400' :
+                    strategyType.complexity === 'Medium' ? 'bg-yellow-500/20 text-yellow-400' :
+                    'bg-green-500/20 text-green-400'
+                  }`}>
+                    {strategyType.complexity}
+                  </Badge>
+                </div>
+                
+                {strategyType.id === 'sanal_supurge' && (
+                  <div className="mt-3 pt-3 border-t border-gray-600">
+                    <div className="flex items-center justify-center gap-1 text-xs text-cyan-400">
+                      <Sparkles className="w-3 h-3" />
+                      <span>Fibonacci + Grid</span>
+                    </div>
+                  </div>
+                )}
+              </motion.div>
+            ))}
+          </div>
+          
+          {selectedStrategyType === 'sanal_supurge' && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              className="bg-gradient-to-r from-cyan-900/30 to-blue-900/30 border border-cyan-500/30 rounded-lg p-4"
+            >
+              <div className="flex items-center gap-3 mb-3">
+                <div className="text-2xl">🧹</div>
+                <div>
+                  <h4 className="font-bold text-cyan-400">Sanal Süpürge - Advanced Grid Trading</h4>
+                  <p className="text-sm text-gray-300">
+                    Otomatik Fibonacci seviyeli grid trading sistemi
+                  </p>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div className="text-sm">
+                  <span className="text-gray-400">✓ Otomatik Fibonacci hesaplama</span>
+                </div>
+                <div className="text-sm">
+                  <span className="text-gray-400">✓ Volatilite adaptasyonu</span>
+                </div>
+                <div className="text-sm">
+                  <span className="text-gray-400">✓ Risk yönetimi</span>
+                </div>
+                <div className="text-sm">
+                  <span className="text-gray-400">✓ MT5 entegrasyonu</span>
+                </div>
+              </div>
+              
+              <Button 
+                className="w-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700"
+                onClick={() => window.location.href = '/sanal-supurge'}
+              >
+                <Target className="w-4 h-4 mr-2" />
+                Sanal Süpürge'yi Konfigure Et
+              </Button>
+            </motion.div>
+          )}
+        </GlassCard>
 
         {/* Control Panel */}
         <GlassCard className="p-6">

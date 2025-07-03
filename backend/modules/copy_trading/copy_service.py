@@ -14,7 +14,10 @@ from .models import (
     FollowerStats, CopySignal, CopyStatus
 )
 from ..mt5_integration.service import MT5Service
-from ...core.enhanced_event_bus import enhanced_event_bus
+import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
+from core.enhanced_event_bus import enhanced_event_bus
 
 logger = logging.getLogger(__name__)
 
